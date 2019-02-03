@@ -1,0 +1,170 @@
+---
+title: "CBECS Exploration"
+author: "John Grando"
+date: "January 29, 2019"
+output: html_document
+---
+
+```{r echo=FALSE}
+library(RMySQL)
+library(dplyr)
+library(tidyr)
+library(kableExtra)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(randomForest)
+```
+
+```{r}
+credentials_df <- read.csv('./credentials.csv', header = FALSE, stringsAsFactors = FALSE)
+gbci_dw <- dbConnect(MySQL(), user=credentials_df[,1], password=credentials_df[,2], db='dw_stg_analytics', host='dw.usgbc.org')
+cbecs_raw_0_df <- fetch(dbSendQuery(gbci_dw, "SELECT * FROM dw_stg_analytics.tbl_cbecs_microdata_2012_0"), n=-1)
+cbecs_raw_1_df <- fetch(dbSendQuery(gbci_dw, "SELECT * FROM dw_stg_analytics.tbl_cbecs_microdata_2012_1"), n=-1)
+```
+
+```{r}
+cbecs_raw_df <- cbecs_raw_0_df %>% 
+  inner_join(cbecs_raw_1_df, 
+             by = c("ID" = "ID")
+  )
+write.csv(t(cbecs_raw_df[1:5,]), 'tst.csv')
+```
+
+```{r}
+#make column categorical and replace na with -1
+make_cat_w_repl <- function(x){
+  as.factor(ifelse(is.na(x), as.character(-1), as.character(x)))
+}
+
+na_repl_num <- function(x, num){
+  ifelse(is.na(x), num, x)
+}
+```
+
+
+```{r}
+#Remove weights
+weight_list <- names(cbecs_raw_df[grepl('^FINAL.*', names(cbecs_raw_df), ignore.case = TRUE)])
+#Remove imputation flags
+impute_list <- names(cbecs_raw_df[grepl('^Z.*', names(cbecs_raw_df), ignore.case = TRUE)])
+
+cbecs_trim_df <- cbecs_raw_df %>% 
+  #Remove weight and imputation columns as well as IDs
+  select(-one_of(weight_list), -one_of(impute_list), -ID, -PUBID) %>% 
+  #Remove small buildings - not of interest and contain NAs - also remove NAs from this column
+  filter(SQFT > 1000) %>% 
+  #Only Freestanding buildings
+  filter(FREESTN==1) %>% #Only 614 samples of non-freestanding buildings, maybe make a separate model
+  select(-FREESTN) %>% 
+  #Drop month ready for occupancy in 2012, not useful
+  select(-MONCON) %>% 
+  #Remove DK/RF for renovation? only 342 samples.  Maybe impute?
+  filter(!is.na(RENOV)) %>% 
+  #filter owner occupied or leased tentants - 157 samples
+  filter(!is.na(OWNOCC)) %>% 
+  #filter when building is cooled but respondend did not give percentage - possibly could imput
+  filter(!is.na(COOLP)) %>% 
+  #remove percent occupancy for office mall or outpaitent healthcare until you can figure out more
+  #and lodgining room percent occupancy due to small number of responses
+  select(-OCCUPYP, -LODOCCP) %>% 
+  #0 percent heated, heated to less than 50, No useful information.  all one response
+  select(-HTLS50) %>% 
+  #Update BASEMNT to have value of 0 for one-floor buildings
+  mutate(BASEMNT = ifelse(NFLOOR==1,0,BASEMNT)) %>%
+  #make a has-baseament encoder and make a factor
+  mutate(BASEMNT_HAS = as.factor(ifelse(is.na(BASEMNT)|BASEMNT==0,0,1))) %>% 
+  #if responded with no elevators or escalators then number of elevators is 0
+  mutate(NELVTR = ifelse(ELEVTR==2, 0, NELVTR)) %>% 
+  mutate(NESLTR = ifelse(ESCLTR==2, 0, NESLTR)) %>% 
+  #if don't know or refuse then assume zero?
+  mutate_at(vars(NELVTR, NESLTR), funs(na_repl_num(.,0))) %>% 
+  #If only indicated that electricity is bought from local utility, then assume it is 100%
+  mutate(ELLUPCT = ifelse(ELLOCUT==1 & ELNONLU==2 & ELOTSRC==2 & ELCPLT==2, 100, ELLUPCT)) %>% 
+  mutate(ELLUPCT = ifelse(ELLOCUT==2 & ELNONLU==1 & ELOTSRC==2 & ELCPLT==2, 0, ELLUPCT)) %>% 
+  mutate(ELLUPCT = ifelse(ELLOCUT==2 & ELNONLU==2 & ELOTSRC==1 & ELCPLT==2, 0, ELLUPCT)) %>% 
+  mutate(ELLUPCT = ifelse(ELLOCUT==2 & ELNONLU==2 & ELOTSRC==2 & ELCPLT==1, 0, ELLUPCT)) %>% 
+  #fix 999 flag which means 'dont know' - NA
+  mutate(ELLUPCT = ifelse(ELLUPCT==999, NA, ELLUPCT)) %>% 
+  ##### Remove ELLUPCT FOR NOW
+  select(-ELLUPCT) %>% 
+  #Not interested in cost
+  select(-WOEXP, -WOEXPC) %>% 
+  #Categorical conversions with nas
+  #heating equipment types - If question wasn't asnwered then input -1 encoder
+  #type of boiler system - If question wasn't asnwered then input -1 encoder
+  #type of steam or HW distribution system - If question wasn't asnwered then input -1 encoder
+  #other heating components - If question wasn't asnwered then input -1 encoder
+  #any energy use for no heat, cool, water heating, cooking, manufacturing - If question wasn't asnwered then input -1 encoder
+  #Fuel oil, diesel, or kerosene used - If question wasn't asnwered then input -1 encoder
+  #Primary heating type used - if NA then it means that no heating at all, 1 means heating but not primary, 2 means primary.  Set NA to -1 encoder
+  #Secondary heating type used - if NA then it means that no heating at all, 1 means heating but not secondary, 2 means secondary.  Set NA to -1 encoder
+  mutate_at(vars(EQGLSS, SUNGLS, ELEVTR, ESCLTR, ACT1, ACT2, ACT3, DATACNTR, DRYCL, VACANT, 
+                 CUBE, CUBEC, CUBELOC, COURT, FEDFAC, FACACT, MANIND, PLANT, 
+                 FACDST, FACDHW, FACDCW, FACELC, BLDPLT, GOVTYP, OWNPPR, 
+                 NWNPPR, NWNOPR, WHOPPR, ANYEGY, FKTYPE, ELHT1, NGHT1, FKHT1,
+                 PRHT1, STHT1, HWHT1, WOHT1, COHT1, SOHT1, OTHT1, ELHT2, NGHT2,
+                 FKHT2, PRHT2, STHT2, HWHT2, WOHT2, COHT2, SOHT2, OTHT2, FURNAC,
+                 PKGHT, BOILER, STHW, HTPMPH, SLFCON, OTHTEQ, BLRRAD, BLRFNCL, BLRINDC,
+                 BLRAIR, BLRPKG, BLRDUCT, DHRAD, DHFNCL, DHINDC, DHWATR, DHAIR, DHPKG,
+                 DHDUCT, OTSTRP, OTDUCT, OTPIU, PKGHTTYP, PKGFURN, PKGHTP, PKGCOIL, PKGPIU,
+                 PKGDUCT, HPHPKG, HPHSPLT, HPHROOM, HPHMINI, HPHVRF, HPHAIR, HPHGRD, HPHDUAL, 
+                 HPHWTR, HPHBKUP, SHRDNT, SHBBRD, SHPORT, SHWALL, SHFURN, SHUNIT, SHPTAC,
+                 HTVCAV, HTVVAV, HTVFLR, HTVOAS, HTVDEM, HTVNON, MAINHT, NWMNHT, ELCOOL, NGCOOL,
+                 FKCOOL, PRCOOL, STCOOL, HWCOOL, CWCOOL, OTCOOL, PKGCLTYP, CHLAIRCL, CHLWTRCL, CHLABSRP,
+                 HTRCHLR, CHLAIR, CHLFNCL, CHLINDC, CHLBEAM, CHLPKG, CHLDUCT, DCWAIR, DCWFNCL, DCWINDC,
+                 DCWBEAM, DCWPKG, DCWDUCT, HPCPKG, HPCSPLT, HPCROOM, HPCMINI, HPCVRF, HPCAIR, HPCGRD, HPCDUAL,
+                 HPCWTR, CLVCAV, CLVVAV, CLVFLR, CLVOAS, CLVDEM, CLVNON, NWMNCL, RDHTNF, HWRDHT, HWRDCL, ECN, ECNTYPE,
+                 MAINT, ELWATR, NGWATR, FKWATR, PRWATR, STWATR, HWWATR, WOWATR, COWATR, SOWATR, OTWATR, WTHTEQ, BOOSTWT,
+                 INSTWT, ELCOOK, NGCOOK, FKCOOK, PRCOOK, STCOOK, HWCOOK, WOCOOK, COCOOK, SOCOOK, OTCOOK, ELMANU, NGMANU,
+                 FKMANU, PRMANU, STMANU, HWMANU, WOMANU, COMANU, SOMANU, OTMANU, NGGENR, FKGENR, PRGENR, WOGENR, COGENR,
+                 SOGENR, OTGENR, PVC, FUELCL, LRGTRB, MCROTB, ENGINE, GENUSE, COGEN, TOGRID, ELLOCUT, ELNONLU, ELOTSRC,
+                 ELCPLT, NGSRC, PRAMTC, PRUNIT, WOAMT, WOSRC, SNACK, FASTFD, CAF, FDPREP, KITCHN, BREAKRM, OTFDRM, HWTRM,
+                 LAUNDR, CONFSP, MEDEQP, CTSCAN, MRI, LINACC, OUTSURG, LABEQP, MCHEQP, POOL, HTPOOL, POOLSRC, STRLZR), funs(make_cat_w_repl(.))) %>%
+  #Categorical conversions witout nas
+  mutate_at(vars(SQFTC, WLCNS, RFCNS, RFCOOL, RFTILT, BLDSHP, GLSSPC, EQGLSS, SUNGLS, 
+                 ATTIC, YRCONC, RENADD, RENRDC, RENCOS, RENINT, RENRFF, RENWLL, RENWIN, 
+                 RENHVC, RENLGT, RENPLB, RENELC, RENINS, RENSAF, RENSTR, RENOTH, ONEACT, 
+                 PBAPLUS, PBA, FACIL, GOVOWN, OWNTYPE, NOCCAT, OWNOCC, OWNOPR, OPEN24, 
+                 OPEN24, OPNMF, OPNWE, NWKERC, HT1, COOL, WATR, COOK, MANU, CAPGEN, ELUSED,
+                 NGUSED, FKUSED, PRUSED, STUSED, HWUSED, CWUSED, OTUSED, WOUSED, COUSED, SOUSED, 
+                 RCAC, PKGCL, CHILLR, CHWT, HTPMPC, ACWNWL, EVAPCL, OTCLEQ, MAINCL, EMCS, RDCLNF, GENR, AMIMETER, ENRGYPLN), funs(as.factor(.))) %>% 
+  #replace nas with zeroes
+  #percent heated - if not asked, then heating was indicated as no, so put zero0
+  #Conference space - if not asked then assume zero
+  #xray equipment - if not asked then assume zero
+  mutate_at(vars(RWSEAT, PBSEAT, EDSEAT, FDSEAT, HCBED, NRSBED, LODGRM, HEATP, FURNP, PKGHP, 
+                 BOILP, STHWP, HTPHP, SLFCNP, OTHTP, RCACP, PKGCP, CHILP, CHWTP, HTPCP, ACWNWP, EVAPP, OTCLP, CONFSPP,
+                 XRAYN), funs(na_repl_num(., 0))) %>% 
+  #Move down the order of activities and when there is a null, fill it in with the difference of 100 - sum
+  mutate(ACT1PCT = ifelse(ACT1==-1, 100, ACT1PCT)) %>% 
+  mutate(ACT2PCT = ifelse(ACT2==-1, 100-ACT1PCT, ACT2PCT)) %>% 
+  mutate(ACT3PCT = ifelse(ACT3==-1, 100-ACT1PCT-ACT2PCT, ACT3PCT)) %>% 
+  #create additional column that catches difference
+  mutate(OTHPCT = 100 - ACT1PCT - ACT2PCT - ACT3PCT) %>% 
+  mutate(ELCNS_per_sf = ELCNS / SQFT)
+```
+
+
+```{r fig.height=10}
+#Check columsn with NAs, remove large ones
+large_na_test_df <- stack(colSums(is.na(cbecs_trim_df))) %>% filter(values > 1000)
+ggplot(large_na_test_df, aes(x=ind, y=values)) + geom_col() + coord_flip()
+```
+
+
+```{r}
+cbecs_df <- cbecs_trim_df %>% 
+  select(-one_of(as.vector(large_na_test_df$ind))) %>% 
+  na.omit()
+```
+
+
+```{r fig.height=10}
+cbecs_rf_test <- randomForest(ELCNS_per_sf ~ ., 
+                              data = cbecs_df,
+                              ntree = 100
+                  )
+varImpPlot(cbecs_rf_test)
+```
+
