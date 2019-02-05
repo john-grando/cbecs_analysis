@@ -52,19 +52,21 @@ impute_list <- names(cbecs_raw_df[grepl('^Z.*', names(cbecs_raw_df), ignore.case
 cbecs_trim_df <- cbecs_raw_df %>% 
   #Remove weight and imputation columns as well as IDs
   select(-one_of(weight_list), -one_of(impute_list), -ID, -PUBID) %>% 
-  #Remove small buildings - not of interest and contain NAs - also remove NAs from this column
+  #Remove small buildings - not of interest and contain NAs - also remove NAs from this column implicitly
   filter(SQFT > 1000) %>% 
   #Only Freestanding buildings
   filter(FREESTN==1) %>% #Only 614 samples of non-freestanding buildings, maybe make a separate model
   select(-FREESTN) %>% 
-  #Drop month ready for occupancy in 2012, not useful
-  select(-MONCON) %>% 
+  #Drop month ready for occupancy in 2012, not useful. Also major fuels used (all yes)
+  select(-MONCON, -MFUSED) %>% 
   #Remove DK/RF for renovation? only 342 samples.  Maybe impute?
   filter(!is.na(RENOV)) %>% 
   #filter owner occupied or leased tentants - 157 samples
   filter(!is.na(OWNOCC)) %>% 
   #filter when building is cooled but respondend did not give percentage - possibly could imput
   filter(!is.na(COOLP)) %>% 
+  #filter buildings with na for percent lit while open, very small number.  Also nonresponses to percent lit off hours
+  filter(!is.na(LTOHRP)&!is.na(LTNHRP)) %>% 
   #remove percent occupancy for office mall or outpaitent healthcare until you can figure out more
   #and lodgining room percent occupancy due to small number of responses
   select(-OCCUPYP, -LODOCCP) %>% 
@@ -89,7 +91,30 @@ cbecs_trim_df <- cbecs_raw_df %>%
   ##### Remove ELLUPCT FOR NOW
   select(-ELLUPCT) %>% 
   #Not interested in cost
-  select(-WOEXP, -WOEXPC) %>% 
+  select(-WOEXP, -WOEXPC) %>%
+  #if respondent did not indicate any residential refrigerators, then it is zero
+  #also, if the question didn't apply then assume zero
+  mutate(RFGRSN = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGRES==2, 0, RFGRES)) %>% 
+  #same for compact refrigerators
+  mutate(RFGCOMPN = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGCOMP==2, 0, RFGCOMPN)) %>% 
+  #same for walkins
+  mutate(RFGWIN = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGWI==2, 0, RFGWIN)) %>% 
+  #same for open cases
+  mutate(RFGOPN = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGOP==2, 0, RFGOPN)) %>% 
+  #same for closed cases
+  mutate(RFGCLN = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGCL==2, 0, RFGCLN)) %>% 
+  #same for vending
+  mutate(RFGVNN = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGVEN==2, 0, RFGVNN)) %>%
+  #same for ice makers
+  mutate(RFGICN = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGICE==2, 0, RFGICN)) %>%
+  #same for large cold storage
+  mutate(RFGSTP = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGSTO==2, 0, RFGSTP)) %>%
+  #if tv/video response was 'no', then it is zero
+  mutate(TVVIDEON = ifelse(TVVIDEO==2, 0, TVVIDEON)) %>% 
+  #if cash register response was 'no', then it is zero
+  mutate(RGSTRN = ifelse(RGSTR==2, 0, RGSTRN)) %>% 
+  #if copoer response was 'no', then it is zero
+  mutate(COPIERN = ifelse(COPIER==2, 0, COPIERN)) %>% 
   #Categorical conversions with nas
   #heating equipment types - If question wasn't asnwered then input -1 encoder
   #type of boiler system - If question wasn't asnwered then input -1 encoder
@@ -120,51 +145,201 @@ cbecs_trim_df <- cbecs_raw_df %>%
                  FKMANU, PRMANU, STMANU, HWMANU, WOMANU, COMANU, SOMANU, OTMANU, NGGENR, FKGENR, PRGENR, WOGENR, COGENR,
                  SOGENR, OTGENR, PVC, FUELCL, LRGTRB, MCROTB, ENGINE, GENUSE, COGEN, TOGRID, ELLOCUT, ELNONLU, ELOTSRC,
                  ELCPLT, NGSRC, PRAMTC, PRUNIT, WOAMT, WOSRC, SNACK, FASTFD, CAF, FDPREP, KITCHN, BREAKRM, OTFDRM, HWTRM,
-                 LAUNDR, CONFSP, MEDEQP, CTSCAN, MRI, LINACC, OUTSURG, LABEQP, MCHEQP, POOL, HTPOOL, POOLSRC, STRLZR), funs(make_cat_w_repl(.))) %>%
+                 LAUNDR, CONFSP, MEDEQP, CTSCAN, MRI, LINACC, OUTSURG, LABEQP, MCHEQP, POOL, HTPOOL, POOLSRC, STRLZR,
+                 RFGRES, RFGCOMP, RFGWI, RFGOP, RFGCL, RFGVEN, RFGICE, RFGSTO, WHRECOV, WHHT2, WHWT, WHOT, MLTMON, MLTMNC, 
+                 FLATC, TRNGRM, STDNRM, DCNTRSFC, WBOARDS, PRNTYP, LTNR24, FLUOR, CFLR, BULB, HALO, HID, LED, OTLT, EMCSLT, 
+                 SCHED, OCSN, DIM, DAYHARV, TRIM, PLGCTRL, DRLGHT, TINT, REFL, AWN, SKYLT, COOTH, WOOTH, OTOTH, HWOTH, SOOTH,
+                 DCWLOOP, CWOTH, STOTH, DHLOOP, DHHT1, DHHT2, DHCOOL, DHCOOK, DHMANU, DHOTH, PROTH, CHLLOOP, FKOTH, BLRLOOP,
+                 NGOTH),
+            funs(make_cat_w_repl(.))) %>%
   #Categorical conversions witout nas
   mutate_at(vars(SQFTC, WLCNS, RFCNS, RFCOOL, RFTILT, BLDSHP, GLSSPC, EQGLSS, SUNGLS, 
                  ATTIC, YRCONC, RENADD, RENRDC, RENCOS, RENINT, RENRFF, RENWLL, RENWIN, 
                  RENHVC, RENLGT, RENPLB, RENELC, RENINS, RENSAF, RENSTR, RENOTH, ONEACT, 
                  PBAPLUS, PBA, FACIL, GOVOWN, OWNTYPE, NOCCAT, OWNOCC, OWNOPR, OPEN24, 
-                 OPEN24, OPNMF, OPNWE, NWKERC, HT1, COOL, WATR, COOK, MANU, CAPGEN, ELUSED,
+                 OPEN24, OPNMF, OPNWE, NWKERC, HT1, HT2, COOL, WATR, COOK, MANU, CAPGEN, ELUSED,
                  NGUSED, FKUSED, PRUSED, STUSED, HWUSED, CWUSED, OTUSED, WOUSED, COUSED, SOUSED, 
-                 RCAC, PKGCL, CHILLR, CHWT, HTPMPC, ACWNWL, EVAPCL, OTCLEQ, MAINCL, EMCS, RDCLNF, GENR, AMIMETER, ENRGYPLN), funs(as.factor(.))) %>% 
-  #replace nas with zeroes
-  #percent heated - if not asked, then heating was indicated as no, so put zero0
-  #Conference space - if not asked then assume zero
-  #xray equipment - if not asked then assume zero
-  mutate_at(vars(RWSEAT, PBSEAT, EDSEAT, FDSEAT, HCBED, NRSBED, LODGRM, HEATP, FURNP, PKGHP, 
-                 BOILP, STHWP, HTPHP, SLFCNP, OTHTP, RCACP, PKGCP, CHILP, CHWTP, HTPCP, ACWNWP, EVAPP, OTCLP, CONFSPP,
-                 XRAYN), funs(na_repl_num(., 0))) %>% 
+                 RCAC, PKGCL, CHILLR, CHWT, HTPMPC, ACWNWL, EVAPCL, OTCLEQ, MAINCL, EMCS, RDCLNF, GENR, AMIMETER, 
+                 ENRGYPLN, RFGEQP, PCTERM, PCTRMC, LAPTPC, SERVER, SERVERC, TVVIDEO, RGSTR, COPIER, FAX, LOHRPC,
+                 LNHRPC, LTEXPC, PKLT, WINTYP, REGION, CENDIV, RENOV, WKHRSC, PUBCLIM), 
+            funs(as.factor(.))) %>% 
   #Move down the order of activities and when there is a null, fill it in with the difference of 100 - sum
   mutate(ACT1PCT = ifelse(ACT1==-1, 100, ACT1PCT)) %>% 
   mutate(ACT2PCT = ifelse(ACT2==-1, 100-ACT1PCT, ACT2PCT)) %>% 
   mutate(ACT3PCT = ifelse(ACT3==-1, 100-ACT1PCT-ACT2PCT, ACT3PCT)) %>% 
   #create additional column that catches difference
   mutate(OTHPCT = 100 - ACT1PCT - ACT2PCT - ACT3PCT) %>% 
-  mutate(ELCNS_per_sf = ELCNS / SQFT)
-```
+  #per sf values to track: electricity
+  mutate(ELCNSPerSf = ELCNS / SQFT) %>%
+  #electricity btu
+  mutate(ELBTUPerSf = ELBTU / SQFT) %>%
+  #electricity heating btu
+  mutate(ELHTBTUPerSf = ELHTBTU / SQFT) %>%
+  #electricity cooling btu
+  mutate(ELCLBTUPerSf = ELCLBTU / SQFT) %>%
+  #electricity ventilation btu
+  mutate(ELVNBTUPerSf = ELVNBTU / SQFT) %>%
+  #electricity water heating btu
+  mutate(ELWTBTUPerSf = ELWTBTU / SQFT) %>%
+  #electricity lighting btu
+  mutate(ELLTBTUPerSf = ELLTBTU / SQFT) %>%
+  #electricity cooking btu
+  mutate(ELCKBTUPerSf = ELCKBTU / SQFT) %>%
+  #electricity refrigeration btu
+  mutate(ELRFBTUPerSf = ELRFBTU / SQFT) %>%
+  #electricity office equipment btu
+  mutate(ELOFBTUPerSf = ELOFBTU / SQFT) %>%
+  #electricity computing btu
+  mutate(ELPCBTUPerSf = ELPCBTU / SQFT) %>%
+  #electricity miscellaneous btu
+  mutate(ELOTBTUPerSf = ELOTBTU / SQFT) %>%
+  #natural gas ccf
+  mutate(NGCNSPerSf = NGCNS / SQFT) %>%
+  #natural gas BTU
+  mutate(NGBTUPerSf = NGBTU / SQFT) %>%
+  #natural gas heating BTU
+  mutate(NGHTBTUPerSf = NGHTBTU / SQFT) %>%
+  #natural gas cooling BTU
+  mutate(NGCLBTUPerSf = NGCLBTU / SQFT) %>%
+  #natural gas water heating BTU
+  mutate(NGWTBTUPerSf = NGWTBTU / SQFT) %>%
+  #natural gas cooking BTU
+  mutate(NGCKBTUPerSf = NGCKBTU / SQFT) %>%
+  #natural gas misc BTU
+  mutate(NGOTBTUPerSf = NGOTBTU / SQFT) %>%
+  #District heat thousand pounds
+  mutate(DHCNSPerSf = DHCNS / SQFT) %>%
+  #District heat thousand btu
+  mutate(DHBTUPerSf = DHBTU / SQFT) %>% 
+  #District heat heating thousand btu
+  mutate(DHHTBTUPerSf = DHHTBTU / SQFT) %>% 
+  #District heat cooling thousand btu
+  mutate(DHCLBTUPerSf = DHCLBTU / SQFT) %>% 
+  #District heat water heating thousand btu
+  mutate(DHWTBTUPerSf = DHWTBTU / SQFT) %>% 
+  #District heat cooking thousand btu
+  mutate(DHCKBTUPerSf = DHCKBTU / SQFT) %>%
+  #District heat misc thousand btu
+  mutate(DHOTBTUPerSf = DHOTBTU / SQFT) %>%
+  #fuel oil
+  mutate(FKCNSPerSf = FKCNS / SQFT) %>%
+  #Fuel oil thousand btu
+  mutate(FKBTUPerSf = FKBTU / SQFT) %>%
+  #Fuel oil heating thousand btu
+  mutate(FKHTBTUPerSf = FKHTBTU / SQFT) %>%
+  #Fuel oil cooling thousand btu
+  mutate(FKCLBTUPerSf = FKCLBTU / SQFT) %>%
+  #Fuel oil water heating thousand btu
+  mutate(FKWTBTUPerSf = FKWTBTU / SQFT) %>%
+  #Fuel oil cooking thousand btu
+  mutate(FKCKBTUPerSf = FKCKBTU / SQFT) %>%
+  #Fuel oil misc thousand btu
+  mutate(FKOTBTUPerSf = FKOTBTU / SQFT) %>%
+  #Major fuel btu
+  mutate(MFBTUPerSf = MFBTU / SQFT) %>%
+  #Major fuel heating btu
+  mutate(MFHTBTUPerSf = MFHTBTU / SQFT) %>%
+  #Major fuel cooling btu
+  mutate(MFCLBTUPerSf = MFCLBTU / SQFT) %>%
+  #Major fuel ventilation btu
+  mutate(MFVNBTUPerSf = MFVNBTU / SQFT) %>%
+  #Major fuel water heating btu
+  mutate(MFWTBTUPerSf = MFWTBTU / SQFT) %>%
+  #Major fuel lighting btu
+  mutate(MFLTBTUPerSf = MFLTBTU / SQFT) %>%
+  #Major fuel cooking btu
+  mutate(MFCKBTUPerSf = MFCKBTU / SQFT) %>%
+  #Major fuel refrigeration btu
+  mutate(MFRFBTUPerSf = MFRFBTU / SQFT) %>%
+  #Major fuel office equipment use btu
+  mutate(MFOFBTUPerSf = MFOFBTU / SQFT) %>%
+  #Major fuel computing use btu
+  mutate(MFPCBTUPerSf = MFPCBTU / SQFT) %>%
+  #Major fuel other btu
+  mutate(MFOTBTUPerSf = MFOTBTU / SQFT) %>%
+  #columns not interested in tracking for this study (e.g. expenditures, total usage, etc.)
+  select(-ELCNS, -ELBTU, -ELHTBTU, -ELCLBTU, -ELCLBTU, -ELVNBTU, -ELWTBTU, -ELLTBTU, -ELCKBTU,
+         -ELRFBTU, -ELOFBTU, -ELPCBTU, -ELOTBTU,
+         -NGCNS, -NGBTU, -NGHTBTU, -NGCLBTU, -NGWTBTU, -NGCKBTU, -NGOTBTU, -FKCNS, 
+         -DHBTU, -DHCNS, -DHHTBTU, -DHCLBTU, -DHWTBTU, -DHCKBTU, -DHOTBTU, 
+         -FKBTU, -FKHTBTU, -FKCLBTU, -FKWTBTU, -FKCKBTU, -FKOTBTU, -MFBTU,
+         -MFHTBTU, -MFCLBTU, -MFVNBTU, -MFWTBTU, -MFLTBTU, -MFCKBTU, 
+         -MFRFBTU, -MFOFBTU, -MFPCBTU, -MFOTBTU,
+         -ELEXP, -NGEXP, -FKEXP, -DHEXP, -MFEXP) %>% 
+  #replace nas with zeroes
+  #percent heated - if not asked, then heating was indicated as no, so put zero0
+  #Conference space - if not asked then assume zero
+  #xray equipment - if not asked then assume zero
+  mutate_at(vars(RWSEAT, PBSEAT, EDSEAT, FDSEAT, HCBED, NRSBED, LODGRM, HEATP, FURNP, PKGHP, 
+                 BOILP, STHWP, HTPHP, SLFCNP, OTHTP, RCACP, PKGCP, CHILP, CHWTP, HTPCP, ACWNWP, EVAPP, OTCLP, CONFSPP,
+                 XRAYN, PRNTRN, FLUORP, CFLRP, BULBP, HALOP, HIDP, LEDP, FLUORP, CFLRP, BULBP, HALOP, HIDP, LEDP, 
+                 OTLTP, DAYLTP, ELCNSPerSf, NGCNSPerSf, NGBTUPerSf, NGHTBTUPerSf, NGCLBTUPerSf, NGWTBTUPerSf, 
+                 NGCKBTUPerSf, NGOTBTUPerSf, FKCNSPerSf, DHCNSPerSf, DHBTUPerSf, DHHTBTUPerSf, DHCLBTUPerSf,
+                 DHWTBTUPerSf, DHCKBTUPerSf, DHOTBTUPerSf, FKBTUPerSf, FKHTBTUPerSf, FKCLBTUPerSf, FKWTBTUPerSf, 
+                 FKCKBTUPerSf, FKOTBTUPerSf), 
+            funs(na_repl_num(., 0)))
 
-
-```{r fig.height=10}
 #Check columsn with NAs, remove large ones
+cbecs_trim_na_df <- stack(colSums(is.na(cbecs_trim_df))) %>% filter(values>0)
 large_na_test_df <- stack(colSums(is.na(cbecs_trim_df))) %>% filter(values > 1000)
-ggplot(large_na_test_df, aes(x=ind, y=values)) + geom_col() + coord_flip()
 ```
-
 
 ```{r}
-cbecs_df <- cbecs_trim_df %>% 
-  select(-one_of(as.vector(large_na_test_df$ind))) %>% 
+#Get appropriate numeric columns and divide to get PerSF metrics
+numeric_cols <- cbecs_trim_df[, unlist(lapply(cbecs_trim_df, is.numeric))]
+PerSFVector <- c('NFLOOR', 'BASEMNT', 'NELVTR', 'NESLTR', 'RWSEAT', 'PBSEAT',
+                 'EDSEAT', 'FDSEAT', 'HCBED', 'NRSBED', 'LODGRM', 'NOCC', 'NWKER',
+                 'XRAYN', 'RFGRSN', 'RFGCOMPN', 'RFGWIN', 'RFGOPN', 'RFGCLN', 'RFGVNN',
+                 'RFGICN', 'PCTERMN', 'LAPTPN', 'PRNTRN', 'SERVERN', 'TVVIDEON', 'RGSTRN')
+per_sf_df <- cbecs_trim_df %>% select_(.dots = PerSFVector)
+per_sf_df <- per_sf_df / cbecs_trim_df[,c('SQFT')]
+colnames(per_sf_df) <- paste(colnames(per_sf_df), "PerSF", sep="")
+cbecs_trans_df <- cbecs_trim_df %>% 
+  select(names(cbecs_trim_df[!(colnames(cbecs_trim_df) %in% PerSFVector)])) %>% 
+  bind_cols(per_sf_df) %>% 
+  select(-SQFT)
+new_numeric_cols <-names(cbecs_trans_df[, unlist(lapply(cbecs_trans_df, is.numeric))])
+new_non_numeric_cols <- names(cbecs_trans_df[, !(colnames(cbecs_trans_df) %in% new_numeric_cols)])
+new_numeric_cols
+new_non_numeric_cols
+```
+
+#Explore data set. response variable shapes, correlations, k-means clustering, princomp, etc. to determine possibility of prediction.
+
+```{r}
+
+```
+
+
+#Remove collinear, and other possible response variable, columns and create df for prediction
+```{r}
+elbtu_pred_list <- append(
+  colnames(cbecs_trans_df[,!grepl('EL.*PerSf|NG.*PerSf|DH.*PerSf|FK.*PerSf|MF.*PerSf', colnames(cbecs_trans_df), ignore.case = TRUE)]),
+  'ELBTUPerSf')
+cbecs_elbtu_df <- cbecs_trans_df %>% 
+  select_(.dots = elbtu_pred_list) %>% 
   na.omit()
 ```
 
+```{r}
+#split train/test
+
+```
+
 
 ```{r fig.height=10}
-cbecs_rf_test <- randomForest(ELCNS_per_sf ~ ., 
-                              data = cbecs_df,
+cbecs_elbtu_rf <- randomForest(ELBTUPerSf ~ ., 
+                              data = cbecs_elbtu_df,
                               ntree = 100
                   )
-varImpPlot(cbecs_rf_test)
+varImpPlot(cbecs_elbtu_rf)
+```
+
+```{r fig.height=10}
+tst <- cbecs_elbtu_df %>% bind_cols(ELBTUPerSfPred = predict(cbecs_elbtu_rf, newdata=cbecs_elbtu_df))
+ggplot(tst, aes(x=ELBTUPerSf, y=ELBTUPerSfPred)) + geom_point() + facet_wrap(~PBA, scales = "free")
+hist(cbecs_elbtu_rf$predicted - cbecs_elbtu_df$ELBTUPerSf)
+cor(cbecs_elbtu_rf$predicted, cbecs_elbtu_rf$predicted - cbecs_elbtu_df$ELBTUPerSf)
+cbecs_elbtu_rf$rsq
 ```
 
