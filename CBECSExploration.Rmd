@@ -14,6 +14,7 @@ library(gridExtra)
 library(grid)
 library(ggplot2)
 library(randomForest)
+library(corrplot)
 ```
 
 ```{r}
@@ -298,23 +299,53 @@ cbecs_trans_df <- cbecs_trim_df %>%
   select(names(cbecs_trim_df[!(colnames(cbecs_trim_df) %in% PerSFVector)])) %>% 
   bind_cols(per_sf_df) %>% 
   select(-SQFT)
-new_numeric_cols <-names(cbecs_trans_df[, unlist(lapply(cbecs_trans_df, is.numeric))])
-new_non_numeric_cols <- names(cbecs_trans_df[, !(colnames(cbecs_trans_df) %in% new_numeric_cols)])
-new_numeric_cols
-new_non_numeric_cols
+```
+
+
+#Make lists of columns to be used for later
+```{r}
+removed_response_list <- colnames(cbecs_trans_df[,!grepl('EL.*PerSf|NG.*PerSf|DH.*PerSf|FK.*PerSf|MF.*PerSf', colnames(cbecs_trans_df), ignore.case = TRUE)])
+full_column_list <- append(removed_response_list, c('ELBTUPerSf', 'NGBTUPerSf', 'DHBTUPerSf', 'FKBTUPerSf', 'MFBTUPerSf'))
+new_numeric_cols <- names(cbecs_trans_df[, unlist(lapply(cbecs_trans_df, is.numeric)) & colnames(cbecs_trans_df) %in% full_column_list])
+new_non_numeric_cols <- names(cbecs_trans_df[, !(colnames(cbecs_trans_df) %in% new_numeric_cols) & colnames(cbecs_trans_df) %in% full_column_list])
 ```
 
 #Explore data set. response variable shapes, correlations, k-means clustering, princomp, etc. to determine possibility of prediction.
 
 ```{r}
-
+#histogram of possible response categories
+cbecs_response_df <- cbecs_trans_df %>% 
+  select(ELBTUPerSf, NGBTUPerSf, DHBTUPerSf, FKBTUPerSf, MFBTUPerSf) %>% 
+  gather("source", "BTU", 1:5)
+p1 <- ggplot(cbecs_response_df %>% filter(source=='ELBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('ELBTUPerSf')
+p2 <- ggplot(cbecs_response_df %>% filter(source=='NGBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('NGBTUPerSf')
+p3 <- ggplot(cbecs_response_df %>% filter(source=='DHBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('DHBTUPerSf')
+p3
+p4 <- ggplot(cbecs_response_df %>% filter(source=='FKBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('FKBTUPerSf')
+p5 <- ggplot(cbecs_response_df %>% filter(source=='MFBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('MFBTUPerSf')
+grid.arrange(p1, p2, p3, p4, p5, ncol=2)
 ```
 
+# Correlation plot
+```{r fig.width=40}
+cbecs_scaled_df <- scale(cbecs_trans_df[, colnames(cbecs_trans_df) %in% new_numeric_cols])
+correlations_df <- cor(cbecs_scaled_df)
+corrplot(correlations_df)
+```
+
+#k means
+```{r}
+k_means_fit <- kmeans(cbecs_scaled_df, 3)
+library(cluster)
+```
+
+
+#PCA
 
 #Remove collinear, and other possible response variable, columns and create df for prediction
 ```{r}
 elbtu_pred_list <- append(
-  colnames(cbecs_trans_df[,!grepl('EL.*PerSf|NG.*PerSf|DH.*PerSf|FK.*PerSf|MF.*PerSf', colnames(cbecs_trans_df), ignore.case = TRUE)]),
+  removed_response_list,
   'ELBTUPerSf')
 cbecs_elbtu_df <- cbecs_trans_df %>% 
   select_(.dots = elbtu_pred_list) %>% 
