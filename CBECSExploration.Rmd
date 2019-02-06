@@ -6,7 +6,6 @@ output: html_document
 ---
 
 ```{r echo=FALSE}
-library(RMySQL)
 library(dplyr)
 library(tidyr)
 library(kableExtra)
@@ -15,21 +14,17 @@ library(grid)
 library(ggplot2)
 library(randomForest)
 library(corrplot)
+library(caret)
+library(cluster)
+library(factoextra)
+library(e1071)
+library(ggfortify)
 ```
 
 ```{r}
-credentials_df <- read.csv('./credentials.csv', header = FALSE, stringsAsFactors = FALSE)
-gbci_dw <- dbConnect(MySQL(), user=credentials_df[,1], password=credentials_df[,2], db='dw_stg_analytics', host='dw.usgbc.org')
-cbecs_raw_0_df <- fetch(dbSendQuery(gbci_dw, "SELECT * FROM dw_stg_analytics.tbl_cbecs_microdata_2012_0"), n=-1)
-cbecs_raw_1_df <- fetch(dbSendQuery(gbci_dw, "SELECT * FROM dw_stg_analytics.tbl_cbecs_microdata_2012_1"), n=-1)
-```
-
-```{r}
-cbecs_raw_df <- cbecs_raw_0_df %>% 
-  inner_join(cbecs_raw_1_df, 
-             by = c("ID" = "ID")
-  )
-write.csv(t(cbecs_raw_df[1:5,]), 'tst.csv')
+cbecs_raw_df <- read.csv('./2012_public_use_data_aug2016.csv', 
+                         header = TRUE, 
+                         stringsAsFactors = FALSE)
 ```
 
 ```{r}
@@ -38,39 +33,42 @@ make_cat_w_repl <- function(x){
   as.factor(ifelse(is.na(x), as.character(-1), as.character(x)))
 }
 
+#replace nas with a specified number in a numerical column
 na_repl_num <- function(x, num){
   ifelse(is.na(x), num, x)
 }
 ```
 
+```{r}
+#Predictor population
+summary(data.frame(lapply(cbecs_raw_df[,grepl('^[^Z].*USED$', colnames(cbecs_raw_df))], factor)))
+```
+
+
 
 ```{r}
-#Remove weights
+#Clean the raw data file
+
+#Identify Weight columns
 weight_list <- names(cbecs_raw_df[grepl('^FINAL.*', names(cbecs_raw_df), ignore.case = TRUE)])
-#Remove imputation flags
+#Identify imputation flag columns
 impute_list <- names(cbecs_raw_df[grepl('^Z.*', names(cbecs_raw_df), ignore.case = TRUE)])
 
 cbecs_trim_df <- cbecs_raw_df %>% 
   #Remove weight and imputation columns as well as IDs
-  select(-one_of(weight_list), -one_of(impute_list), -ID, -PUBID) %>% 
+  select(-one_of(weight_list), -one_of(impute_list), -PUBID) %>% 
   #Remove small buildings - not of interest and contain NAs - also remove NAs from this column implicitly
   filter(SQFT > 1000) %>% 
-  #Only Freestanding buildings
-  filter(FREESTN==1) %>% #Only 614 samples of non-freestanding buildings, maybe make a separate model
-  select(-FREESTN) %>% 
-  #Drop month ready for occupancy in 2012, not useful. Also major fuels used (all yes)
-  select(-MONCON, -MFUSED) %>% 
-  #Remove DK/RF for renovation? only 342 samples.  Maybe impute?
-  filter(!is.na(RENOV)) %>% 
-  #filter owner occupied or leased tentants - 157 samples
-  filter(!is.na(OWNOCC)) %>% 
-  #filter when building is cooled but respondend did not give percentage - possibly could imput
-  filter(!is.na(COOLP)) %>% 
-  #filter buildings with na for percent lit while open, very small number.  Also nonresponses to percent lit off hours
-  filter(!is.na(LTOHRP)&!is.na(LTNHRP)) %>% 
-  #remove percent occupancy for office mall or outpaitent healthcare until you can figure out more
-  #and lodgining room percent occupancy due to small number of responses
-  select(-OCCUPYP, -LODOCCP) %>% 
+  #Drop month ready for occupancy in 2012, not useful
+  select(-MONCON) %>% 
+  #If buidling was indicated to be not cooled, then percent cooled is zero
+  mutate(COOLP = ifelse(COOL==2, 0, COOL)) %>% 
+  #If one of the preceding non-electrical use questions is answered as yes, then zero for percent-lit
+  mutate(LTOHRP = ifelse(ELUSED==2|WKHRS==0, 0, LTOHRP)) %>% 
+  #If lights are always on, then they are never of
+  mutate(LTNHRP = ifelse(WKHRS==168|OPEN24==1|LTNR24==2, 0, LTNHRP)) %>% 
+  ### REMOVE FOR NOW, TOO MANY NULLS ###
+  select(-LTNHRP) %>% 
   #0 percent heated, heated to less than 50, No useful information.  all one response
   select(-HTLS50) %>% 
   #Update BASEMNT to have value of 0 for one-floor buildings
@@ -89,7 +87,7 @@ cbecs_trim_df <- cbecs_raw_df %>%
   mutate(ELLUPCT = ifelse(ELLOCUT==2 & ELNONLU==2 & ELOTSRC==2 & ELCPLT==1, 0, ELLUPCT)) %>% 
   #fix 999 flag which means 'dont know' - NA
   mutate(ELLUPCT = ifelse(ELLUPCT==999, NA, ELLUPCT)) %>% 
-  ##### Remove ELLUPCT FOR NOW
+  ##### Remove ELLUPCT FOR NOW ####
   select(-ELLUPCT) %>% 
   #Not interested in cost
   select(-WOEXP, -WOEXPC) %>%
@@ -116,16 +114,8 @@ cbecs_trim_df <- cbecs_raw_df %>%
   mutate(RGSTRN = ifelse(RGSTR==2, 0, RGSTRN)) %>% 
   #if copoer response was 'no', then it is zero
   mutate(COPIERN = ifelse(COPIER==2, 0, COPIERN)) %>% 
-  #Categorical conversions with nas
-  #heating equipment types - If question wasn't asnwered then input -1 encoder
-  #type of boiler system - If question wasn't asnwered then input -1 encoder
-  #type of steam or HW distribution system - If question wasn't asnwered then input -1 encoder
-  #other heating components - If question wasn't asnwered then input -1 encoder
-  #any energy use for no heat, cool, water heating, cooking, manufacturing - If question wasn't asnwered then input -1 encoder
-  #Fuel oil, diesel, or kerosene used - If question wasn't asnwered then input -1 encoder
-  #Primary heating type used - if NA then it means that no heating at all, 1 means heating but not primary, 2 means primary.  Set NA to -1 encoder
-  #Secondary heating type used - if NA then it means that no heating at all, 1 means heating but not secondary, 2 means secondary.  Set NA to -1 encoder
-  mutate_at(vars(EQGLSS, SUNGLS, ELEVTR, ESCLTR, ACT1, ACT2, ACT3, DATACNTR, DRYCL, VACANT, 
+  #Categorical conversions with nas - If question not asked, then encode NA as -1
+  mutate_at(vars(FREESTN, RENOV, OWNOCC, RDLTNF, EQGLSS, SUNGLS, ELEVTR, ESCLTR, ACT1, ACT2, ACT3, DATACNTR, DRYCL, VACANT, 
                  CUBE, CUBEC, CUBELOC, COURT, FEDFAC, FACACT, MANIND, PLANT, 
                  FACDST, FACDHW, FACDCW, FACELC, BLDPLT, GOVTYP, OWNPPR, 
                  NWNPPR, NWNOPR, WHOPPR, ANYEGY, FKTYPE, ELHT1, NGHT1, FKHT1,
@@ -147,14 +137,12 @@ cbecs_trim_df <- cbecs_raw_df %>%
                  SOGENR, OTGENR, PVC, FUELCL, LRGTRB, MCROTB, ENGINE, GENUSE, COGEN, TOGRID, ELLOCUT, ELNONLU, ELOTSRC,
                  ELCPLT, NGSRC, PRAMTC, PRUNIT, WOAMT, WOSRC, SNACK, FASTFD, CAF, FDPREP, KITCHN, BREAKRM, OTFDRM, HWTRM,
                  LAUNDR, CONFSP, MEDEQP, CTSCAN, MRI, LINACC, OUTSURG, LABEQP, MCHEQP, POOL, HTPOOL, POOLSRC, STRLZR,
-                 RFGRES, RFGCOMP, RFGWI, RFGOP, RFGCL, RFGVEN, RFGICE, RFGSTO, WHRECOV, WHHT2, WHWT, WHOT, MLTMON, MLTMNC, 
-                 FLATC, TRNGRM, STDNRM, DCNTRSFC, WBOARDS, PRNTYP, LTNR24, FLUOR, CFLR, BULB, HALO, HID, LED, OTLT, EMCSLT, 
-                 SCHED, OCSN, DIM, DAYHARV, TRIM, PLGCTRL, DRLGHT, TINT, REFL, AWN, SKYLT, COOTH, WOOTH, OTOTH, HWOTH, SOOTH,
-                 DCWLOOP, CWOTH, STOTH, DHLOOP, DHHT1, DHHT2, DHCOOL, DHCOOK, DHMANU, DHOTH, PROTH, CHLLOOP, FKOTH, BLRLOOP,
-                 NGOTH),
-            funs(make_cat_w_repl(.))) %>%
-  #Categorical conversions witout nas
-  mutate_at(vars(SQFTC, WLCNS, RFCNS, RFCOOL, RFTILT, BLDSHP, GLSSPC, EQGLSS, SUNGLS, 
+                 RFGRES, RFGCOMP, RFGWI, RFGOP, RFGCL, RFGVEN, RFGICE, RFGSTO, WHRECOV, WHHT2, WHWT, WHOT, 
+                 MLTMON, MLTMNC, FLATC, TRNGRM, STDNRM, DCNTRSFC, WBOARDS, PRNTYP, LTNR24, FLUOR, CFLR, BULB, HALO, 
+                 HID, LED, OTLT, EMCSLT, SCHED, OCSN, DIM, DAYHARV, TRIM, PLGCTRL, DRLGHT, TINT, REFL, AWN, SKYLT, 
+                 COOTH, WOOTH, OTOTH, HWOTH, SOOTH, DCWLOOP, CWOTH, STOTH, DHLOOP, DHHT1, DHHT2, DHCOOL, DHCOOK, 
+                 DHMANU, DHOTH, PROTH, CHLLOOP, FKOTH, BLRLOOP, NGOTH, SQFTC, WLCNS, RFCNS, RFCOOL, RFTILT, BLDSHP, 
+                 GLSSPC, EQGLSS, SUNGLS, 
                  ATTIC, YRCONC, RENADD, RENRDC, RENCOS, RENINT, RENRFF, RENWLL, RENWIN, 
                  RENHVC, RENLGT, RENPLB, RENELC, RENINS, RENSAF, RENSTR, RENOTH, ONEACT, 
                  PBAPLUS, PBA, FACIL, GOVOWN, OWNTYPE, NOCCAT, OWNOCC, OWNOPR, OPEN24, 
@@ -162,8 +150,8 @@ cbecs_trim_df <- cbecs_raw_df %>%
                  NGUSED, FKUSED, PRUSED, STUSED, HWUSED, CWUSED, OTUSED, WOUSED, COUSED, SOUSED, 
                  RCAC, PKGCL, CHILLR, CHWT, HTPMPC, ACWNWL, EVAPCL, OTCLEQ, MAINCL, EMCS, RDCLNF, GENR, AMIMETER, 
                  ENRGYPLN, RFGEQP, PCTERM, PCTRMC, LAPTPC, SERVER, SERVERC, TVVIDEO, RGSTR, COPIER, FAX, LOHRPC,
-                 LNHRPC, LTEXPC, PKLT, WINTYP, REGION, CENDIV, RENOV, WKHRSC, PUBCLIM), 
-            funs(as.factor(.))) %>% 
+                 LNHRPC, LTEXPC, PKLT, WINTYP, REGION, CENDIV, RENOV, WKHRSC, PUBCLIM),
+            funs(make_cat_w_repl(.))) %>%
   #Move down the order of activities and when there is a null, fill it in with the difference of 100 - sum
   mutate(ACT1PCT = ifelse(ACT1==-1, 100, ACT1PCT)) %>% 
   mutate(ACT2PCT = ifelse(ACT2==-1, 100-ACT1PCT, ACT2PCT)) %>% 
@@ -267,60 +255,78 @@ cbecs_trim_df <- cbecs_raw_df %>%
          -MFHTBTU, -MFCLBTU, -MFVNBTU, -MFWTBTU, -MFLTBTU, -MFCKBTU, 
          -MFRFBTU, -MFOFBTU, -MFPCBTU, -MFOTBTU,
          -ELEXP, -NGEXP, -FKEXP, -DHEXP, -MFEXP) %>% 
-  #replace nas with zeroes
-  #percent heated - if not asked, then heating was indicated as no, so put zero0
-  #Conference space - if not asked then assume zero
-  #xray equipment - if not asked then assume zero
-  mutate_at(vars(RWSEAT, PBSEAT, EDSEAT, FDSEAT, HCBED, NRSBED, LODGRM, HEATP, FURNP, PKGHP, 
+  #replace nas with zeroes - if question not asked or applicable then assume zero as input
+  mutate_at(vars(OCCUPYP, LODOCCP, RWSEAT, PBSEAT, EDSEAT, FDSEAT, HCBED, NRSBED, LODGRM, HEATP, FURNP, PKGHP, 
                  BOILP, STHWP, HTPHP, SLFCNP, OTHTP, RCACP, PKGCP, CHILP, CHWTP, HTPCP, ACWNWP, EVAPP, OTCLP, CONFSPP,
                  XRAYN, PRNTRN, FLUORP, CFLRP, BULBP, HALOP, HIDP, LEDP, FLUORP, CFLRP, BULBP, HALOP, HIDP, LEDP, 
-                 OTLTP, DAYLTP, ELCNSPerSf, NGCNSPerSf, NGBTUPerSf, NGHTBTUPerSf, NGCLBTUPerSf, NGWTBTUPerSf, 
+                 OTLTP, DAYLTP, PCTERMN, LAPTPN, SERVERN, TVVIDEON, RGSTRN, COPIERN,
+                 ELCNSPerSf, ELBTUPerSf, ELHTBTUPerSf, ELCLBTUPerSf, ELVNBTUPerSf, ELWTBTUPerSf, ELLTBTUPerSf,
+                 ELCKBTUPerSf, ELRFBTUPerSf, ELOFBTUPerSf, ELPCBTUPerSf, ELOTBTUPerSf, NGCNSPerSf, NGBTUPerSf, 
+                 NGHTBTUPerSf, NGCLBTUPerSf, NGWTBTUPerSf, 
                  NGCKBTUPerSf, NGOTBTUPerSf, FKCNSPerSf, DHCNSPerSf, DHBTUPerSf, DHHTBTUPerSf, DHCLBTUPerSf,
                  DHWTBTUPerSf, DHCKBTUPerSf, DHOTBTUPerSf, FKBTUPerSf, FKHTBTUPerSf, FKCLBTUPerSf, FKWTBTUPerSf, 
-                 FKCKBTUPerSf, FKOTBTUPerSf), 
+                 FKCKBTUPerSf, FKOTBTUPerSf, MFBTUPerSf, MFHTBTUPerSf, MFCLBTUPerSf, MFVNBTUPerSf, MFWTBTUPerSf,
+                 MFLTBTUPerSf, MFCKBTUPerSf, MFRFBTUPerSf, MFOFBTUPerSf, MFPCBTUPerSf, MFOTBTUPerSf), 
             funs(na_repl_num(., 0)))
 
-#Check columsn with NAs, remove large ones
+
+#Check columsn with NAs
 cbecs_trim_na_df <- stack(colSums(is.na(cbecs_trim_df))) %>% filter(values>0)
-large_na_test_df <- stack(colSums(is.na(cbecs_trim_df))) %>% filter(values > 1000)
+cbecs_large_na_df <- stack(colSums(is.na(cbecs_trim_df))) %>% filter(values > 1000)
+
+#Find columns with only one factor/value and remove
+no_info_columns <- colnames(cbecs_trim_df[, sapply(cbecs_trim_df, function(x) {
+  ifelse(length(unique(x))<2,TRUE, FALSE)})])
+#cbecs_trim_df <- cbecs_trim_df %>% select(-one_of(no_info_columns))
 ```
 
 ```{r}
-#Get appropriate numeric columns and divide to get PerSF metrics
-numeric_cols <- cbecs_trim_df[, unlist(lapply(cbecs_trim_df, is.numeric))]
-PerSFVector <- c('NFLOOR', 'BASEMNT', 'NELVTR', 'NESLTR', 'RWSEAT', 'PBSEAT',
+#Get appropriate numeric columns and divide to get PerSf metrics
+
+#Print numeric columns for inspection
+#cbecs_trim_df[, unlist(lapply(cbecs_trim_df, is.numeric))]
+#Create vector for columns to be transformed
+
+PerSfVector <- c('NFLOOR', 'BASEMNT', 'NELVTR', 'NESLTR', 'RWSEAT', 'PBSEAT',
                  'EDSEAT', 'FDSEAT', 'HCBED', 'NRSBED', 'LODGRM', 'NOCC', 'NWKER',
                  'XRAYN', 'RFGRSN', 'RFGCOMPN', 'RFGWIN', 'RFGOPN', 'RFGCLN', 'RFGVNN',
                  'RFGICN', 'PCTERMN', 'LAPTPN', 'PRNTRN', 'SERVERN', 'TVVIDEON', 'RGSTRN')
-per_sf_df <- cbecs_trim_df %>% select_(.dots = PerSFVector)
+per_sf_df <- cbecs_trim_df %>% select_(.dots = PerSfVector)
 per_sf_df <- per_sf_df / cbecs_trim_df[,c('SQFT')]
-colnames(per_sf_df) <- paste(colnames(per_sf_df), "PerSF", sep="")
-cbecs_trans_df <- cbecs_trim_df %>% 
-  select(names(cbecs_trim_df[!(colnames(cbecs_trim_df) %in% PerSFVector)])) %>% 
+colnames(per_sf_df) <- paste(colnames(per_sf_df), "PerSf", sep="")
+cbecs_clean_df <- cbecs_trim_df %>% 
+  select(names(cbecs_trim_df[!(colnames(cbecs_trim_df) %in% PerSfVector)])) %>% 
   bind_cols(per_sf_df) %>% 
   select(-SQFT)
 ```
 
-
-#Make lists of columns to be used for later
 ```{r}
-removed_response_list <- colnames(cbecs_trans_df[,!grepl('EL.*PerSf|NG.*PerSf|DH.*PerSf|FK.*PerSf|MF.*PerSf', colnames(cbecs_trans_df), ignore.case = TRUE)])
-full_column_list <- append(removed_response_list, c('ELBTUPerSf', 'NGBTUPerSf', 'DHBTUPerSf', 'FKBTUPerSf', 'MFBTUPerSf'))
-new_numeric_cols <- names(cbecs_trans_df[, unlist(lapply(cbecs_trans_df, is.numeric)) & colnames(cbecs_trans_df) %in% full_column_list])
-new_non_numeric_cols <- names(cbecs_trans_df[, !(colnames(cbecs_trans_df) %in% new_numeric_cols) & colnames(cbecs_trans_df) %in% full_column_list])
+#Make list of numeric column groups
+removed_response_list <- colnames(cbecs_clean_df[,!grepl('EL.*PerSf|NG.*PerSf|DH.*PerSf|FK.*PerSf|MF.*PerSf', colnames(cbecs_clean_df), ignore.case = TRUE)])
+tmp_column_list <- append(removed_response_list, c('ELBTUPerSf', 'NGBTUPerSf', 'DHBTUPerSf', 'FKBTUPerSf', 'MFBTUPerSf'))
+cbecs_clean_numeric_cols <- names(cbecs_clean_df[, unlist(lapply(cbecs_clean_df, is.numeric)) & colnames(cbecs_clean_df) %in% tmp_column_list])
+cbecs_clean_non_numeric_cols <- names(cbecs_clean_df[, !(colnames(cbecs_clean_df) %in% cbecs_clean_numeric_cols) & colnames(cbecs_clean_df) %in% tmp_column_list])
+cbecs_clean_full_column_list <- append(cbecs_clean_numeric_cols, cbecs_clean_non_numeric_cols)
+cbecs_clean_df <- cbecs_clean_df[,cbecs_clean_full_column_list]
+
+#Convert factor columns to one-hot encoders
+dummy_f <- dummyVars(" ~ .", data = cbecs_clean_df)
+cbecs_trans_df <- data.frame(predict(dummy_f, newdata=cbecs_clean_df))
+cbecs_trans_numeric_cols <- cbecs_clean_numeric_cols
+cbecs_trans_non_numeric_cols <- names(cbecs_trans_df[, !(colnames(cbecs_trans_df) %in% cbecs_trans_numeric_cols)])
+cbecs_trans_full_column_list <- append(cbecs_trans_numeric_cols, cbecs_trans_non_numeric_cols)
 ```
 
 #Explore data set. response variable shapes, correlations, k-means clustering, princomp, etc. to determine possibility of prediction.
 
 ```{r}
-#histogram of possible response categories
+#histograms of possible response categories
 cbecs_response_df <- cbecs_trans_df %>% 
   select(ELBTUPerSf, NGBTUPerSf, DHBTUPerSf, FKBTUPerSf, MFBTUPerSf) %>% 
   gather("source", "BTU", 1:5)
 p1 <- ggplot(cbecs_response_df %>% filter(source=='ELBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('ELBTUPerSf')
 p2 <- ggplot(cbecs_response_df %>% filter(source=='NGBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('NGBTUPerSf')
 p3 <- ggplot(cbecs_response_df %>% filter(source=='DHBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('DHBTUPerSf')
-p3
 p4 <- ggplot(cbecs_response_df %>% filter(source=='FKBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('FKBTUPerSf')
 p5 <- ggplot(cbecs_response_df %>% filter(source=='MFBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('MFBTUPerSf')
 grid.arrange(p1, p2, p3, p4, p5, ncol=2)
@@ -328,26 +334,52 @@ grid.arrange(p1, p2, p3, p4, p5, ncol=2)
 
 # Correlation plot
 ```{r fig.width=40}
-cbecs_scaled_df <- scale(cbecs_trans_df[, colnames(cbecs_trans_df) %in% new_numeric_cols])
-correlations_df <- cor(cbecs_scaled_df)
+cbecs_clean_scaled_df <- scale(
+  cbecs_clean_df %>%
+    select(one_of(cbecs_clean_numeric_cols))
+)
+correlations_df <- cor(cbecs_clean_scaled_df)
 corrplot(correlations_df)
 ```
 
+#svm
+```{r eval=FALSE}
+svm_fit <- svm(PBA ~ ., 
+               data = cbind(cbecs_clean_df[, cbecs_clean_numeric_cols], PBA = cbecs_clean_df$PBA), 
+               kernel='linear', 
+               cost=10, 
+               scale=FALSE, 
+               cachesize=2000)
+plot(svm_fit, data = cbecs_clean_df, ELBTUPerSf ~ CDD65)
+plot(svm_fit, data = cbecs_clean_df, log(NGBTUPerSf + 1) ~ HDD65)
+```
+
 #k means
-```{r}
-k_means_fit <- kmeans(cbecs_scaled_df, 3)
-library(cluster)
+```{r fig.height=10}
+kmeans_fit <- kmeans(cbecs_clean_scaled_df, centers=4, nstart = 25)
+fviz_cluster(kmeans_fit, data=cbecs_clean_scaled_df)
+ggplot(data=cbind(cbecs_clean_df, kgroup = kmeans_fit$cluster), aes(x=log(MFBTUPerSf/WKHRS), y=log(SERVERNPerSf), color=as.factor(kgroup), shape=as.factor(kgroup))) + geom_point(aes(alpha=0.4)) + facet_wrap(~DHUSED+factor(ifelse(RFGWINPerSf>0|RFGCLNPerSf>0|RGSTRNPerSf,1,0)), scales = 'free')
 ```
 
 
 #PCA
+```{r fig.width=14}
+cbecs_pca <- prcomp(cbecs_clean_df[, cbecs_clean_numeric_cols], 
+                    center = TRUE, 
+                    scale. = TRUE)
+screeplot(cbecs_pca, type = 'lines')
+summary(cbecs_pca)
+ggplot(cbecs_pca$x, aes(x=PC1, y=PC2, color=cbecs_clean_df$PBA)) + geom_point()
+autoplot(cbecs_pca, data = cbecs_clean_df, loadings=TRUE, loadings.label = TRUE, alpha=0.2, loadings.label.size = 3)
+```
 
-#Remove collinear, and other possible response variable, columns and create df for prediction
+
+#Remove collinear, and other possible response variable, columns and create df for prediction for just electricity
 ```{r}
 elbtu_pred_list <- append(
   removed_response_list,
   'ELBTUPerSf')
-cbecs_elbtu_df <- cbecs_trans_df %>% 
+cbecs_elbtu_df <- cbecs_clean_df %>% 
   select_(.dots = elbtu_pred_list) %>% 
   na.omit()
 ```
