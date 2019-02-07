@@ -319,17 +319,48 @@ cbecs_trans_full_column_list <- append(cbecs_trans_numeric_cols, cbecs_trans_non
 
 #Explore data set. response variable shapes, correlations, k-means clustering, princomp, etc. to determine possibility of prediction.
 
-```{r}
+```{r fig.width=6, fig.height=5}
 #histograms of possible response categories
 cbecs_response_df <- cbecs_trans_df %>% 
   select(ELBTUPerSf, NGBTUPerSf, DHBTUPerSf, FKBTUPerSf, MFBTUPerSf) %>% 
   gather("source", "BTU", 1:5)
-p1 <- ggplot(cbecs_response_df %>% filter(source=='ELBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('ELBTUPerSf')
-p2 <- ggplot(cbecs_response_df %>% filter(source=='NGBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('NGBTUPerSf')
-p3 <- ggplot(cbecs_response_df %>% filter(source=='DHBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('DHBTUPerSf')
-p4 <- ggplot(cbecs_response_df %>% filter(source=='FKBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('FKBTUPerSf')
-p5 <- ggplot(cbecs_response_df %>% filter(source=='MFBTUPerSf' & BTU > 0), aes(x=BTU)) + geom_histogram(bins = 40) + ggtitle('MFBTUPerSf')
-grid.arrange(p1, p2, p3, p4, p5, ncol=2)
+p1 <- ggplot(cbecs_response_df %>% filter(source=='ELBTUPerSf' & BTU > 0), aes(x=BTU)) + 
+  geom_histogram(bins = 40) + 
+  ggtitle('Electric') +
+  labs(x = 'BTU Per SF', y='') +
+  theme(plot.title = element_text(hjust = 0.5, size=10))
+p2 <- ggplot(cbecs_response_df %>% filter(source=='NGBTUPerSf' & BTU > 0), aes(x=BTU)) + 
+  geom_histogram(bins = 40) + 
+  ggtitle('Nat. Gas') +
+  labs(x = 'BTU Per SF', y='') +
+  theme(plot.title = element_text(hjust = 0.5, size=10))
+p3 <- ggplot(cbecs_response_df %>% filter(source=='DHBTUPerSf' & BTU > 0), aes(x=BTU))+ 
+  geom_histogram(bins = 40) + 
+  ggtitle('District Heat') +
+  labs(x = 'BTU Per SF', y='') +
+  theme(plot.title = element_text(hjust = 0.5, size=10))
+p4 <- ggplot(cbecs_response_df %>% filter(source=='FKBTUPerSf' & BTU > 0), aes(x=BTU)) + 
+  geom_histogram(bins = 40) + 
+  ggtitle('Fuel Oil') +
+  labs(x = 'BTU Per SF', y='') +
+  theme(plot.title = element_text(hjust = 0.5, size=10))
+p5 <- ggplot(cbecs_response_df %>% filter(source=='MFBTUPerSf' & BTU > 0), aes(x=BTU)) + 
+  geom_histogram(bins = 40) + 
+  ggtitle('All Major Fuel') +
+  labs(x = 'BTU Per SF', y='') +
+  theme(plot.title = element_text(hjust = 0.5, size=10))
+lay <- rbind(
+  c(1, 2),
+  c(3, 4),
+  c(5, 5)
+)
+tmp_plot <- grid.arrange(top = "Consumption By Major Fuel", 
+                         p1, p2, p3, p4, p5, 
+                         ncol=2,
+                         layout_matrix=lay
+)
+ggsave('Documents/major_fuels_preliminary_analysis.png', tmp_plot)
+tmp_plot
 ```
 
 # Correlation plot
