@@ -328,27 +328,62 @@ p1 <- ggplot(cbecs_response_df %>% filter(source=='ELBTUPerSf' & BTU > 0), aes(x
   geom_histogram(bins = 40) + 
   ggtitle('Electric') +
   labs(x = 'BTU Per SF', y='') +
-  theme(plot.title = element_text(hjust = 0.5, size=10))
+  theme(plot.title = element_text(hjust = 0.5, size=10),
+        strip.text = element_text(size = 20),
+        plot.background = element_rect(fill = "lightgrey"), 
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_line(color = "lightgrey"), 
+        panel.grid.major.y = element_line(color = "lightgrey"), 
+        axis.text = element_text(size=8, color = "grey55"), 
+        axis.title = element_text(size=10, color = "grey55"))
 p2 <- ggplot(cbecs_response_df %>% filter(source=='NGBTUPerSf' & BTU > 0), aes(x=BTU)) + 
   geom_histogram(bins = 40) + 
   ggtitle('Nat. Gas') +
   labs(x = 'BTU Per SF', y='') +
-  theme(plot.title = element_text(hjust = 0.5, size=10))
+  theme(plot.title = element_text(hjust = 0.5, size=10),
+        strip.text = element_text(size = 20),
+        plot.background = element_rect(fill = "lightgrey"), 
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_line(color = "lightgrey"), 
+        panel.grid.major.y = element_line(color = "lightgrey"), 
+        axis.text = element_text(size=8, color = "grey55"), 
+        axis.title = element_text(size=10, color = "grey55"))
 p3 <- ggplot(cbecs_response_df %>% filter(source=='DHBTUPerSf' & BTU > 0), aes(x=BTU))+ 
   geom_histogram(bins = 40) + 
   ggtitle('District Heat') +
   labs(x = 'BTU Per SF', y='') +
-  theme(plot.title = element_text(hjust = 0.5, size=10))
+  theme(plot.title = element_text(hjust = 0.5, size=10),
+        strip.text = element_text(size = 20),
+        plot.background = element_rect(fill = "lightgrey"), 
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_line(color = "lightgrey"), 
+        panel.grid.major.y = element_line(color = "lightgrey"), 
+        axis.text = element_text(size=8, color = "grey55"), 
+        axis.title = element_text(size=10, color = "grey55"))
 p4 <- ggplot(cbecs_response_df %>% filter(source=='FKBTUPerSf' & BTU > 0), aes(x=BTU)) + 
   geom_histogram(bins = 40) + 
   ggtitle('Fuel Oil') +
   labs(x = 'BTU Per SF', y='') +
-  theme(plot.title = element_text(hjust = 0.5, size=10))
+  theme(plot.title = element_text(hjust = 0.5, size=10),
+        strip.text = element_text(size = 20),
+        plot.background = element_rect(fill = "lightgrey"), 
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_line(color = "lightgrey"), 
+        panel.grid.major.y = element_line(color = "lightgrey"), 
+        axis.text = element_text(size=8, color = "grey55"), 
+        axis.title = element_text(size=10, color = "grey55"))
 p5 <- ggplot(cbecs_response_df %>% filter(source=='MFBTUPerSf' & BTU > 0), aes(x=BTU)) + 
   geom_histogram(bins = 40) + 
   ggtitle('All Major Fuel') +
   labs(x = 'BTU Per SF', y='') +
-  theme(plot.title = element_text(hjust = 0.5, size=10))
+  theme(plot.title = element_text(hjust = 0.5, size=10),
+        strip.text = element_text(size = 20),
+        plot.background = element_rect(fill = "lightgrey"), 
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_line(color = "lightgrey"), 
+        panel.grid.major.y = element_line(color = "lightgrey"), 
+        axis.text = element_text(size=8, color = "grey55"), 
+        axis.title = element_text(size=10, color = "grey55"))
 lay <- rbind(
   c(1, 2),
   c(3, 4),
@@ -367,6 +402,7 @@ tmp_plot
 ```{r fig.width=40}
 cbecs_clean_scaled_df <- scale(
   cbecs_clean_df %>%
+    select(one_of(removed_response_list)) %>% 
     select(one_of(cbecs_clean_numeric_cols))
 )
 correlations_df <- cor(cbecs_clean_scaled_df)
@@ -386,22 +422,42 @@ plot(svm_fit, data = cbecs_clean_df, log(NGBTUPerSf + 1) ~ HDD65)
 ```
 
 #k means
-```{r fig.height=10}
+```{r fig.height=8}
 kmeans_fit <- kmeans(cbecs_clean_scaled_df, centers=4, nstart = 25)
-fviz_cluster(kmeans_fit, data=cbecs_clean_scaled_df)
+fviz_cluster(kmeans_fit, data=cbecs_clean_scaled_df) + 
+  ggtitle('K Means Cluster Analysis') +
+  theme(plot.title = element_text(hjust = 0.5, size=20),
+        strip.text = element_text(size = 20),
+        plot.background = element_rect(fill = "lightgrey"), 
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_line(color = "lightgrey"), 
+        panel.grid.major.y = element_line(color = "lightgrey"), 
+        axis.text = element_text(size=10, color = "grey55"), 
+        axis.title = element_text(size=14, color = "grey55"))
 ggplot(data=cbind(cbecs_clean_df, kgroup = kmeans_fit$cluster), aes(x=log(MFBTUPerSf/WKHRS), y=log(SERVERNPerSf), color=as.factor(kgroup), shape=as.factor(kgroup))) + geom_point(aes(alpha=0.4)) + facet_wrap(~DHUSED+factor(ifelse(RFGWINPerSf>0|RFGCLNPerSf>0|RGSTRNPerSf,1,0)), scales = 'free')
 ```
 
 
 #PCA
 ```{r fig.width=14}
-cbecs_pca <- prcomp(cbecs_clean_df[, cbecs_clean_numeric_cols], 
+cbecs_pca <- prcomp(cbecs_clean_df %>%
+    select(one_of(removed_response_list)) %>% 
+    select(one_of(cbecs_clean_numeric_cols)), 
                     center = TRUE, 
                     scale. = TRUE)
 screeplot(cbecs_pca, type = 'lines')
 summary(cbecs_pca)
 ggplot(cbecs_pca$x, aes(x=PC1, y=PC2, color=cbecs_clean_df$PBA)) + geom_point()
-autoplot(cbecs_pca, data = cbecs_clean_df, loadings=TRUE, loadings.label = TRUE, alpha=0.2, loadings.label.size = 3)
+autoplot(cbecs_pca, data = cbecs_clean_df, loadings=TRUE, loadings.label = TRUE, alpha=0.2, loadings.label.size = 3) + 
+  ggtitle('Principal Component Analysis') +
+  theme(plot.title = element_text(hjust = 0.5, size=20),
+        strip.text = element_text(size = 20),
+        plot.background = element_rect(fill = "lightgrey"), 
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_line(color = "lightgrey"), 
+        panel.grid.major.y = element_line(color = "lightgrey"), 
+        axis.text = element_text(size=10, color = "grey55"), 
+        axis.title = element_text(size=14, color = "grey55"))
 ```
 
 
@@ -424,7 +480,8 @@ cbecs_elbtu_df <- cbecs_clean_df %>%
 ```{r fig.height=10}
 cbecs_elbtu_rf <- randomForest(ELBTUPerSf ~ ., 
                               data = cbecs_elbtu_df,
-                              ntree = 100
+                              ntree = 100,
+                              maxnodes = 10
                   )
 varImpPlot(cbecs_elbtu_rf)
 ```
