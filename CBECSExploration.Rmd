@@ -22,6 +22,11 @@ library(ggfortify)
 ```
 
 ```{r}
+source('tree_func.R')
+```
+
+
+```{r}
 cbecs_raw_df <- read.csv('./2012_public_use_data_aug2016.csv', 
                          header = TRUE, 
                          stringsAsFactors = FALSE)
@@ -335,7 +340,8 @@ p1 <- ggplot(cbecs_response_df %>% filter(source=='ELBTUPerSf' & BTU > 0), aes(x
         panel.grid.major.x = element_line(color = "lightgrey"), 
         panel.grid.major.y = element_line(color = "lightgrey"), 
         axis.text = element_text(size=8, color = "grey55"), 
-        axis.title = element_text(size=10, color = "grey55"))
+        axis.title = element_text(size=10, color = "grey55"),
+        axis.title.y = element_text(size = 0))
 p2 <- ggplot(cbecs_response_df %>% filter(source=='NGBTUPerSf' & BTU > 0), aes(x=BTU)) + 
   geom_histogram(bins = 40) + 
   ggtitle('Nat. Gas') +
@@ -347,7 +353,8 @@ p2 <- ggplot(cbecs_response_df %>% filter(source=='NGBTUPerSf' & BTU > 0), aes(x
         panel.grid.major.x = element_line(color = "lightgrey"), 
         panel.grid.major.y = element_line(color = "lightgrey"), 
         axis.text = element_text(size=8, color = "grey55"), 
-        axis.title = element_text(size=10, color = "grey55"))
+        axis.title = element_text(size=10, color = "grey55"),
+        axis.title.y = element_text(size = 0))
 p3 <- ggplot(cbecs_response_df %>% filter(source=='DHBTUPerSf' & BTU > 0), aes(x=BTU))+ 
   geom_histogram(bins = 40) + 
   ggtitle('District Heat') +
@@ -359,7 +366,8 @@ p3 <- ggplot(cbecs_response_df %>% filter(source=='DHBTUPerSf' & BTU > 0), aes(x
         panel.grid.major.x = element_line(color = "lightgrey"), 
         panel.grid.major.y = element_line(color = "lightgrey"), 
         axis.text = element_text(size=8, color = "grey55"), 
-        axis.title = element_text(size=10, color = "grey55"))
+        axis.title = element_text(size=10, color = "grey55"),
+        axis.title.y = element_text(size = 0))
 p4 <- ggplot(cbecs_response_df %>% filter(source=='FKBTUPerSf' & BTU > 0), aes(x=BTU)) + 
   geom_histogram(bins = 40) + 
   ggtitle('Fuel Oil') +
@@ -371,7 +379,8 @@ p4 <- ggplot(cbecs_response_df %>% filter(source=='FKBTUPerSf' & BTU > 0), aes(x
         panel.grid.major.x = element_line(color = "lightgrey"), 
         panel.grid.major.y = element_line(color = "lightgrey"), 
         axis.text = element_text(size=8, color = "grey55"), 
-        axis.title = element_text(size=10, color = "grey55"))
+        axis.title = element_text(size=10, color = "grey55"),
+        axis.title.y = element_text(size = 0))
 p5 <- ggplot(cbecs_response_df %>% filter(source=='MFBTUPerSf' & BTU > 0), aes(x=BTU)) + 
   geom_histogram(bins = 40) + 
   ggtitle('All Major Fuel') +
@@ -383,7 +392,8 @@ p5 <- ggplot(cbecs_response_df %>% filter(source=='MFBTUPerSf' & BTU > 0), aes(x
         panel.grid.major.x = element_line(color = "lightgrey"), 
         panel.grid.major.y = element_line(color = "lightgrey"), 
         axis.text = element_text(size=8, color = "grey55"), 
-        axis.title = element_text(size=10, color = "grey55"))
+        axis.title = element_text(size=10, color = "grey55"),
+        axis.title.y = element_text(size = 1))
 lay <- rbind(
   c(1, 2),
   c(3, 4),
@@ -403,27 +413,16 @@ tmp_plot
 cbecs_clean_scaled_df <- scale(
   cbecs_clean_df %>%
     select(one_of(removed_response_list)) %>% 
-    select(one_of(cbecs_clean_numeric_cols))
+    select(one_of(cbecs_clean_numeric_cols)) %>% 
+    select(-matches('.*USED$'))
 )
 correlations_df <- cor(cbecs_clean_scaled_df)
 corrplot(correlations_df)
 ```
 
-#svm
-```{r eval=FALSE}
-svm_fit <- svm(PBA ~ ., 
-               data = cbind(cbecs_clean_df[, cbecs_clean_numeric_cols], PBA = cbecs_clean_df$PBA), 
-               kernel='linear', 
-               cost=10, 
-               scale=FALSE, 
-               cachesize=2000)
-plot(svm_fit, data = cbecs_clean_df, ELBTUPerSf ~ CDD65)
-plot(svm_fit, data = cbecs_clean_df, log(NGBTUPerSf + 1) ~ HDD65)
-```
-
 #k means
 ```{r fig.height=8}
-kmeans_fit <- kmeans(cbecs_clean_scaled_df, centers=4, nstart = 25)
+kmeans_fit <- kmeans(cbecs_clean_scaled_df, centers=3, nstart = 25)
 fviz_cluster(kmeans_fit, data=cbecs_clean_scaled_df) + 
   ggtitle('K Means Cluster Analysis') +
   theme(plot.title = element_text(hjust = 0.5, size=20),
@@ -434,22 +433,36 @@ fviz_cluster(kmeans_fit, data=cbecs_clean_scaled_df) +
         panel.grid.major.y = element_line(color = "lightgrey"), 
         axis.text = element_text(size=10, color = "grey55"), 
         axis.title = element_text(size=14, color = "grey55"))
-ggplot(data=cbind(cbecs_clean_df, kgroup = kmeans_fit$cluster), aes(x=log(MFBTUPerSf/WKHRS), y=log(SERVERNPerSf), color=as.factor(kgroup), shape=as.factor(kgroup))) + geom_point(aes(alpha=0.4)) + facet_wrap(~DHUSED+factor(ifelse(RFGWINPerSf>0|RFGCLNPerSf>0|RGSTRNPerSf,1,0)), scales = 'free')
+ggsave('Documents/k_means_preliminary.png')
+ggplot(data=cbind(cbecs_clean_df, kgroup = kmeans_fit$cluster), aes(x=log(MFBTUPerSf/WKHRS), y=log(SERVERNPerSf), color=as.factor(kgroup), shape=as.factor(kgroup))) + geom_point(aes(alpha=0.4)) + facet_wrap(~factor(ifelse(RFGWINPerSf>0|RFGCLNPerSf>0|RGSTRNPerSf,1,0)), scales = 'free')
+
 ```
 
 
 #PCA
-```{r fig.width=14}
+```{r fig.width=8}
 cbecs_pca <- prcomp(cbecs_clean_df %>%
     select(one_of(removed_response_list)) %>% 
-    select(one_of(cbecs_clean_numeric_cols)), 
+    select(one_of(cbecs_clean_numeric_cols))%>% 
+    select(-matches('.*USED$')), 
                     center = TRUE, 
                     scale. = TRUE)
 screeplot(cbecs_pca, type = 'lines')
 summary(cbecs_pca)
-ggplot(cbecs_pca$x, aes(x=PC1, y=PC2, color=cbecs_clean_df$PBA)) + geom_point()
-autoplot(cbecs_pca, data = cbecs_clean_df, loadings=TRUE, loadings.label = TRUE, alpha=0.2, loadings.label.size = 3) + 
-  ggtitle('Principal Component Analysis') +
+ggplot(cbecs_pca$x, aes(x=PC1, y=PC2, color=cbecs_clean_df$PBA)) + geom_point() + geom_text(aes(label=cbecs_clean_df$PBAPLUS), nudge_x = 0.5) +
+  ggtitle('Principal Component Analysis - Group IDs') +
+  theme(plot.title = element_text(hjust = 0.5, size=20),
+        strip.text = element_text(size = 20),
+        plot.background = element_rect(fill = "lightgrey"), 
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_line(color = "lightgrey"), 
+        panel.grid.major.y = element_line(color = "lightgrey"), 
+        axis.text = element_text(size=10, color = "grey55"), 
+        axis.title = element_text(size=14, color = "grey55"),
+        legend.position = 'none')
+ggsave('Documents/pca_group_ids_preliminary.png')
+autoplot(cbecs_pca, data = cbecs_clean_df, loadings=TRUE, loadings.label = TRUE, alpha=0.2, loadings.label.size = 3) +
+  ggtitle('Principal Component Analysis - Vectors') +
   theme(plot.title = element_text(hjust = 0.5, size=20),
         strip.text = element_text(size = 20),
         plot.background = element_rect(fill = "lightgrey"), 
@@ -458,6 +471,7 @@ autoplot(cbecs_pca, data = cbecs_clean_df, loadings=TRUE, loadings.label = TRUE,
         panel.grid.major.y = element_line(color = "lightgrey"), 
         axis.text = element_text(size=10, color = "grey55"), 
         axis.title = element_text(size=14, color = "grey55"))
+ggsave('Documents/pca_group_vectors_preliminary.png')
 ```
 
 
@@ -476,21 +490,42 @@ cbecs_elbtu_df <- cbecs_clean_df %>%
 
 ```
 
-
+#Random Forest
 ```{r fig.height=10}
-cbecs_elbtu_rf <- randomForest(ELBTUPerSf ~ ., 
-                              data = cbecs_elbtu_df,
+cbecs_pbaplus_df <- cbecs_clean_df %>% 
+  select(-PBA) %>% 
+  select(one_of(removed_response_list))
+cbecs_pbaplus_rf <- randomForest(PBAPLUS ~ ., 
+                              data = cbecs_pbaplus_df,
                               ntree = 100,
-                              maxnodes = 10
+                              maxnodes = 100
                   )
-varImpPlot(cbecs_elbtu_rf)
+varImpPlot(cbecs_pbaplus_rf)
+
+#set up training/tuning parameters - examples in caret - https://machinelearningmastery.com/tune-machine-learning-algorithms-in-r/
 ```
+
+```{r fig.width=30}
+tree_func(cbecs_pbaplus_rf, 1)
+```
+
 
 ```{r fig.height=10}
-tst <- cbecs_elbtu_df %>% bind_cols(ELBTUPerSfPred = predict(cbecs_elbtu_rf, newdata=cbecs_elbtu_df))
-ggplot(tst, aes(x=ELBTUPerSf, y=ELBTUPerSfPred)) + geom_point() + facet_wrap(~PBA, scales = "free")
-hist(cbecs_elbtu_rf$predicted - cbecs_elbtu_df$ELBTUPerSf)
-cor(cbecs_elbtu_rf$predicted, cbecs_elbtu_rf$predicted - cbecs_elbtu_df$ELBTUPerSf)
-cbecs_elbtu_rf$rsq
+
+tst <- cbecs_pbaplus_df %>% bind_cols(PBAPLUSPred = predict(cbecs_pbaplus_rf, newdata=cbecs_pbaplus_df))
+ggplot(tst, aes(PBAPLUSPred, ..count..)) + geom_bar() + facet_wrap(~PBAPLUS, scales = "free")
+data.frame(error = cbecs_pbaplus_rf$confusion[,'class.error']) %>% add_rownames(var="PBAPLUS") %>% arrange(desc(error))
 ```
 
+#svm
+```{r eval=FALSE}
+#Takes a long time, only run when needed
+svm_fit <- svm(PBA ~ ., 
+               data = cbind(cbecs_clean_df[, cbecs_clean_numeric_cols], PBA = cbecs_clean_df$PBA), 
+               kernel='linear', 
+               cost=10, 
+               scale=FALSE, 
+               cachesize=2000)
+plot(svm_fit, data = cbecs_clean_df, ELBTUPerSf ~ CDD65)
+plot(svm_fit, data = cbecs_clean_df, log(NGBTUPerSf + 1) ~ HDD65)
+```
