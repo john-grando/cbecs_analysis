@@ -82,3 +82,4 @@ latex.out/
 # algorithms
 *.alg
 *.loa
+.Rproj.user
