@@ -38,8 +38,12 @@ cbecs_dfs <- clean_encode_cbecs(cbecs_raw_df)
 
 ```{r}
 #remove buildings that know the don't use electricity
-cbecs_el_encoded_df <- cbecs_dfs$encoded_df %>% filter(ELUSED.1==1) %>% select(-matches('^ELUSED'))
-cbecs_el_cleaned_df <- cbecs_dfs$clean_df %>% filter(ELUSED==1) %>% select(-matches('^ELUSED'))
+cbecs_el_encoded_df <- cbecs_dfs$encoded_df %>% filter(ELUSED.1==1) %>% 
+  #add own predictors
+  mutate(RGSTRNPerSf_2 = RGSTRNPerSf ^ 2)
+cbecs_el_cleaned_df <- cbecs_dfs$clean_df %>% filter(ELUSED==1) %>% 
+  #add own predictors
+  mutate(RGSTRNPerSf_2 = RGSTRNPerSf ^ 2)
 ```
 
 Response Variable
@@ -69,7 +73,12 @@ cbecs_elbtu_encoded_df <- cbecs_el_encoded_df %>%
   bind_cols(cbecs_el_encoded_df %>% select(matches('^PBA\\.'))) %>% 
   bind_cols(ELBTUPerSf = cbecs_el_encoded_df %>% select(ELBTUPerSf))
 
-cbecs_elbtu_encoded_numerics_cols <- colnames(cbecs_elbtu_encoded_df %>% select(one_of(cbecs_dfs$encoded_numeric_cols)) %>% select(-ELBTUPerSf)) 
+cbecs_elbtu_encoded_numerics_cols <- colnames(
+  cbecs_elbtu_encoded_df %>% 
+    select(one_of(cbecs_dfs$encoded_numeric_cols), 
+           #add own predictors
+           RGSTRNPerSf_2) %>% 
+    select(-ELBTUPerSf)) 
 cbecs_elbtu_encoded_non_numerics_cols <- colnames(cbecs_elbtu_encoded_df %>% select(one_of(cbecs_dfs$encoded_non_numeric_cols)))
 
 #center and scale only numeric columns in data set, not encoder columns
@@ -86,6 +95,17 @@ cbecs_elbtu_df <- cbecs_el_encoded_df %>%
   bind_cols(ELBTUPerSf = cbecs_el_encoded_df %>% select(ELBTUPerSf))
 ```
 
+PCA
+```{r fig.width=10}
+cbecs_pca <- prcomp(cbecs_elbtu_encoded_center_scale_df %>% 
+    select(-ELBTUPerSf) %>%
+    select(-one_of(cbecs_dfs$response_cols)), center = TRUE, scale. = TRUE)
+fviz_eig(cbecs_pca, addlabels = TRUE)
+var <- get_pca_var(cbecs_pca)
+fviz_pca_var(cbecs_pca, select.var = list(contrib=50), repel = TRUE)
+fviz_contrib(cbecs_pca, choice = "var", axes = 1:5, top = 50)
+```
+
 #Train/Test split
 ```{r}
 cbecs_train_list <- createDataPartition(y= cbecs_el_cleaned_df$PBA, p=0.8, list = FALSE) 
@@ -100,17 +120,7 @@ folds <- 10
 cbecs_train_cv_list <- createFolds(y=cbecs_dfs$clean_df[cbecs_train_list,]$PBAPLUS, k = folds, returnTrain = TRUE)
 ```
 
-PCA
-```{r fig.width=10}
-cbecs_pca <- prcomp(cbecs_elbtu_encoded_center_scale_df %>% 
-    select(-ELBTUPerSf) %>%
-    select(-one_of(cbecs_dfs$response_cols)), center = TRUE, scale. = TRUE)
-fviz_eig(cbecs_pca, addlabels = TRUE)
-var <- get_pca_var(cbecs_pca)
-fviz_pca_var(cbecs_pca, select.var = list(contrib=50), repel = TRUE)
-fviz_contrib(cbecs_pca, choice = "var", axes = 1:5, top = 50)
-```
-
+#PLS 
 ```{r fig.height=14}
 control <- trainControl(index = cbecs_train_cv_list, method = 'repeatedcv', number = folds, repeats = 1, search = 'grid', verboseIter = TRUE)
 tunegrid <- expand.grid(ncomp = seq(1, 30, 3))
@@ -125,11 +135,11 @@ pls_train <- train(
 )
 print(pls_train)
 ggplot(cbecs_elbtu_encoded_center_scale_train_df, 
-       aes(x=pls_train$finalModel$fitted.values[,,10]^(1/0.2), 
+       aes(x=pls_train$finalModel$fitted.values[,,10]^(1/lmbda), 
            y=ELBTUPerSf)) + geom_point()
 varImp(pls_train)
+plot(pls_train$finalModel$fitted.values[,,10]^(1/lmbda), pls_train$finalModel$residuals[,,10])
 ```
-
 
 #Tree regression importance
 ```{r fig.height=10, eval=FALSE}
@@ -170,7 +180,7 @@ l_train <- train(
 )
 print(l_train)
 ggplot(cbecs_elbtu_encoded_center_scale_train_df, 
-       aes(x=predict(l_train, newx = predict(elbtu_pre_process, newdata = cbecs_elbtu_encoded_center_scale_train_df))^(1/0.2),
+       aes(x=predict(l_train, newx = predict(elbtu_pre_process, newdata = cbecs_elbtu_encoded_center_scale_train_df))^(1/lmbda),
            y=ELBTUPerSf)) + geom_point()
 varImp(l_train)
 ```
@@ -192,10 +202,17 @@ l_train <- train(
 )
 print(l_train)
 ggplot(cbecs_elbtu_encoded_center_scale_train_df, 
-       aes(x=predict(l_train, newx = predict(elbtu_pre_process, newdata = cbecs_elbtu_encoded_center_scale_train_df))^(1/0.2),
+       aes(x=predict(l_train, newx = predict(elbtu_pre_process, newdata = cbecs_elbtu_encoded_center_scale_train_df))^(1/lmbda),
            y=ELBTUPerSf)) + geom_point()
 varImp(l_train)
 ```
+
+Plots for high importance variables
+```{r}
+ggplot(cbecs_el_cleaned_df, aes(x=(RGSTRNPerSf+1), y=ELBTUPerSf^lmbda)) + geom_point()
+#also do this for residuals on best fits...
+```
+
 
 #Stop parallel processing
 ```{r}
