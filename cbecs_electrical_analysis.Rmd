@@ -17,6 +17,13 @@ library(factoextra)
 library(pls)
 library(randomForest)
 library(inTrees)
+library(doParallel)
+library(elasticnet)
+```
+#Initialize parallel processing on 2 cores
+```{r}
+cl <- makePSOCKcluster(2)
+registerDoParallel(cl)
 ```
 
 Load and transform
@@ -29,11 +36,16 @@ cbecs_dfs <- clean_encode_cbecs(cbecs_raw_df)
 
 ### Explore
 
+```{r}
+#remove buildings that know the don't use electricity
+cbecs_el_encoded_df <- cbecs_dfs$encoded_df %>% filter(ELUSED.1==1) %>% select(-matches('^ELUSED'))
+cbecs_el_cleaned_df <- cbecs_dfs$clean_df %>% filter(ELUSED==1) %>% select(-matches('^ELUSED'))
+```
 
 Response Variable
 ```{r}
-lmbda <- BoxCoxTrans(cbecs_dfs$clean_df$ELBTUPerSf + 1)$lambda
-ggplot(cbecs_dfs$clean_df, aes(x=ELBTUPerSf^lmbda)) + 
+lmbda <- BoxCoxTrans(cbecs_el_cleaned_df$ELBTUPerSf + 1)$lambda
+ggplot(cbecs_el_cleaned_df, aes(x=ELBTUPerSf^lmbda)) + 
   geom_density() + 
   stat_function(fun=dnorm,
                 color="blue",
@@ -46,73 +58,147 @@ ggplot(cbecs_dfs$clean_df, aes(x=ELBTUPerSf^lmbda)) +
 ```
 
 Remove highly correlated pairs and report???
-```{r}
-cbecs_elbtu_reduced_df <- cbecs_dfs$encoded_df %>% 
+```{r warning=FALSE}
+cbecs_elbtu_encoded_df <- cbecs_el_encoded_df %>% 
+  #remove zero variance variables
+  select(-one_of(preProcess(., method = c('zv'))$method$remove)) %>% 
   select(-one_of(cbecs_dfs$response_cols)) %>% 
-  select(findCorrelation(cor(.), cutoff=0.75, names = TRUE)) %>% 
-  bind_cols(ELBTUPerSf = cbecs_dfs$encoded_df[,c('ELBTUPerSf')])
+  select(-one_of(findCorrelation(cor(.), cutoff=0.75, names = TRUE))) %>%
+  #remove remaining pba values then reinsert all
+  select(-matches('^PBA')) %>% 
+  bind_cols(cbecs_el_encoded_df %>% select(matches('^PBA\\.'))) %>% 
+  bind_cols(ELBTUPerSf = cbecs_el_encoded_df %>% select(ELBTUPerSf))
+
+cbecs_elbtu_encoded_numerics_cols <- colnames(cbecs_elbtu_encoded_df %>% select(one_of(cbecs_dfs$encoded_numeric_cols)) %>% select(-ELBTUPerSf)) 
+cbecs_elbtu_encoded_non_numerics_cols <- colnames(cbecs_elbtu_encoded_df %>% select(one_of(cbecs_dfs$encoded_non_numeric_cols)))
+
+#center and scale only numeric columns in data set, not encoder columns
+elbtu_pre_process <- preProcess(
+  cbecs_elbtu_encoded_df, 
+  method = list(center = cbecs_elbtu_encoded_numerics_cols, 
+       scale = cbecs_elbtu_encoded_numerics_cols))
+cbecs_elbtu_encoded_center_scale_df <- predict(elbtu_pre_process, cbecs_elbtu_encoded_df)
 ```
 
 ```{r}
-cbecs_elbtu_df <- cbecs_dfs$encoded_df %>% 
+cbecs_elbtu_df <- cbecs_el_encoded_df %>% 
   select(-one_of(cbecs_dfs$response_cols)) %>% 
-  bind_cols(ELBTUPerSf = cbecs_dfs$encoded_df[,c('ELBTUPerSf')])
+  bind_cols(ELBTUPerSf = cbecs_el_encoded_df %>% select(ELBTUPerSf))
+```
+
+#Train/Test split
+```{r}
+cbecs_train_list <- createDataPartition(y= cbecs_el_cleaned_df$PBA, p=0.8, list = FALSE) 
+cbecs_elbtu_train_df <- cbecs_elbtu_df[cbecs_train_list,]
+cbecs_elbtu_test_df <- cbecs_elbtu_df[-cbecs_train_list,]
+cbecs_elbtu_encoded_train_df <- cbecs_elbtu_encoded_df[cbecs_train_list,]
+cbecs_elbtu_encoded_test_df <- cbecs_elbtu_encoded_df[-cbecs_train_list,]
+cbecs_elbtu_encoded_center_scale_train_df <- cbecs_elbtu_encoded_center_scale_df[cbecs_train_list,]
+cbecs_elbtu_encoded_center_scale_test_df <- cbecs_elbtu_encoded_center_scale_df[-cbecs_train_list,]
+#stratify training set
+folds <- 10
+cbecs_train_cv_list <- createFolds(y=cbecs_dfs$clean_df[cbecs_train_list,]$PBAPLUS, k = folds, returnTrain = TRUE)
 ```
 
 PCA
 ```{r fig.width=10}
-cbecs_pca <- prcomp(cbecs_elbtu_reduced_df %>% 
+cbecs_pca <- prcomp(cbecs_elbtu_encoded_center_scale_df %>% 
     select(-ELBTUPerSf) %>%
     select(-one_of(cbecs_dfs$response_cols)), center = TRUE, scale. = TRUE)
-screeplot(cbecs_pca, type = 'lines', npcs = 50)
+fviz_eig(cbecs_pca, addlabels = TRUE)
 var <- get_pca_var(cbecs_pca)
 fviz_pca_var(cbecs_pca, select.var = list(contrib=50), repel = TRUE)
 fviz_contrib(cbecs_pca, choice = "var", axes = 1:5, top = 50)
 ```
 
-
-#Tree regression importance
-```{r fig.height=10}
-control <- trainControl(method = 'repeatedcv', number = 3, repeats = 2, search = 'grid')
-tunegrid <- expand.grid(mtry = seq(10, 20, 20), maxdepth = seq(3, 4, 2))
+```{r fig.height=14}
+control <- trainControl(index = cbecs_train_cv_list, method = 'repeatedcv', number = folds, repeats = 1, search = 'grid', verboseIter = TRUE)
+tunegrid <- expand.grid(ncomp = seq(1, 30, 3))
 pls_train <- train(
-  ELBTUPerSf ~ .,
-  data=cbecs_elbtu_reduced_df,
-  method='rfRules',
-  metric='Rsquared',
+  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf^lmbda,
+  x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
+  method='pls',
+  metric='RMSE',
+  maximize=FALSE,
   tuneGrid=tunegrid,
   trControl=control
 )
 print(pls_train)
-ggplot(cbecs_elbtu_df, 
-       aes(x=pls_train$finalModel$fitted.values[,,26], 
+ggplot(cbecs_elbtu_encoded_center_scale_train_df, 
+       aes(x=pls_train$finalModel$fitted.values[,,10]^(1/0.2), 
            y=ELBTUPerSf)) + geom_point()
-plot(varImp(pls_train), 40)
+varImp(pls_train)
 ```
 
 
-
-```{r fig.height=14}
-control <- trainControl(method = 'repeatedcv', number = 5, repeats = 3, search = 'grid')
-tunegrid <- expand.grid(ncomp = seq(1, 20, 2))
-pls_train <- train(
-  ELBTUPerSf^0.2 ~ .,
-  data=cbecs_elbtu_reduced_df,
-  method='pls',
+#Tree regression importance
+```{r fig.height=10, eval=FALSE}
+#eval set to false, takes a long time to process
+control <- trainControl(index = cbecs_train_cv_list, method = 'repeatedcv', number = folds, repeats = 1, search = 'grid', verboseIter = TRUE)
+tunegrid <- expand.grid(mtry = seq(10, 10, 50))
+rf_train <- train(
+  ELBTUPerSf ~ .,
+  data=cbecs_elbtu_encoded_train_df,
+  method='rf',
   metric='Rsquared',
   tuneGrid=tunegrid,
   trControl=control,
-  preProcess = c("center", "scale")
+  maxnodes=30,
+  importance = TRUE
 )
-print(pls_train)
-ggplot(cbecs_elbtu_reduced_df, 
-       aes(x=pls_train$finalModel$fitted.values[,,19]^(1/0.2), 
+print(rf_train)
+ggplot(cbecs_elbtu_train_df, 
+       aes(x=rf_train$finalModel$predicted, 
            y=ELBTUPerSf)) + geom_point()
-plot(varImp(pls_train), 40)
+varImp(rf_train)
 ```
 
-rfe
+lasso
 ```{r}
-#Do rfe (recursive feature elimination) for linear model, and classification tree, then compare their metrics together.  Mabye set up a custom one or also try lasso?
+#Do lasso as well, then maybe try rfe (recursive feature elimination) for linear model, and classification tree, then compare their metrics together.  Mabye set up a custom one or also try lasso?
+
+control <- trainControl(index = cbecs_train_cv_list, method = 'repeatedcv', number = folds, repeats = 1, search = 'grid', verboseIter = TRUE)
+tunegrid <- expand.grid(fraction = seq(.01, .1, .02))
+l_train <- train(
+  ELBTUPerSf^lmbda ~ .,
+  data=cbecs_elbtu_encoded_center_scale_train_df,
+  method='lasso',
+  metric='Rsquared',
+  tuneGrid=tunegrid,
+  trControl=control,
+  preProcess = c('zv')
+)
+print(l_train)
+ggplot(cbecs_elbtu_encoded_center_scale_train_df, 
+       aes(x=predict(l_train, newx = predict(elbtu_pre_process, newdata = cbecs_elbtu_encoded_center_scale_train_df))^(1/0.2),
+           y=ELBTUPerSf)) + geom_point()
+varImp(l_train)
+```
+
+leaps
+```{r}
+#Do lasso as well, then maybe try rfe (recursive feature elimination) for linear model, and classification tree, then compare their metrics together.  Mabye set up a custom one or also try lasso?
+
+control <- trainControl(index = cbecs_train_cv_list, method = 'repeatedcv', number = folds, repeats = 1, search = 'grid', verboseIter = TRUE)
+tunegrid <- expand.grid(nvmax = seq(100, 700, 100))
+l_train <- train(
+  ELBTUPerSf^lmbda ~ .,
+  data=cbecs_elbtu_encoded_center_scale_train_df,
+  method='leapBackward',
+  metric='Rsquared',
+  tuneGrid=tunegrid,
+  trControl=control,
+  preProcess = c('zv')
+)
+print(l_train)
+ggplot(cbecs_elbtu_encoded_center_scale_train_df, 
+       aes(x=predict(l_train, newx = predict(elbtu_pre_process, newdata = cbecs_elbtu_encoded_center_scale_train_df))^(1/0.2),
+           y=ELBTUPerSf)) + geom_point()
+varImp(l_train)
+```
+
+#Stop parallel processing
+```{r}
+stopCluster(cl)
 ```
 
