@@ -231,14 +231,17 @@ nn_input_validate_df <- cbecs_elbtu_encoded_center_scale_test_df %>%
          one_of(rf_imp_df$feature),
          one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBA\\.'), ELBTUPerSf))))
 
-#NEED TO SPLIT UP TRAIN/TEST TO TRAIN AND TEST
-nn_input_train_test_pba_labels <- cbecs_el_cleaned_df[cbecs_train_list,]$PBA
-nn_input_validate_pba_labels <- cbecs_el_cleaned_df[-cbecs_train_list,]$PBA
+nn_input_df <- cbecs_elbtu_encoded_center_scale_df %>% 
+  select(one_of(pls_imp_df$feature), 
+         one_of(pca_imp_df$feature),
+         one_of(rf_imp_df$feature),
+         one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBA\\.'), ELBTUPerSf))))
+
+nn_input_pba_labels <- cbecs_el_cleaned_df$PBA
   
-save(nn_input_train_test_pba_labels, 
-     nn_input_validate_pba_labels, 
-     nn_input_train_test_df, 
-     nn_input_validate_df, 
+save(nn_input_pba_labels, 
+     nn_input_df, 
+     elbtu_pre_process,
      file='nn_input.RData'
 )
 ```

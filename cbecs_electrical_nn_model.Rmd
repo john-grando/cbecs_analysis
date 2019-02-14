@@ -7,24 +7,53 @@ output: html_document
 
 Load libraries
 ```{r}
+library(dplyr)
+library(doParallel)
+library(tidyr)
 library(caret)
 library(keras)
+library(tibble)
 ```
 
 load input data and assign as train/test/validation
 ```{r}
 load('nn_input.RData')
 #stratify training set
-folds <- 1
-nn_train_cv_list <- createFolds(y=nn_input_train_test_pba_labels$PBAPLUS, 
-                                k = folds, 
-                                returnTrain = TRUE)
+folds <- 2
+train_test_list <- createDataPartition(y=nn_input_pba_labels, 
+                                        p=0.8, 
+                                        list = FALSE)
+train_test_df <- nn_input_df %>% 
+  bind_cols(PBA=nn_input_pba_labels) %>% 
+  slice(train_test_list)
+
+train_list <- createDataPartition(y=train_test_df$PBA,
+                                  p=0.8,
+                                  list=FALSE)
+train_df <- as.matrix(train_test_df %>% 
+  slice(train_list) %>% 
+  select(-PBA, -ELBTUPerSf))
+
+train_labels <- (train_test_df %>% 
+  slice(train_list) %>% 
+  select(ELBTUPerSf))$ELBTUPerSf
+
+test_df <- as.matrix(train_test_df %>% 
+  slice(-train_list) %>% 
+  select(-PBA, -ELBTUPerSf))
+
+test_labels <- (train_test_df %>% 
+  slice(-train_list) %>% 
+  select(ELBTUPerSf))$ELBTUPerSf
+
+validation_df <- as.matrix(nn_input_df %>% 
+  slice(-train_test_list) %>% 
+  select(-ELBTUPerSf))
+
+validation_labels <- (nn_input_df %>%
+  slice(-train_test_list) %>% 
+  select(ELBTUPerSf))$ELBTUPerSf
 ```
-
-```{r}
-
-```
-
 
 #Initialize parallel processing on 2 cores
 ```{r}
@@ -32,7 +61,80 @@ cl <- makePSOCKcluster(2)
 registerDoParallel(cl)
 ```
 
+#Build keras model
+```{r}
+build_model <- function() {
+  
+  model <- keras_model_sequential() %>%
+    layer_dense(units = 400, 
+                activation = "relu",
+                input_shape = dim(train_df)[2],
+                kernel_regularizer = regularizer_l2()) %>%
+#    layer_dropout(0.6) %>%
+    layer_dense(units = 100, 
+                activation = "relu",
+                kernel_regularizer = regularizer_l2()) %>%
+#    layer_dropout(0.6) %>%
+#    layer_dense(units = 100, 
+#                activation = "relu",
+#                kernel_regularizer = regularizer_l2()) %>%
+#    layer_dropout(0.6) %>%
+    layer_dense(units = 1)
+  
+  model %>% compile(
+    loss = "mse",
+    optimizer = optimizer_rmsprop(),
+    metrics = list("mean_absolute_error")
+  )
+  
+  model
+}
+
+model <- build_model()
+model %>% summary()
+```
+
+#Function for model building
+```{r}
+# Display training progress by printing a single dot for each completed epoch.
+print_dot_callback <- callback_lambda(
+  on_epoch_end = function(epoch, logs) {
+    if (epoch %% 80 == 0) cat("\n")
+    cat(".")
+  }
+)
+
+# The patience parameter is the amount of epochs to check for improvement.
+early_stop <- callback_early_stopping(monitor = "val_loss", patience = 20)
+```
+
+#Run model
+```{r}
+epochs <- 500
+
+# Fit the model and store training stats
+history <- model %>% fit(
+  train_df,
+  train_labels,
+  epochs = epochs,
+  validation_data = list(test_df, test_labels),
+  batch_size = 1000,
+  verbose = 2,
+  callbacks = list(print_dot_callback, early_stop)
+)
+```
+
 #Stop parallel processing
 ```{r}
 stopCluster(cl)
 ```
+
+#Predict and examine residuals
+```{r fig.width=10}
+prediction <- model %>% evaluate(validation_df, validation_labels, verbose=2)
+prediction
+residuals <- resid(lm(model %>% predict(validation_df)~validation_labels))
+resid_df <- data.frame(resid = residuals, pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list))
+ggplot(resid_df, aes(x=resid)) + geom_density() + facet_wrap(~pba, scales = 'free')
+```
+
