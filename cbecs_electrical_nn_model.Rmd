@@ -1,0 +1,38 @@
+---
+title: "multi_layer_perceptron"
+author: "John Grando"
+date: "February 13, 2019"
+output: html_document
+---
+
+Load libraries
+```{r}
+library(caret)
+library(keras)
+```
+
+load input data and assign as train/test/validation
+```{r}
+load('nn_input.RData')
+#stratify training set
+folds <- 1
+nn_train_cv_list <- createFolds(y=nn_input_train_test_pba_labels$PBAPLUS, 
+                                k = folds, 
+                                returnTrain = TRUE)
+```
+
+```{r}
+
+```
+
+
+#Initialize parallel processing on 2 cores
+```{r}
+cl <- makePSOCKcluster(2)
+registerDoParallel(cl)
+```
+
+#Stop parallel processing
+```{r}
+stopCluster(cl)
+```
