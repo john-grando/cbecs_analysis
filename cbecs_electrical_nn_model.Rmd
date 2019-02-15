@@ -13,6 +13,7 @@ library(tidyr)
 library(caret)
 library(keras)
 library(tibble)
+library(tensorflow)
 ```
 
 #Load input data and assign as train/test/validation
@@ -64,10 +65,14 @@ registerDoParallel(cl)
 ```{r}
 custom_loss_func <- function(y_true, y_pred) {
   K <- backend()
-  first_log <- K$log(K$relu(y_pred)+1)
-  second_log <- K$log(K$relu(y_true)+1)
-  K$mean(K$square(first_log - second_log) / K$clip(K$abs(second_log),1,700))
+  second_y <- tf$multiply(K$relu(y_true), 0.01)
+  K$mean(tf$multiply(K$square(y_pred - y_true) / K$clip(y_true,0.1,700), second_y))
 }
+
+percentage_metric <- custom_metric('percentage_metric', function(y_true, y_pred){
+  K <- backend()
+  K$mean(tf$multiply(K$abs(1 - K$abs(y_true - y_pred) / K$abs(y_true)), K$relu(y_true)))
+})
 ```
 
 
@@ -78,33 +83,33 @@ build_model <- function() {
   model <- keras_model_sequential() %>%
     layer_dense(units = 400, 
                 activation = "relu",
-                input_shape = dim(train_df)[2]
-                #kernel_regularizer = regularizer_l2()
+                input_shape = dim(train_df)[2],
+#                kernel_regularizer = regularizer_l2()
                 ) %>%
     layer_dropout(0.6) %>%
     layer_dense(units = 400, 
                 activation = "relu"
-                #kernel_regularizer = regularizer_l2()
+#                kernel_regularizer = regularizer_l2()
                 ) %>%
     layer_dropout(0.6) %>%
     layer_dense(units = 400, 
                 activation = "relu"
-                #kernel_regularizer = regularizer_l2()
+#                kernel_regularizer = regularizer_l2()
                 ) %>%
     layer_dropout(0.2) %>%
     layer_dense(units = 400, 
                 activation = "relu"
-                #kernel_regularizer = regularizer_l2()
+#                kernel_regularizer = regularizer_l2()
                 ) %>%
     layer_dropout(0.2) %>%
     layer_dense(units = 400, 
                 activation = "relu"
-                #kernel_regularizer = regularizer_l2()
+#                kernel_regularizer = regularizer_l2()
                 ) %>%
-    layer_dropout(0.2) %>%
+#    layer_dropout(0.2) %>%
     layer_dense(units = 400, 
                 activation = "relu"
-                #kernel_regularizer = regularizer_l2()
+#                kernel_regularizer = regularizer_l2()
                 ) %>%
     layer_dropout(0.2) %>%
     layer_dense(units = 1)
@@ -112,9 +117,9 @@ build_model <- function() {
   model %>% compile(
     #loss = keras::loss_mean_squared_logarithmic_error,
     loss = custom_loss_func,
-    optimizer = keras::optimizer_sgd(decay = 0.05),
+    optimizer = keras::optimizer_sgd(lr = 0.02, decay = 0.05),
     #optimizer = keras::optimizer_rmsprop(),
-    metrics = list("mean_absolute_error")
+    metrics = list("mean_absolute_error", percentage_metric)
   )
   
   model
@@ -169,13 +174,20 @@ summary(resid_model)
 residuals <- resid(resid_model)
 resid_df <- data.frame(resid = residuals, 
                        pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list),
-                       elbtu_per_sf = validation_labels)
+                       elbtu_per_sf = validation_labels,
+                       pred = model %>% predict(validation_df),
+                       ratio = abs(1 - model %>% predict(validation_df) / validation_labels))
 ggplot(data = data.frame(pred=model %>% predict(validation_df),
                          obs=validation_labels),
        aes(x=pred, y=obs)) + 
   geom_point() + 
   geom_abline(slope = 1)
-ggplot(resid_df, aes(x=resid)) + geom_density() + facet_wrap(~pba, scales = 'free')
+#ggplot(resid_df, aes(x=resid)) + geom_density() + facet_wrap(~pba, scales = 'free')
 ggplot(resid_df, aes(x=elbtu_per_sf, y=resid)) + geom_point()
+
+elbtu_impact_error_check_df <- resid_df %>% 
+  group_by(pba) %>% 
+  summarize(ratio = mean(ratio), 
+            elbtu_per_sf_error = mean(ratio * elbtu_per_sf))
 ```
 
