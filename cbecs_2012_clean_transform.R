@@ -26,6 +26,9 @@ clean_encode_cbecs <- function(data) {
   
   #clean data frame
   trim_df <- data %>% 
+    ###Remove outliers
+    #School with 1750 works and 12,000 sf does not make sense
+    filter(!(PBAPLUS==29&SQFT<13000&NWKER>1700)) %>% 
     #Remove weight and imputation columns as well as IDs
     select(-one_of(weight_list), -one_of(impute_list), -PUBID) %>% 
     #Remove small buildings - not of interest and contain NAs - also remove NAs from this column implicitly
