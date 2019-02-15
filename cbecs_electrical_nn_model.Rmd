@@ -15,11 +15,10 @@ library(keras)
 library(tibble)
 ```
 
-load input data and assign as train/test/validation
+#Load input data and assign as train/test/validation
 ```{r}
-load('nn_input.RData')
+load('nn_elbtu_input.RData')
 #stratify training set
-folds <- 2
 train_test_list <- createDataPartition(y=nn_input_pba_labels, 
                                         p=0.8, 
                                         list = FALSE)
@@ -61,6 +60,17 @@ cl <- makePSOCKcluster(2)
 registerDoParallel(cl)
 ```
 
+#Custom loss funciton
+```{r}
+custom_loss_func <- function(y_true, y_pred) {
+  K <- backend()
+  first_log <- K$log(K$relu(y_pred)+1)
+  second_log <- K$log(K$relu(y_true)+1)
+  K$mean(K$square(first_log - second_log) / K$clip(K$abs(second_log),1,700))
+}
+```
+
+
 #Build keras model
 ```{r}
 build_model <- function() {
@@ -68,22 +78,42 @@ build_model <- function() {
   model <- keras_model_sequential() %>%
     layer_dense(units = 400, 
                 activation = "relu",
-                input_shape = dim(train_df)[2],
-                kernel_regularizer = regularizer_l2()) %>%
-#    layer_dropout(0.6) %>%
-    layer_dense(units = 100, 
-                activation = "relu",
-                kernel_regularizer = regularizer_l2()) %>%
-#    layer_dropout(0.6) %>%
-#    layer_dense(units = 100, 
-#                activation = "relu",
-#                kernel_regularizer = regularizer_l2()) %>%
-#    layer_dropout(0.6) %>%
+                input_shape = dim(train_df)[2]
+                #kernel_regularizer = regularizer_l2()
+                ) %>%
+    layer_dropout(0.6) %>%
+    layer_dense(units = 400, 
+                activation = "relu"
+                #kernel_regularizer = regularizer_l2()
+                ) %>%
+    layer_dropout(0.6) %>%
+    layer_dense(units = 400, 
+                activation = "relu"
+                #kernel_regularizer = regularizer_l2()
+                ) %>%
+    layer_dropout(0.2) %>%
+    layer_dense(units = 400, 
+                activation = "relu"
+                #kernel_regularizer = regularizer_l2()
+                ) %>%
+    layer_dropout(0.2) %>%
+    layer_dense(units = 400, 
+                activation = "relu"
+                #kernel_regularizer = regularizer_l2()
+                ) %>%
+    layer_dropout(0.2) %>%
+    layer_dense(units = 400, 
+                activation = "relu"
+                #kernel_regularizer = regularizer_l2()
+                ) %>%
+    layer_dropout(0.2) %>%
     layer_dense(units = 1)
   
   model %>% compile(
-    loss = "mse",
-    optimizer = optimizer_rmsprop(),
+    #loss = keras::loss_mean_squared_logarithmic_error,
+    loss = custom_loss_func,
+    optimizer = keras::optimizer_sgd(decay = 0.05),
+    #optimizer = keras::optimizer_rmsprop(),
     metrics = list("mean_absolute_error")
   )
   
@@ -105,7 +135,7 @@ print_dot_callback <- callback_lambda(
 )
 
 # The patience parameter is the amount of epochs to check for improvement.
-early_stop <- callback_early_stopping(monitor = "val_loss", patience = 20)
+early_stop <- callback_early_stopping(monitor = "val_loss", patience = 50)
 ```
 
 #Run model
@@ -119,7 +149,7 @@ history <- model %>% fit(
   epochs = epochs,
   validation_data = list(test_df, test_labels),
   batch_size = 1000,
-  verbose = 2,
+  verbose = 1,
   callbacks = list(print_dot_callback, early_stop)
 )
 ```
@@ -131,10 +161,21 @@ stopCluster(cl)
 
 #Predict and examine residuals
 ```{r fig.width=10}
-prediction <- model %>% evaluate(validation_df, validation_labels, verbose=2)
-prediction
-residuals <- resid(lm(model %>% predict(validation_df)~validation_labels))
-resid_df <- data.frame(resid = residuals, pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list))
+plot(history)
+evaluation <- model %>% evaluate(validation_df, validation_labels, verbose=2)
+evaluation
+resid_model <- lm(model %>% predict(validation_df)~validation_labels)
+summary(resid_model)
+residuals <- resid(resid_model)
+resid_df <- data.frame(resid = residuals, 
+                       pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list),
+                       elbtu_per_sf = validation_labels)
+ggplot(data = data.frame(pred=model %>% predict(validation_df),
+                         obs=validation_labels),
+       aes(x=pred, y=obs)) + 
+  geom_point() + 
+  geom_abline(slope = 1)
 ggplot(resid_df, aes(x=resid)) + geom_density() + facet_wrap(~pba, scales = 'free')
+ggplot(resid_df, aes(x=elbtu_per_sf, y=resid)) + geom_point()
 ```
 
