@@ -77,6 +77,8 @@ cbecs_elbtu_encoded_df <- cbecs_el_encoded_df %>%
   #bind_cols(cbecs_el_encoded_df %>% select(matches('^PBAPLUS'))) %>% 
   bind_cols(ELBTUPerSf = cbecs_el_encoded_df %>% select(ELBTUPerSf))
 
+findCorrelation(cor(cbecs_elbtu_encoded_df), cutoff=0.75, names = TRUE)
+
 cbecs_elbtu_encoded_numerics_cols <- colnames(
   cbecs_elbtu_encoded_df %>% 
     select(one_of(cbecs_dfs$encoded_numeric_cols)) %>% 
