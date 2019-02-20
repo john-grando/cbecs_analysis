@@ -1,0 +1,76 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\graphicspath{{./}}
+\geometry{tmargin=1in, bmargin=1in}
+\setlength{\emergencystretch}{3em}
+\author{John Grando}
+\title{CUNY MSDS Proposal}
+
+\fancyhf{} % only used for clearing the headers
+\rfoot{\thepage}
+\pagestyle{fancy}
+% --------------------------------------------------------------------
+% Definitions (do not change this)
+% --------------------------------------------------------------------
+\newcommand{\HRule}[1]{\rule{\linewidth}{#1}} 	% Horizontal rule
+
+\makeatletter							% Title
+\def\printtitle{%						
+    {\centering \@title\par}}
+\makeatother									
+
+\makeatletter							% Author
+\def\printauthor{%					
+    {\centering \Large \@author}}				
+\makeatother							
+
+% --------------------------------------------------------------------
+% Metadata (Change this)
+% --------------------------------------------------------------------
+\title{	\Large { CUNY MSDS Capstone Project} 	% Subtitle
+		 	\\[2.0cm]								% 2cm spacing
+			\HRule{2pt} \\						% Upper rule
+			\LARGE \textbf{\uppercase{Commercial Building Energy Consumption}} \\ [0.25in] \Large \textbf{\uppercase{Analysis and Prediction}}	% Title
+			\HRule{2pt} \\ [0.5cm]		% Lower rule + 0.5cm spacing
+			\Large \today			% Todays date
+		}
+
+ \author{
+		John Grando\\	
+        john.grando@spsmail.cuny.edu \\
+}
+
+
+\begin{document}
+% ------------------------------------------------------------------------------
+% Maketitle
+% ------------------------------------------------------------------------------
+\thispagestyle{empty}		% Remove page numbering on this page
+\printtitle					% Print the title data as defined above
+  	\vfill
+\printauthor				% Print the author data as defined above
+\newpage
+\setcounter{page}{1}		% Set page numbering to begin on this page
+% ------------------------------------------------------------------------------
+% Begin document
+% ------------------------------------------------------------------------------
+\noindent
+\input{project_abstract}
+\\[0.125in]
+\input{project_introduction}
+%\noindent
+%Related Work \\
+%Problem Statement \\
+%Solution \\
+%Performance Experiments \\
+%Conclusion \\
+%Future Work \\
+%Acknowledgements \\
+%Citations \\
+%Appendices \\
+\end{document}
