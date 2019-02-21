@@ -14,6 +14,8 @@ library(caret)
 library(keras)
 library(tibble)
 library(tensorflow)
+library(foreach)
+library(doMC)
 ```
 
 #Load input data and assign as train/test/validation
@@ -53,12 +55,6 @@ validation_df <- nn_input_df %>%
 validation_labels <- (nn_input_df %>%
   slice(-train_test_list) %>% 
   select(ELBTUPerSf))$ELBTUPerSf
-```
-
-#Initialize parallel processing on 2 cores
-```{r eval=FALSE}
-cl <- makePSOCKcluster(2)
-registerDoParallel(cl)
 ```
 
 #Custom loss funciton
@@ -142,13 +138,20 @@ early_stop <- callback_early_stopping(monitor = "val_loss", patience = 50)
 
 #Hyperparameter training
 ```{r}
-folds <- createFolds(y = train_test_list, k=5, list=FALSE)
+n_folds <- 5
+folds <- createFolds(y = train_test_list, k=n_folds, list=FALSE)
 
 hyper_list <- list()
-hyper_list$dropout <- seq(0.1, 0.5, 0.2)
-hyper_list$units <- seq(400, 800, 200)
+hyper_list$dropout <- seq(0.5, 0.5, 0.2)
+hyper_list$units <- seq(10, 10, 200)
 ```
 
+
+#Initialize parallel processing on 2 cores
+```{r}
+cl <- makeCluster(2)
+registerDoMC(2)
+```
 
 #Run model
 ```{r echo=FALSE}
@@ -156,7 +159,8 @@ epochs <- 100
 hyper_results <- data.frame()
 for (d in hyper_list$dropout) {
   for (u in hyper_list$units) {
-    for (f in unique(folds)){
+    tmp_df <- foreach(f = 1:n_folds,
+                   .combine = rbind) %dopar% {
       print(paste('running dropout, units, fold:',d,u,f, sep=' '))
       ind <- which(folds == f)
       cv_train_df <- train_test_df %>% slice(-ind) %>% select(-PBA, -ELBTUPerSf)
@@ -175,15 +179,22 @@ for (d in hyper_list$dropout) {
       loss_val <- tail(history$metrics$val_loss,1)
       mae_val <- tail(history$metrics$val_mean_absolute_error,1)
       pm_val <- tail(history$metrics$percentage_metric,1)
-      hyper_results <- rbind(hyper_results, data.frame(dropout=d, units=u, fold=f, loss= loss_val, mae = mae_val, pm = pm_val))
-      print(paste('finished running model, mae, pm:',mae_val, pm_val, sep=' '))
+      #hyper_results <- rbind(hyper_results, data.frame(dropout=d, units=u, fold=f, loss= loss_val, mae = mae_val, pm = pm_val))
+      data.frame(dropout=d, units=u, fold=f, loss= loss_val, mae = mae_val, pm = pm_val)
     }
+  print(paste('finished running model: droput, units', d, u, sep = " "))
+  hyper_results <- rbind(hyper_results, tmp_df)
   }
 }
 
 ```
 
+#Stop parallel processing
 ```{r}
+stopCluster(cl)
+```
+
+```{r eval=FALSE}
 # Fit the model with best hyper parameters and store training stats
 model <- build_model(df=train_df, n_dropout=0.2, n_units = 100)
 model %>% summary()
@@ -199,13 +210,8 @@ history <- model %>% fit(
 )
 ```
 
-#Stop parallel processing
-```{r}
-stopCluster(cl)
-```
-
 #Predict and examine residuals
-```{r fig.width=10}
+```{r eval=FALSE, fig.width=10}
 plot(history)
 evaluation <- model %>% evaluate(as.matrix(validation_df), as.matrix(validation_labels), verbose=2)
 evaluation
