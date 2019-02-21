@@ -18,7 +18,7 @@ na_repl_num <- function(x, num){
   ifelse(is.na(x), num, x)
 }
 
-clean_encode_cbecs <- function(data) {
+clean_encode_cbecs <- function(data, pba_filter=NA) {
   #Identify Weight columns
   weight_list <- names(data[grepl('^FINAL.*', names(data), ignore.case = TRUE)])
   #Identify imputation flag columns
@@ -264,6 +264,7 @@ clean_encode_cbecs <- function(data) {
   clean_full_column_list <- append(clean_numeric_cols, clean_non_numeric_cols)
   clean_df <- clean_df[,clean_full_column_list]
   
+  if(!is.na(pba_filter)) {clean_df <- clean_df %>% filter(PBAPLUS==pba_filter)}
   #Convert factor columns to one-hot encoders
   dummy_f <- dummyVars(" ~ .", data = clean_df)
   encoded_df <- data.frame(predict(dummy_f, newdata=clean_df))
