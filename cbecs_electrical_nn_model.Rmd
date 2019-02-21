@@ -30,25 +30,25 @@ train_test_df <- nn_input_df %>%
 train_list <- createDataPartition(y=train_test_df$PBA,
                                   p=0.8,
                                   list=FALSE)
-train_df <- as.matrix(train_test_df %>% 
+train_df <- train_test_df %>% 
   slice(train_list) %>% 
-  select(-PBA, -ELBTUPerSf))
+  select(-PBA, -ELBTUPerSf)
 
 train_labels <- (train_test_df %>% 
   slice(train_list) %>% 
   select(ELBTUPerSf))$ELBTUPerSf
 
-test_df <- as.matrix(train_test_df %>% 
+test_df <- train_test_df %>% 
   slice(-train_list) %>% 
-  select(-PBA, -ELBTUPerSf))
+  select(-PBA, -ELBTUPerSf)
 
 test_labels <- (train_test_df %>% 
   slice(-train_list) %>% 
   select(ELBTUPerSf))$ELBTUPerSf
 
-validation_df <- as.matrix(nn_input_df %>% 
+validation_df <- nn_input_df %>% 
   slice(-train_test_list) %>% 
-  select(-ELBTUPerSf))
+  select(-ELBTUPerSf)
 
 validation_labels <- (nn_input_df %>%
   slice(-train_test_list) %>% 
@@ -56,7 +56,7 @@ validation_labels <- (nn_input_df %>%
 ```
 
 #Initialize parallel processing on 2 cores
-```{r}
+```{r eval=FALSE}
 cl <- makePSOCKcluster(2)
 registerDoParallel(cl)
 ```
@@ -66,52 +66,52 @@ registerDoParallel(cl)
 custom_loss_func <- function(y_true, y_pred) {
   K <- backend()
   second_y <- tf$multiply(K$relu(y_true), 0.01)
-  K$mean(tf$multiply(K$square(y_pred - y_true) / K$clip(y_true,0.1,700), second_y))
+  K$mean(tf$multiply(K$square(y_pred - y_true) / K$clip(y_true,0.1,1000), second_y))
 }
 
 percentage_metric <- custom_metric('percentage_metric', function(y_true, y_pred){
   K <- backend()
-  K$mean(tf$multiply(K$abs(1 - K$abs(y_true - y_pred) / K$abs(y_true)), K$relu(y_true)))
+  K$mean(tf$multiply(K$abs(1 - K$abs(y_true - y_pred) / K$clip(y_true,0.1,1000)), y_true))
 })
 ```
 
 
 #Build keras model
 ```{r}
-build_model <- function() {
+build_model <- function(df = NA, n_dropout=0, n_units=10) {
   
   model <- keras_model_sequential() %>%
-    layer_dense(units = 400, 
+    layer_dense(units = n_units, 
                 activation = "relu",
-                input_shape = dim(train_df)[2],
+                input_shape = dim(df)[2],
 #                kernel_regularizer = regularizer_l2()
                 ) %>%
-    layer_dropout(0.6) %>%
-    layer_dense(units = 400, 
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
                 activation = "relu"
 #                kernel_regularizer = regularizer_l2()
                 ) %>%
-    layer_dropout(0.6) %>%
-    layer_dense(units = 400, 
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
                 activation = "relu"
 #                kernel_regularizer = regularizer_l2()
                 ) %>%
-    layer_dropout(0.2) %>%
-    layer_dense(units = 400, 
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
                 activation = "relu"
 #                kernel_regularizer = regularizer_l2()
                 ) %>%
-    layer_dropout(0.2) %>%
-    layer_dense(units = 400, 
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
                 activation = "relu"
 #                kernel_regularizer = regularizer_l2()
                 ) %>%
 #    layer_dropout(0.2) %>%
-    layer_dense(units = 400, 
+    layer_dense(units = n_units, 
                 activation = "relu"
 #                kernel_regularizer = regularizer_l2()
                 ) %>%
-    layer_dropout(0.2) %>%
+    layer_dropout(n_dropout) %>%
     layer_dense(units = 1)
   
   model %>% compile(
@@ -124,9 +124,6 @@ build_model <- function() {
   
   model
 }
-
-model <- build_model()
-model %>% summary()
 ```
 
 #Function for model building
@@ -143,16 +140,59 @@ print_dot_callback <- callback_lambda(
 early_stop <- callback_early_stopping(monitor = "val_loss", patience = 50)
 ```
 
-#Run model
+#Hyperparameter training
 ```{r}
-epochs <- 500
+folds <- createFolds(y = train_test_list, k=5, list=FALSE)
 
-# Fit the model and store training stats
+hyper_list <- list()
+hyper_list$dropout <- seq(0.1, 0.5, 0.2)
+hyper_list$units <- seq(400, 800, 200)
+```
+
+
+#Run model
+```{r echo=FALSE}
+epochs <- 100
+hyper_results <- data.frame()
+for (d in hyper_list$dropout) {
+  for (u in hyper_list$units) {
+    for (f in unique(folds)){
+      print(paste('running dropout, units, fold:',d,u,f, sep=' '))
+      ind <- which(folds == f)
+      cv_train_df <- train_test_df %>% slice(-ind) %>% select(-PBA, -ELBTUPerSf)
+      cv_train_y <- train_test_df %>% slice(-ind) %>% select(ELBTUPerSf)
+      cv_test_df <- train_test_df %>% slice(ind) %>% select(-PBA, -ELBTUPerSf)
+      cv_test_y <- train_test_df %>% slice(ind) %>% select(ELBTUPerSf)
+      cv_model_t <- build_model(df = train_df, n_dropout = d, n_units = u)
+      history <- cv_model_t %>% fit(
+        as.matrix(cv_train_df),
+        as.matrix(cv_train_y),
+        epochs = epochs,
+        validation_data = list(as.matrix(cv_test_df), as.matrix(cv_test_y)),
+        batch_size = 1000,
+        verbose = 0,
+        callbacks = list(print_dot_callback, early_stop))
+      loss_val <- tail(history$metrics$val_loss,1)
+      mae_val <- tail(history$metrics$val_mean_absolute_error,1)
+      pm_val <- tail(history$metrics$percentage_metric,1)
+      hyper_results <- rbind(hyper_results, data.frame(dropout=d, units=u, fold=f, loss= loss_val, mae = mae_val, pm = pm_val))
+      print(paste('finished running model, mae, pm:',mae_val, pm_val, sep=' '))
+    }
+  }
+}
+
+```
+
+```{r}
+# Fit the model with best hyper parameters and store training stats
+model <- build_model(df=train_df, n_dropout=0.2, n_units = 100)
+model %>% summary()
+
 history <- model %>% fit(
-  train_df,
-  train_labels,
+  as.matrix(train_df),
+  as.matrix(train_labels),
   epochs = epochs,
-  validation_data = list(test_df, test_labels),
+  validation_data = list(as.matrix(test_df), as.matrix(test_labels)),
   batch_size = 1000,
   verbose = 1,
   callbacks = list(print_dot_callback, early_stop)
@@ -167,17 +207,17 @@ stopCluster(cl)
 #Predict and examine residuals
 ```{r fig.width=10}
 plot(history)
-evaluation <- model %>% evaluate(validation_df, validation_labels, verbose=2)
+evaluation <- model %>% evaluate(as.matrix(validation_df), as.matrix(validation_labels), verbose=2)
 evaluation
-resid_model <- lm(model %>% predict(validation_df)~validation_labels)
+resid_model <- lm(model %>% predict(as.matrix(validation_df))~as.matrix(validation_labels))
 summary(resid_model)
 residuals <- resid(resid_model)
 resid_df <- data.frame(resid = residuals, 
                        pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list),
                        elbtu_per_sf = validation_labels,
-                       pred = model %>% predict(validation_df),
-                       ratio = abs(1 - model %>% predict(validation_df) / validation_labels))
-ggplot(data = data.frame(pred=model %>% predict(validation_df),
+                       pred = model %>% predict(as.matrix(validation_df)),
+                       ratio = abs(1 - (1 + model %>% predict(as.matrix(validation_df))) / (1 + validation_labels)))
+ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_df)),
                          obs=validation_labels),
        aes(x=pred, y=obs)) + 
   geom_point() + 
@@ -187,7 +227,7 @@ ggplot(resid_df, aes(x=elbtu_per_sf, y=resid)) + geom_point()
 
 elbtu_impact_error_check_df <- resid_df %>% 
   group_by(pba) %>% 
-  summarize(ratio = mean(ratio), 
+  summarize(avg_ratio = mean(ratio), 
             elbtu_per_sf_error = mean(ratio * elbtu_per_sf))
 ```
 
