@@ -190,20 +190,26 @@ build_0h_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) {
 
 #model selector
 ```{r}
-model_selector <- function(model_n = 1, ...){
-  if(model_n==0){
+model_selector <- function(model_n = '1', ...){
+  model_n <- as.character(model_n)
+  m_selected <- 0
+  if(model_n=='0'){
     x <- build_0h_model(...)
+    m_selected <- 1
   }
-  if(model_n==1){
+  if(model_n=='1'){
     x <- build_1h_model(...)
+    m_selected <- 1
   }
-  if(model_n==2){
+  if(model_n=='2'){
     x <- build_2h_model(...)
+m_selected <- 1
   }
-  if(model_n==3){
+  if(model_n=='3'){
     x <- build_3h_model(...)
+    m_selected <- 1
   }
-  if(model_n>3){stop('model does not exist')}
+  if(model_selected==0){stop('model does not exist')}
   return(x)
 }
 ```
