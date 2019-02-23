@@ -1,3 +1,9 @@
 {\section*{General Process}}
 
-The 
+Given the large number of features in the survey responses, it is not possible to analyze each one individually.  Therefore, the first steps in the process will be centered around selecting a smaller subset.  A few algorithms will be used in order to try and reduce bias.  First, a partial least squares model will be fit to the response.  Second, a random forest regression tree will be used in order to try and extract any nonlinear relationships.  Third, an attempt to construct a lasso regression model will be made.  Finally, a backward selection linear model will also be fit in order to see if an automated approach can be taken.  The magnitude and contribution percentage of each variable will be considered in selecting features from this model.  Also, the various error rates from each final model will be used as a benchmark for the final performance.
+
+After the prelminary set of models 
+
+
+
+neural network one model on all predictors, one on subset.  use prelminary modesl as floor, full nn model as ceiling.
