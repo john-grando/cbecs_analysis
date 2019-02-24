@@ -33,6 +33,8 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     select(-one_of(weight_list), -one_of(impute_list), -PUBID) %>% 
     #Remove small buildings - not of interest and contain NAs - also remove NAs from this column implicitly
     filter(SQFT > 1000) %>% 
+    #Remove buildings open for less than a year
+    filter(YRCON != 2012) %>% 
     #Drop month ready for occupancy in 2012, not useful
     select(-MONCON) %>% 
     #If buidling was indicated to be not cooled, then percent cooled is zero
@@ -252,8 +254,9 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
   colnames(per_sf_df) <- paste(colnames(per_sf_df), "PerSf", sep="")
   clean_df <- trim_df %>% 
     select(names(trim_df[!(colnames(trim_df) %in% PerSfVector)])) %>% 
-    bind_cols(per_sf_df) %>% 
-    select(-SQFT)
+    bind_cols(per_sf_df) #%>%
+  #keep sf?
+#    select(-SQFT)
   
   #Make list of numeric column groups
   removed_response_list <- colnames(clean_df[,!grepl('EL.*PerSf|NG.*PerSf|DH.*PerSf|FK.*PerSf|MF.*PerSf', colnames(clean_df), ignore.case = TRUE)])
