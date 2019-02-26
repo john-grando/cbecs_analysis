@@ -13,6 +13,7 @@ source('cbecs_2012_clean_transform.R')
 
 Libraries
 ```{r}
+library(gridExtra)
 library(factoextra)
 library(pls)
 library(randomForest)
@@ -101,7 +102,7 @@ cbecs_elbtu_encoded_center_scale_df <- predict(elbtu_pre_process, cbecs_elbtu_en
 
 #Set number of most important variables to take from each model
 ```{r}
-top_n_rows <- 20
+top_n_rows <- 2
 ```
 
 #PCA
@@ -109,16 +110,19 @@ top_n_rows <- 20
 cbecs_pca <- prcomp(cbecs_elbtu_encoded_center_scale_df %>% 
     select(-ELBTUPerSf) %>%
     select(-one_of(cbecs_dfs$response_cols)), center = TRUE, scale. = TRUE)
-fviz_eig(cbecs_pca, addlabels = TRUE)
+p1 <- fviz_eig(cbecs_pca, addlabels = TRUE)
 var <- get_pca_var(cbecs_pca)
-fviz_pca_var(cbecs_pca, select.var = list(contrib=20), repel = TRUE)
-fviz_contrib(cbecs_pca, choice = "var", axes = 1:20, top = 20)
+p2 <- fviz_pca_var(cbecs_pca, select.var = list(contrib=20), repel = TRUE)
+p3 <- fviz_contrib(cbecs_pca, choice = "var", axes = 1:20, top = 20)
 pca_imp_df <- fviz_contrib(cbecs_pca, choice = "var", axes = 1:20, top = 50)$data %>% 
   arrange(desc(contrib)) %>% 
   head(top_n_rows) %>% 
   select(name) %>% 
   rename(feature = name) %>% 
   mutate(feature = as.character(feature))
+grid.arrange(p1, p3, nrow=1)
+g <- arrangeGrob(p1, p3, nrow = 1)
+ggsave('Documents/Images/electricity_pca.png', g)
 ```
 
 ```{r}
@@ -308,6 +312,25 @@ par(mfrow=c(2,2))
 plot(tmp_model)
 ```
 
+#recursive feaure extraction
+```{r}
+ctrl <- rfeControl(functions = treebagFuncs,
+                   index = cbecs_train_cv_list, 
+                   method = 'repeatedcv', 
+                   number = folds, 
+                   repeats = 1,
+                   verbose = TRUE)
+
+rfe_train <- rfe(y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
+                 x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
+                 sizes = c(1:20, seq(100, 700, 100)),
+                 rfeControl = ctrl)
+
+rfe_train
+plot(rfe_train, type=c('g', 'o'))
+rfe_imp_df <- rfe_train$variables %>% filter(Variables == 7) %>% select(var) %>% distinct() %>% rename(feature = var)
+```
+
 #make neural network input df based on the most important features selected
 ```{r}
 nn_input_train_test_df <- cbecs_elbtu_encoded_center_scale_train_df %>% 
@@ -315,12 +338,15 @@ nn_input_train_test_df <- cbecs_elbtu_encoded_center_scale_train_df %>%
          one_of(pca_imp_df$feature),
          one_of(rf_imp_df$feature),
          one_of(nn_imp_df$feature),
+         one_of(rfe_imp_df$feature),
          one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'), ELBTUPerSf))))
 
 nn_input_validate_df <- cbecs_elbtu_encoded_center_scale_test_df %>% 
   select(one_of(pls_imp_df$feature), 
          one_of(pca_imp_df$feature),
          one_of(rf_imp_df$feature),
+         one_of(nn_imp_df$feature),
+         one_of(rfe_imp_df$feature),
          one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'), ELBTUPerSf))))
 ```
 
@@ -332,6 +358,8 @@ nn_input_df <- cbecs_elbtu_encoded_center_scale_df %>%
   select(one_of(pls_imp_df$feature), 
          one_of(pca_imp_df$feature),
          one_of(rf_imp_df$feature),
+         one_of(nn_imp_df$feature),
+         one_of(rfe_imp_df$feature),
          one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'), ELBTUPerSf))))
 
 nn_input_pba_labels <- cbecs_el_cleaned_df$PBAPLUS
