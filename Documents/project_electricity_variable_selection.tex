@@ -5,7 +5,9 @@
 \subsection{General}
 
 The preprocessed data was passed to the following process in order to determine the best possible set of candidate predictors with one additional filter.  Only buildings that indicated electricity being used \lstinline{ELUSED} were included in the samples for this major fuel use.  Additionally, the other major fuel consumption values were removed from the set of possible predictors since separate models will be made to predict these values as well.
-\subsection{Initial Analysis}
+
+\subsection{\hyperref[appendix:electricity:response]{Response Analysis}}
+
 The response data appear to be unimodal and have a heavy right skew with a median of 39.0, mean of 57.9, and max of 971.9 BTU/SF.  After filtering for this model's end-use, there are 6500 samples in the data set.  Due to the varying scales of all the predictors, the numeric columns have been centered and scaled before use for the non-tree regression models.
 
 \subsection{Variable Selection - PCA}

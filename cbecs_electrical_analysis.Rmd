@@ -54,6 +54,7 @@ Response Variable
 ```{r}
 ggplot(cbecs_el_cleaned_df, aes(x=ELBTUPerSf)) + 
   geom_density()
+ggsave('Documents/Images/electricity_response.png', width = 6.5, height = 3, units = 'in')
 lmbda <- BoxCoxTrans(cbecs_el_cleaned_df$ELBTUPerSf + 1)$lambda
 ggplot(cbecs_el_cleaned_df, aes(x=ELBTUPerSf^lmbda)) + 
   geom_density() + 
@@ -122,7 +123,7 @@ pca_imp_df <- fviz_contrib(cbecs_pca, choice = "var", axes = 1:20, top = 50)$dat
   mutate(feature = as.character(feature))
 grid.arrange(p1, p3, nrow=1)
 g <- arrangeGrob(p1, p3, nrow = 1)
-ggsave('Documents/Images/electricity_pca.png', g)
+ggsave('Documents/Images/electricity_pca.png', g, width = 6.5, height = 3, units = 'in')
 ```
 
 ```{r}
