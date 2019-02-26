@@ -319,6 +319,8 @@ evaluation <- model %>% evaluate(as.matrix(validation_df), as.matrix(validation_
 evaluation
 resid_model <- lm(model %>% predict(as.matrix(validation_df))~as.matrix(validation_labels))
 summary(resid_model)
+par(mfrow=c(2,2))
+plot(resid_model)
 residuals <- resid(resid_model)
 resid_df <- data.frame(resid = residuals, 
                        pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list),
