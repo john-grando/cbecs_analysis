@@ -209,7 +209,7 @@ m_selected <- 1
     x <- build_3h_model(...)
     m_selected <- 1
   }
-  if(model_selected==0){stop('model does not exist')}
+  if(m_selected==0){stop('model does not exist')}
   return(x)
 }
 ```
@@ -298,7 +298,7 @@ stopCluster(cl)
 
 ```{r eval=FALSE}
 # Fit the model with best hyper parameters and store training stats
-model <- build_model(df=train_df, n_dropout=0.3, n_units = 60, n_l = 0)
+model <- build_3h_model(df=train_df, n_dropout=0.3, n_units = 60, n_l = 0)
 model %>% summary()
 epochs <- 500
 history <- model %>% fit(
