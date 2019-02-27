@@ -4,7 +4,7 @@
 
 \subsection{General}
 
-The preprocessed data was passed to the following process in order to determine the best possible set of candidate predictors with one additional filter.  Only buildings that indicated electricity being used \lstinline{ELUSED} were included in the samples for this major fuel use.  Additionally, the other major fuel consumption values were removed from the set of possible predictors since separate models will be made to predict these values as well.
+The preprocessed data was passed to the following process in order to determine the best possible set of candidate predictors with one additional filter.  Only buildings that indicated electricity being used \lstinline{ELUSED} were included in the samples for this major fuel use.  Then, one of each pair of predictors with correlations (above 0.75) were removed, to avoid model selection issues. Additionally, the other major fuel consumption values were removed from the set of possible predictors since separate models will be made to predict these values as well.
 
 \subsection{\hyperref[appendix:electricity:response]{Response Analysis}}
 
@@ -15,20 +15,29 @@ The response data appear to be unimodal and have a heavy right skew with a media
 The principle component analysis indicates that only 4.3\% of the variance in the data can be explained in the first principle component, which then drops to 1.7\% for the second principle component.  These results reveal that there does not appear to be clear axes that can explain the variance of the data very well, which indicates there may be some very complex interactions taking place in the predictors.  However, the top 2 predictors, based on contribution percentage to the principle components, will still be taken for further analysis:
 
 \begin{itemize}
-\item \hyperref[appendix:electricity:pca]{Variables Selected} - \lstinline{COOK}
-\item RMSE - 
-\item Rsquared -
+\item \hyperref[appendix:electricity:pca]{Variables Selected} - \lstinline{COOK[NO]}, \lstinline{LAUNDR[NA]}
+\item RMSE - NA
+\item Rsquared - NA
 \end{itemize}
 
-\subsection*{Variable Selection - PLS}
+\subsection{Variable Selection - PLS}
 
-A partial least squares model was created, using four fold cross-validation.  Now that a model has been fit trying t predict the response variable, error metrics can now be provided as well.  
+This model returned a promising result with an Rsquared value of 0.4318, which is pretty good considering it is a simply construcsted model.  Looking at the result, it is obvious that the use of refrigeration equipment is dominating the variable importance plot as well as some other seemingly reasonable predictors, such as the number of registers per square foot of gross floor area.  The top 7 variables were selected for further review.
 
 \begin{itemize}
-\item \hyperref[appendix:electricity:pls]{Variables Selected} - \lstinline{COOK}
-\item RMSE - 
-\item Rsquared -
+\item \hyperref[appendix:electricity:pls]{Variables Selected} - \lstinline{RFGWinPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{RFGICNPerSf}, \lstinline{FDSEATPerSF}, \lstinline{RFGCLNPerSf}, \lstinline{NWKERPerSf}, \lstinline{RFGOPNPerSf}
+\item RMSE - 53.48
+\item Rsquared - 0.4318
 \end{itemize}
 
+\subsection{Variable Selection - Random Forest}
+
+As with the PLS, model, the resulting error metrics were promising, with slightly better RMSE and Rsquared values.  The selected variables are ver similar with a few exceptions.  This model has placed higher importance on a yes/no response to the presence of walk in refrigerators as well as whether or not a building is a fast food establishment
+
+\begin{itemize}
+\item \hyperref[appendix:electricity:rf]{Variables Selected} - \lstinline{RFGWinPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{NWKERPerSf}, \lstinline{RFGWI[YES]}, \lstinline{RFGICNPerSf}, \lstinline{FDSEATPerSf}, \lstinline{PBAPLUS.32[Fast Food]}
+\item RMSE - 52.33
+\item Rsquared - 0.4729
+\end{itemize}
 
 %Electricity - neural netowrk model

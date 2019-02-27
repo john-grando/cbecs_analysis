@@ -26,6 +26,46 @@ library(RSNNS)
 library(car)
 library(nnet)
 ```
+
+#ploting funcitons
+```{r}
+plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE) {
+  plot_df <- varImp(in_model)$importance %>% 
+    rownames_to_column(var='feature') %>% 
+    arrange(desc(Overall)) %>% 
+    head(n_features)
+  p1 <- ggplot(data = data.frame(plot_df), aes(x=reorder(feature, desc(Overall)), y=Overall)) + 
+    geom_bar(stat='identity')
+  ggsave(paste0('Documents/Images/electricity_',short_name,'_vars.png'), p1, width = 6.5, height = 2.75, units = 'in')
+
+  imp_df <- plot_df %>% 
+    select(feature)
+  
+  if(alt_predict==FALSE){
+    tmp_model <- lm(predict(in_model$finalModel, cbecs_elbtu_encoded_center_scale_train_df) ~ 
+      cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf)
+  }
+  if(alt_predict!=FALSE){
+    tmp_model <- lm(predict(in_model, cbecs_elbtu_encoded_center_scale_train_df) ~ 
+      cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf)
+  }
+  plot(tmp_model)
+  png(paste0('Documents/Images/electricity_',short_name,'_res.png'), width = 6.5, height = 5, 
+      units = 'in', pointsize = 12,
+      bg='white', res=100)
+  par(mfrow=c(2,2))
+  plot(tmp_model)
+  dev.off()
+  par(mfrow=c(2,2))
+  return(list(vars_plot = p1, 
+              tmp_model = tmp_model,
+              imp_df = imp_df)
+  )
+}
+```
+
+
+
 #Initialize parallel processing on 2 cores
 ```{r}
 cl <- makePSOCKcluster(1)
@@ -68,7 +108,7 @@ ggplot(cbecs_el_cleaned_df, aes(x=ELBTUPerSf^lmbda)) +
   ggtitle(paste('ELBTUPerSf Transformed via BoxCox, Lambda = ', lmbda, sep=""))
 ```
 
-Remove highly correlated pairs and report???
+#Remove highly correlated pairs
 ```{r warning=FALSE}
 cbecs_elbtu_encoded_df <- cbecs_el_encoded_df %>% 
   #remove zero variance variables
@@ -76,14 +116,12 @@ cbecs_elbtu_encoded_df <- cbecs_el_encoded_df %>%
   #remove response columns
   select(-one_of(cbecs_dfs$response_cols)) %>%
   #remove pba
-  select(-matches('^PBA\\.')) %>% 
+  #select(-matches('^PBA\\.')) %>% 
   select(-one_of(findCorrelation(cor(.), cutoff=0.75, names = TRUE))) %>%
   #remove remaining pba values then reinsert all
   #select(-matches('^PBAPLUS')) %>% 
   #bind_cols(cbecs_el_encoded_df %>% select(matches('^PBAPLUS'))) %>% 
   bind_cols(ELBTUPerSf = cbecs_el_encoded_df %>% select(ELBTUPerSf))
-
-findCorrelation(cor(cbecs_elbtu_encoded_df), cutoff=0.75, names = TRUE)
 
 cbecs_elbtu_encoded_numerics_cols <- colnames(
   cbecs_elbtu_encoded_df %>% 
@@ -103,7 +141,7 @@ cbecs_elbtu_encoded_center_scale_df <- predict(elbtu_pre_process, cbecs_elbtu_en
 
 #Set number of most important variables to take from each model
 ```{r}
-top_n_rows <- 2
+top_n_rows <- 10
 ```
 
 #PCA
@@ -123,7 +161,7 @@ pca_imp_df <- fviz_contrib(cbecs_pca, choice = "var", axes = 1:20, top = 50)$dat
   mutate(feature = as.character(feature))
 grid.arrange(p1, p3, nrow=1)
 g <- arrangeGrob(p1, p3, nrow = 1)
-ggsave('Documents/Images/electricity_pca.png', g, width = 6.5, height = 3, units = 'in')
+ggsave('Documents/Images/electricity_pca_vars.png', g, width = 6.5, height = 3, units = 'in')
 ```
 
 ```{r}
@@ -167,17 +205,11 @@ pls_train <- caret::train(
   trControl=control
 )
 print(pls_train)
-
 varImp(pls_train)
-pls_imp_df <- varImp(pls_train)$importance %>% 
-  rownames_to_column(var='feature') %>% 
-  arrange(desc(Overall)) %>% 
-  head(top_n_rows) %>% 
-  select(feature)
-
-tmp_model <- lm(predict(pls_train$finalModel, cbecs_elbtu_encoded_center_scale_train_df) ~ cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf)
-par(mfrow=c(2,2))
-plot(tmp_model)
+pls_plot <- plot_fun(in_model=pls_train, n_features=7, short_name='pls')
+pls_plot$vars_plot
+plot(pls_plot$tmp_model)
+pls_imp_df <- pls_plot$imp_df
 ```
 
 #Plots
@@ -185,8 +217,6 @@ plot(tmp_model)
 ggplot(cbecs_elbtu_encoded_center_scale_df, aes(x=((RFGWINPerSf)), y=(ELBTUPerSf)^lmbda)) + geom_point()
 ggplot(cbecs_elbtu_encoded_center_scale_df, aes(x=((RGSTRNPerSf)), y=(ELBTUPerSf)^lmbda)) + geom_point()
 ```
-
-
 
 #Tree regression importance
 ```{r fig.height=10}
@@ -209,32 +239,24 @@ rf_train <- caret::train(
   importance = TRUE
 )
 print(rf_train)
-ggplot(cbecs_elbtu_encoded_train_df, 
-       aes(x=rf_train$finalModel$predicted, 
-           y=ELBTUPerSf)) + geom_point()
 varImp(rf_train)
-rf_imp_df <- varImp(rf_train)$importance %>% 
-  rownames_to_column(var='feature') %>% 
-  arrange(desc(Overall)) %>% 
-  head(top_n_rows) %>% 
-  select(feature)
-
-tmp_model <- lm(predict(rf_train$finalModel, cbecs_elbtu_encoded_center_scale_train_df) ~ cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf)
-par(mfrow=c(2,2))
-plot(tmp_model)
+rf_plot <- plot_fun(in_model=rf_train, n_features=7, short_name='rf')
+rf_plot$vars_plot
+plot(rf_plot$tmp_model)
+rf_imp_df <- rf_plot$imp_df
 ```
 
 lasso
-```{r}
+```{r eval=FALSE}
 control <- trainControl(index = cbecs_train_cv_list, 
                         method = 'repeatedcv', 
                         number = folds, 
                         repeats = 1, 
                         search = 'grid', 
                         verboseIter = TRUE)
-tunegrid <- expand.grid(fraction = seq(.1, .1, .01))
+tunegrid <- expand.grid(fraction = seq(0.4, 0.5, .1))
 l_train <- caret::train(
-  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf^lmbda,
+  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
   x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
   method='lasso',
   metric='RMSE',
@@ -245,10 +267,10 @@ l_train <- caret::train(
 )
 print(l_train)
 varImp(l_train)
-
-tmp_model <- lm(predict(l_train$finalModel, cbecs_elbtu_encoded_center_scale_train_df) ~ cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf)
-par(mfrow=c(2,2))
-plot(tmp_model)
+l_plot <- plot_fun(in_model=l_train, n_features=5, short_name='l', alt_predict = TRUE)
+l_plot$vars_plot
+plot(l_plot$tmp_model)
+l_imp_df <- l_plot$imp_df
 ```
 
 leaps
@@ -259,11 +281,11 @@ control <- trainControl(index = cbecs_train_cv_list,
                         repeats = 1, 
                         search = 'grid', 
                         verboseIter = TRUE)
-tunegrid <- expand.grid(nvmax = seq(10, 10, 10))
+tunegrid <- expand.grid(nvmax = seq(10, 100, 10))
 lp_train <- caret::train(
-  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf^lmbda,
+  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
   x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
-  method='leapBackward',
+  method='leapForward',
   metric='RMSE',
   tuneGrid=tunegrid,
   trControl=control,
@@ -271,12 +293,31 @@ lp_train <- caret::train(
 )
 print(lp_train)
 varImp(lp_train)
-
-tmp_model <- lm(predict(lp_train, cbecs_elbtu_encoded_center_scale_train_df) ~ cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf)
-par(mfrow=c(2,2))
-plot(tmp_model)
+lp_plot <- plot_fun(in_model=lp_train, n_features=5, short_name='lp', alt_predict = TRUE)
+lp_plot$vars_plot
+plot(lp_plot$tmp_model)
+lp_imp_df <- lp_plot$imp_df
 ```
 
+#recursive feaure extraction
+```{r}
+ctrl <- rfeControl(functions = treebagFuncs,
+                   index = cbecs_train_cv_list, 
+                   method = 'repeatedcv', 
+                   number = folds, 
+                   repeats = 1,
+                   verbose = TRUE)
+
+rfe_train <- rfe(y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
+                 x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
+                 sizes = c(1:20, seq(100, 700, 100)),
+                 rfeControl = ctrl)
+
+rfe_train
+plot(rfe_train, type=c('g', 'o'))
+rfe_imp_df <- rfe_train$variables %>% filter(Variables == 7) %>% select(var) %>% distinct() %>% rename(feature = var)
+varImp(rfe_train)
+```
 
 #Simple neural network training
 ```{r echo=FALSE, fig.width=10}
@@ -302,34 +343,11 @@ nn_train <- caret::train(
   preProcess = c('zv')
 )
 print(nn_train)
-nn_imp_df <- varImp(nn_train)$importance %>% 
-  rownames_to_column(var='feature') %>% 
-  arrange(desc(Overall)) %>% 
-  head(top_n_rows) %>% 
-  select(feature)
 varImp(nn_train)
-tmp_model <- lm(predict(nn_train, cbecs_elbtu_encoded_center_scale_train_df) ~ cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf)
-par(mfrow=c(2,2))
-plot(tmp_model)
-```
-
-#recursive feaure extraction
-```{r}
-ctrl <- rfeControl(functions = treebagFuncs,
-                   index = cbecs_train_cv_list, 
-                   method = 'repeatedcv', 
-                   number = folds, 
-                   repeats = 1,
-                   verbose = TRUE)
-
-rfe_train <- rfe(y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
-                 x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
-                 sizes = c(1:20, seq(100, 700, 100)),
-                 rfeControl = ctrl)
-
-rfe_train
-plot(rfe_train, type=c('g', 'o'))
-rfe_imp_df <- rfe_train$variables %>% filter(Variables == 7) %>% select(var) %>% distinct() %>% rename(feature = var)
+nn_plot <- plot_fun(in_model=nn_train, n_features=5, short_name='nn', alt_predict = TRUE)
+nn_plot$vars_plot
+plot(nn_plot$tmp_model)
+nn_imp_df <- nn_plot$imp_df
 ```
 
 #make neural network input df based on the most important features selected
@@ -340,7 +358,9 @@ nn_input_train_test_df <- cbecs_elbtu_encoded_center_scale_train_df %>%
          one_of(rf_imp_df$feature),
          one_of(nn_imp_df$feature),
          one_of(rfe_imp_df$feature),
-         one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'), ELBTUPerSf))))
+         ELBTUPerSf
+         #one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'))))
+  )
 
 nn_input_validate_df <- cbecs_elbtu_encoded_center_scale_test_df %>% 
   select(one_of(pls_imp_df$feature), 
@@ -348,7 +368,9 @@ nn_input_validate_df <- cbecs_elbtu_encoded_center_scale_test_df %>%
          one_of(rf_imp_df$feature),
          one_of(nn_imp_df$feature),
          one_of(rfe_imp_df$feature),
-         one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'), ELBTUPerSf))))
+         ELBTUPerSf
+         #one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'), ELBTUPerSf)))
+  )
 ```
 
 
@@ -361,7 +383,9 @@ nn_input_df <- cbecs_elbtu_encoded_center_scale_df %>%
          one_of(rf_imp_df$feature),
          one_of(nn_imp_df$feature),
          one_of(rfe_imp_df$feature),
-         one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'), ELBTUPerSf))))
+         ELBTUPerSf
+         #one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'))))
+  )
 
 nn_input_pba_labels <- cbecs_el_cleaned_df$PBAPLUS
   
