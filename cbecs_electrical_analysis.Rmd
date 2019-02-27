@@ -7,7 +7,6 @@ output: html_document
 
 Source files
 ```{r}
-source('tree_func.R')
 source('cbecs_2012_clean_transform.R')
 ```
 
@@ -19,6 +18,7 @@ library(pls)
 library(randomForest)
 library(inTrees)
 library(doParallel)
+library(doMC)
 library(elasticnet)
 library(keras)
 library(tibble)
@@ -64,11 +64,9 @@ plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE
 }
 ```
 
-
-
 #Initialize parallel processing on 2 cores
 ```{r}
-cl <- makePSOCKcluster(1)
+cl <- makePSOCKcluster(5)
 registerDoParallel(cl)
 ```
 
@@ -141,7 +139,7 @@ cbecs_elbtu_encoded_center_scale_df <- predict(elbtu_pre_process, cbecs_elbtu_en
 
 #Set number of most important variables to take from each model
 ```{r}
-top_n_rows <- 10
+top_n_rows <- 20
 ```
 
 #PCA
@@ -206,7 +204,7 @@ pls_train <- caret::train(
 )
 print(pls_train)
 varImp(pls_train)
-pls_plot <- plot_fun(in_model=pls_train, n_features=7, short_name='pls')
+pls_plot <- plot_fun(in_model=pls_train, n_features=top_n_rows, short_name='pls')
 pls_plot$vars_plot
 plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
@@ -227,7 +225,7 @@ control <- trainControl(index = cbecs_train_cv_list,
                         repeats = 1, 
                         search = 'grid', 
                         verboseIter = TRUE)
-tunegrid <- expand.grid(mtry = seq(100, 300, 100))
+tunegrid <- expand.grid(mtry = seq(100, 100, 100))
 rf_train <- caret::train(
   y = cbecs_elbtu_encoded_train_df$ELBTUPerSf,
   x = cbecs_elbtu_encoded_train_df %>% select(-ELBTUPerSf),
@@ -240,7 +238,7 @@ rf_train <- caret::train(
 )
 print(rf_train)
 varImp(rf_train)
-rf_plot <- plot_fun(in_model=rf_train, n_features=7, short_name='rf')
+rf_plot <- plot_fun(in_model=rf_train, n_features=top_n_rows, short_name='rf')
 rf_plot$vars_plot
 plot(rf_plot$tmp_model)
 rf_imp_df <- rf_plot$imp_df
@@ -267,7 +265,7 @@ l_train <- caret::train(
 )
 print(l_train)
 varImp(l_train)
-l_plot <- plot_fun(in_model=l_train, n_features=5, short_name='l', alt_predict = TRUE)
+l_plot <- plot_fun(in_model=l_train, n_features=top_n_rows, short_name='l', alt_predict = TRUE)
 l_plot$vars_plot
 plot(l_plot$tmp_model)
 l_imp_df <- l_plot$imp_df
@@ -293,7 +291,7 @@ lp_train <- caret::train(
 )
 print(lp_train)
 varImp(lp_train)
-lp_plot <- plot_fun(in_model=lp_train, n_features=5, short_name='lp', alt_predict = TRUE)
+lp_plot <- plot_fun(in_model=lp_train, n_features=top_n_rows, short_name='lp', alt_predict = TRUE)
 lp_plot$vars_plot
 plot(lp_plot$tmp_model)
 lp_imp_df <- lp_plot$imp_df
@@ -344,11 +342,24 @@ nn_train <- caret::train(
 )
 print(nn_train)
 varImp(nn_train)
-nn_plot <- plot_fun(in_model=nn_train, n_features=5, short_name='nn', alt_predict = TRUE)
+nn_plot <- plot_fun(in_model=nn_train, n_features=top_n_rows, short_name='nn', alt_predict = TRUE)
 nn_plot$vars_plot
 plot(nn_plot$tmp_model)
 nn_imp_df <- nn_plot$imp_df
 ```
+
+#trained model summaries
+```{r}
+resamps <- resamples(list(
+  pls_fit = pls_train,
+  rf_fit = rf_train,
+  lp_fit = lp_train,
+  rfe_fit = rfe_train,
+  nn_fit = nn_train
+))
+summary(resamps)
+```
+
 
 #make neural network input df based on the most important features selected
 ```{r}

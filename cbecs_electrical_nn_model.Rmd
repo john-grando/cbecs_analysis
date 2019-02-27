@@ -96,10 +96,11 @@ build_3h_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) {
     layer_dense(units = 1)
   
   model %>% compile(
-    loss = keras::loss_mean_squared_logarithmic_error,
+    loss = 'mse',
+    #loss = keras::loss_mean_squared_logarithmic_error,
     #loss = custom_loss_func,
-    optimizer = keras::optimizer_sgd(lr = 0.01, decay = 0.0),
-    #optimizer = keras::optimizer_rmsprop(),
+    #optimizer = keras::optimizer_sgd(lr = 0.01, decay = 0.0),
+    optimizer = keras::optimizer_rmsprop(),
     metrics = list("mean_absolute_error", percentage_metric)
   )
   model
