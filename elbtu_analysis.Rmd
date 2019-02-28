@@ -1,0 +1,225 @@
+---
+title: "cbecs_electrical_analysis"
+author: "John Grando"
+date: "February 11, 2019"
+output: html_document
+---
+
+Source files
+```{r}
+source('RScripts/elbtu_base_training.R')
+```
+
+Libraries
+```{r}
+library(aws.s3)
+library(aws.signature)
+```
+
+#ploting funcitons
+```{r}
+plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE) {
+  plot_df <- varImp(in_model)$importance %>% 
+    rownames_to_column(var='feature') %>% 
+    arrange(desc(Overall)) %>% 
+    head(n_features)
+  p1 <- ggplot(data = data.frame(plot_df), aes(x=reorder(feature, desc(Overall)), y=Overall)) + 
+    geom_bar(stat='identity')
+  ggsave(paste0('Documents/Images/electricity_',short_name,'_vars.png'), p1, width = 6.5, height = 2.75, units = 'in')
+
+  imp_df <- plot_df %>% 
+    select(feature)
+  
+  if(alt_predict==FALSE){
+    tmp_model <- lm(predict(in_model$finalModel, cbecs_elbtu_encoded_center_scale_train_df) ~ 
+      cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf)
+  }
+  if(alt_predict!=FALSE){
+    tmp_model <- lm(predict(in_model, cbecs_elbtu_encoded_center_scale_train_df) ~ 
+      cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf)
+  }
+  plot(tmp_model)
+  png(paste0('Documents/Images/electricity_',short_name,'_res.png'), width = 6.5, height = 5, 
+      units = 'in', pointsize = 12,
+      bg='white', res=100)
+  par(mfrow=c(2,2))
+  plot(tmp_model)
+  dev.off()
+  par(mfrow=c(2,2))
+  return(list(vars_plot = p1, 
+              tmp_model = tmp_model,
+              imp_df = imp_df)
+  )
+}
+```
+
+```{r}
+#Set number of most important variables to take from each model
+top_n_rows <- 20
+```
+
+Response Variable
+```{r}
+ggplot(cbecs_el_cleaned_df, aes(x=ELBTUPerSf)) + 
+  geom_density()
+ggsave('Documents/Images/electricity_response.png', width = 6.5, height = 3, units = 'in')
+lmbda <- BoxCoxTrans(cbecs_el_cleaned_df$ELBTUPerSf + 1)$lambda
+ggplot(cbecs_el_cleaned_df, aes(x=ELBTUPerSf^lmbda)) + 
+  geom_density() + 
+  stat_function(fun=dnorm,
+                color="blue",
+                args=list(
+                  mean=mean(cbecs_dfs$clean_df$ELBTUPerSf^lmbda, na.rm = TRUE),
+                  sd(cbecs_dfs$clean_df$ELBTUPerSf^lmbda, na.rm = TRUE)
+                )
+  ) +
+  ggtitle(paste('ELBTUPerSf Transformed via BoxCox, Lambda = ', lmbda, sep=""))
+#Reset to 1, not going to use it.
+lmbda <- 1
+```
+
+#Set number of most important variables to take from each model
+```{r}
+top_n_rows <- 20
+```
+
+#PCA
+```{r fig.width=10}
+set.seed(20)
+s3load('ModelSaves/elbtu_pca.RData', bucket = 'cuny-msds-final-project')
+p1 <- fviz_eig(cbecs_pca, addlabels = TRUE)
+var <- get_pca_var(cbecs_pca)
+p2 <- fviz_pca_var(cbecs_pca, select.var = list(contrib=20), repel = TRUE)
+p3 <- fviz_contrib(cbecs_pca, choice = "var", axes = 1:20, top = 20)
+pca_imp_df <- fviz_contrib(cbecs_pca, choice = "var", axes = 1:20, top = 50)$data %>% 
+  arrange(desc(contrib)) %>% 
+  head(top_n_rows) %>% 
+  select(name) %>% 
+  rename(feature = name) %>% 
+  mutate(feature = as.character(feature))
+grid.arrange(p1, p3, nrow=1)
+g <- arrangeGrob(p1, p3, nrow = 1)
+ggsave('Documents/Images/electricity_pca_vars.png', g, width = 6.5, height = 3, units = 'in')
+```
+
+#PLS 
+```{r fig.height=8}
+set.seed(20)
+s3load('ModelSaves/elbtu_pls.RData', bucket = 'cuny-msds-final-project')
+print(pls_train)
+varImp(pls_train)
+pls_plot <- plot_fun(in_model=pls_train, n_features=top_n_rows, short_name='pls', alt_predict = TRUE)
+pls_plot$vars_plot
+plot(pls_plot$tmp_model)
+pls_imp_df <- pls_plot$imp_df
+```
+
+#Tree regression importance
+```{r fig.height=10}
+set.seed(20)
+s3load('ModelSaves/elbtu_rf.RData', bucket = 'cuny-msds-final-project')
+print(rf_train)
+varImp(rf_train)
+rf_plot <- plot_fun(in_model=rf_train, n_features=top_n_rows, short_name='rf')
+rf_plot$vars_plot
+plot(rf_plot$tmp_model)
+rf_imp_df <- rf_plot$imp_df
+```
+
+lasso
+```{r eval}
+set.seed(20)
+s3load('ModelSaves/elbtu_l.RData', bucket = 'cuny-msds-final-project')
+print(l_train)
+varImp(l_train)
+l_plot <- plot_fun(in_model=l_train, n_features=top_n_rows, short_name='l', alt_predict = TRUE)
+l_plot$vars_plot
+plot(l_plot$tmp_model)
+l_imp_df <- l_plot$imp_df
+```
+
+leaps
+```{r}
+set.seed(20)
+s3load('ModelSaves/elbtu_lp.RData', bucket = 'cuny-msds-final-project')
+print(lp_train)
+varImp(lp_train)
+lp_plot <- plot_fun(in_model=lp_train, n_features=top_n_rows, short_name='lp', alt_predict = TRUE)
+lp_plot$vars_plot
+plot(lp_plot$tmp_model)
+lp_imp_df <- lp_plot$imp_df
+```
+
+#recursive feaure extraction
+```{r}
+set.seed(20)
+s3load('ModelSaves/elbtu_rfe.RData', bucket = 'cuny-msds-final-project')
+rfe_train
+plot(rfe_train, type=c('g', 'o'))
+rfe_imp_df <- rfe_train$variables %>% filter(Variables == 7) %>% select(var) %>% distinct() %>% rename(feature = var)
+varImp(rfe_train)
+```
+
+
+#Simple neural network training
+```{r echo=FALSE, fig.width=10}
+set.seed(20)
+s3load('ModelSaves/elbtu_nn.RData', bucket = 'cuny-msds-final-project')
+print(nn_train)
+varImp(nn_train)
+nn_plot <- plot_fun(in_model=nn_train, n_features=top_n_rows, short_name='nn', alt_predict = TRUE)
+nn_plot$vars_plot
+plot(nn_plot$tmp_model)
+nn_imp_df <- nn_plot$imp_df
+```
+
+#load models, again if not done before
+```{r}
+s3load(pca_model_name, bucket = 'cuny-msds-final-project')
+s3load(pls_model_name, bucket = 'cuny-msds-final-project')
+s3load(rf_model_name, bucket = 'cuny-msds-final-project')
+s3load(l_model_name, bucket = 'cuny-msds-final-project')
+s3load(lp_model_name, bucket = 'cuny-msds-final-project')
+s3load(rfe_model_name, bucket = 'cuny-msds-final-project')
+s3load(nn_model_name, bucket = 'cuny-msds-final-project')
+```
+
+#trained model summaries
+```{r}
+resamps <- resamples(list(
+  pls_fit = pls_train,
+  rf_fit = rf_train,
+  lp_fit = lp_train,
+  rfe_fit = rfe_train,
+  nn_fit = nn_train
+))
+summary(resamps)
+```
+
+#Save dataframes for full analysis
+```{r}
+nn_input_df <- cbecs_elbtu_encoded_center_scale_df %>% 
+  select(one_of(pls_imp_df$feature), 
+         one_of(pca_imp_df$feature),
+         one_of(rf_imp_df$feature),
+         one_of(nn_imp_df$feature),
+         one_of(rfe_imp_df$feature),
+         ELBTUPerSf
+         #one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'))))
+  )
+
+nn_input_pba_labels <- cbecs_el_cleaned_df$PBAPLUS
+
+nn_input_data_name <- 'ModelSaves/elbtu_nn_input.RData'
+
+save(nn_input_pba_labels, 
+     nn_input_df, 
+     elbtu_pre_process,
+     cbecs_elbtu_encoded_center_scale_df,
+     file= nn_input_data_name
+)
+put_object(file = nn_input_data_name, 
+           bucket = 'cuny-msds-final-project', 
+           object = nn_input_data_name, 
+           multipart = TRUE)
+```

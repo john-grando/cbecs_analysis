@@ -1,0 +1,66 @@
+---
+title: "multi_layer_perceptron"
+author: "John Grando"
+date: "February 13, 2019"
+output: html_document
+---
+
+#libraries
+```{r}
+library(kableExtra)
+```
+
+```{r}
+#Set up base and compile
+source('RScripts/elbtu_nn_base_model.R')
+#Get model types
+source('RScripts/elbtu_nn_model_functions_build.R')
+```
+
+```{r}
+s3load('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket = 'cuny-msds-final-project')
+hyper_summary <- hyper_results %>% 
+  group_by(model, dropout, units, reg) %>% 
+  summarize(loss = mean(loss), 
+            mae = mean(mae), 
+            pm = mean(pm))
+hyper_summary %>% arrange(mae) %>% kable('html') %>% kable_styling()
+```
+
+```{r}
+model <- s3read_using(load_model_hdf5, 
+                      object = 'ModelSaves/elbtu_nn_full_model.h5', 
+                      bucket = 'cuny-msds-final-project')
+model %>% summary()
+s3load('ModelSaves/elbtu_nn_full_model_history.RData', bucket = 'cuny-msds-final-project')
+```
+
+#Predict and examine residuals
+```{r eval=FALSE, fig.width=10}
+plot(history)
+evaluation <- model %>% evaluate(as.matrix(validation_df), as.matrix(validation_labels), verbose=2)
+evaluation
+resid_model <- lm(model %>% predict(as.matrix(validation_df))~as.matrix(validation_labels))
+summary(resid_model)
+par(mfrow=c(2,2))
+plot(resid_model)
+residuals <- resid(resid_model)
+resid_df <- data.frame(resid = residuals, 
+                       pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list),
+                       elbtu_per_sf = validation_labels,
+                       pred = model %>% predict(as.matrix(validation_df)),
+                       ratio = abs(1 - (1 + model %>% predict(as.matrix(validation_df))) / (1 + validation_labels)))
+ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_df)),
+                         obs=validation_labels),
+       aes(x=pred, y=obs)) + 
+  geom_point() + 
+  geom_abline(slope = 1)
+#ggplot(resid_df, aes(x=resid)) + geom_density() + facet_wrap(~pba, scales = 'free')
+ggplot(resid_df, aes(x=elbtu_per_sf, y=resid)) + geom_point()
+
+elbtu_impact_error_check_df <- resid_df %>% 
+  group_by(pba) %>% 
+  summarize(avg_ratio = mean(ratio), 
+            elbtu_per_sf_error = mean(ratio * elbtu_per_sf))
+```
+

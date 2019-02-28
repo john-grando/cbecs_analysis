@@ -1,9 +1,13 @@
+#keras models
+*.h5
+
 # History files
 .Rhistory
 .Rapp.history
 
 # Session Data files
-.RData
+*.RData
+
 
 # Example code in package build process
 *-Ex.R
