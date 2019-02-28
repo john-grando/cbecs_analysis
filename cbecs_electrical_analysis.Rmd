@@ -164,14 +164,11 @@ g <- arrangeGrob(p1, p3, nrow = 1)
 ggsave('Documents/Images/electricity_pca_vars.png', g, width = 6.5, height = 3, units = 'in')
 ```
 
-<<<<<<< HEAD
-=======
 #save model
 ```{r}
 save(cbecs_pca, file = 'ModelSaves/elbtu_pca.RData')
 ```
 
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 ```{r}
 #ggplot(cbecs_dfs$clean_df, aes(x=COOK, y=log(ELBTUPerSf))) + geom_boxplot()
 #ggplot(cbecs_dfs$clean_df, aes(x=LAUNDR, y=log(ELBTUPerSf))) + geom_boxplot()
@@ -180,10 +177,6 @@ save(cbecs_pca, file = 'ModelSaves/elbtu_pca.RData')
 #ggplot(cbecs_dfs$clean_df, aes(x=BLDPLT, y=(ELBTUPerSf))) + geom_boxplot()
 ```
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 #Train/Test split
 ```{r}
 cbecs_train_list <- createDataPartition(y= cbecs_el_cleaned_df$PBAPLUS, p=0.8, list = FALSE) 
@@ -192,11 +185,7 @@ cbecs_elbtu_encoded_test_df <- cbecs_elbtu_encoded_df[-cbecs_train_list,]
 cbecs_elbtu_encoded_center_scale_train_df <- cbecs_elbtu_encoded_center_scale_df[cbecs_train_list,]
 cbecs_elbtu_encoded_center_scale_test_df <- cbecs_elbtu_encoded_center_scale_df[-cbecs_train_list,]
 #stratify training set
-<<<<<<< HEAD
-folds <- 5
-=======
 folds <- 2
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 cbecs_train_cv_list <- createFolds(y=cbecs_el_cleaned_df[cbecs_train_list,]$PBAPLUS, k = folds, returnTrain = TRUE)
 ```
 
@@ -226,14 +215,11 @@ plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
 ```
 
-<<<<<<< HEAD
-=======
 #save model
 ```{r}
 save(pls_train, file = 'ModelSaves/elbtu_pls.RData')
 ```
 
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 #Plots
 ```{r}
 #ggplot(cbecs_elbtu_encoded_center_scale_df, aes(x=((RFGWINPerSf)), y=(ELBTUPerSf)^lmbda)) + geom_point()
@@ -268,14 +254,11 @@ plot(rf_plot$tmp_model)
 rf_imp_df <- rf_plot$imp_df
 ```
 
-<<<<<<< HEAD
-=======
 #save model
 ```{r}
 save(rf_train, file = 'ModelSaves/elbtu_rf.RData')
 ```
 
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 lasso
 ```{r eval=FALSE}
 control <- trainControl(index = cbecs_train_cv_list, 
@@ -303,14 +286,11 @@ plot(l_plot$tmp_model)
 l_imp_df <- l_plot$imp_df
 ```
 
-<<<<<<< HEAD
-=======
 #save model
 ```{r}
 save(l_train, file = 'ModelSaves/elbtu_l.RData')
 ```
 
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 leaps
 ```{r}
 control <- trainControl(index = cbecs_train_cv_list, 
@@ -337,14 +317,11 @@ plot(lp_plot$tmp_model)
 lp_imp_df <- lp_plot$imp_df
 ```
 
-<<<<<<< HEAD
-=======
 #save model
 ```{r}
 save(lp_train, file = 'ModelSaves/elbtu_lp.RData')
 ```
 
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 #recursive feaure extraction
 ```{r}
 ctrl <- rfeControl(functions = treebagFuncs,
@@ -356,12 +333,8 @@ ctrl <- rfeControl(functions = treebagFuncs,
 
 rfe_train <- rfe(y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
                  x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
-<<<<<<< HEAD
-                 sizes = c(1:20, seq(50, 700, 50)),
-=======
                  #sizes = c(1:20, seq(50, 700, 50)),
                  sizes = c(1:20, seq(500, 700, 50)),
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
                  rfeControl = ctrl)
 
 rfe_train
@@ -370,14 +343,11 @@ rfe_imp_df <- rfe_train$variables %>% filter(Variables == 7) %>% select(var) %>%
 varImp(rfe_train)
 ```
 
-<<<<<<< HEAD
-=======
 #save model
 ```{r}
 save(rfe_train, file = 'ModelSaves/elbtu_rfe.RData')
 ```
 
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 #Simple neural network training
 ```{r echo=FALSE, fig.width=10}
 control <- trainControl(index = cbecs_train_cv_list, 
@@ -409,8 +379,6 @@ plot(nn_plot$tmp_model)
 nn_imp_df <- nn_plot$imp_df
 ```
 
-<<<<<<< HEAD
-=======
 #save model
 ```{r}
 save(nn_train, file = 'ModelSaves/elbtu_nn.RData')
@@ -427,7 +395,6 @@ load('ModelSaves/elbtu_rfe.RData')
 load('ModelSaves/elbtu_nn.RData')
 ```
 
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 #trained model summaries
 ```{r}
 resamps <- resamples(list(
@@ -440,35 +407,6 @@ resamps <- resamples(list(
 summary(resamps)
 ```
 
-<<<<<<< HEAD
-
-#make neural network input df based on the most important features selected
-```{r}
-nn_input_train_test_df <- cbecs_elbtu_encoded_center_scale_train_df %>% 
-  select(one_of(pls_imp_df$feature), 
-         one_of(pca_imp_df$feature),
-         one_of(rf_imp_df$feature),
-         one_of(nn_imp_df$feature),
-         one_of(rfe_imp_df$feature),
-         ELBTUPerSf
-         #one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'))))
-  )
-
-nn_input_validate_df <- cbecs_elbtu_encoded_center_scale_test_df %>% 
-  select(one_of(pls_imp_df$feature), 
-         one_of(pca_imp_df$feature),
-         one_of(rf_imp_df$feature),
-         one_of(nn_imp_df$feature),
-         one_of(rfe_imp_df$feature),
-         ELBTUPerSf
-         #one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'), ELBTUPerSf)))
-  )
-```
-
-
-
-=======
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 #Save dataframes for full analysis
 ```{r}
 nn_input_df <- cbecs_elbtu_encoded_center_scale_df %>% 
@@ -486,19 +424,11 @@ nn_input_pba_labels <- cbecs_el_cleaned_df$PBAPLUS
 save(nn_input_pba_labels, 
      nn_input_df, 
      elbtu_pre_process,
-<<<<<<< HEAD
-=======
      cbecs_elbtu_encoded_center_scale_df,
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
      file='nn_elbtu_input.RData'
 )
 ```
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 3cb970c39f2115dae15235ea0999d4d9975d8f60
 #Stop parallel processing
 ```{r}
 stopCluster(cl)
