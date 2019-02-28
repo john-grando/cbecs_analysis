@@ -104,6 +104,8 @@ ggplot(cbecs_el_cleaned_df, aes(x=ELBTUPerSf^lmbda)) +
                 )
   ) +
   ggtitle(paste('ELBTUPerSf Transformed via BoxCox, Lambda = ', lmbda, sep=""))
+#Reset to 1, not going to use it.
+lmbda <- 1
 ```
 
 #Remove highly correlated pairs
@@ -163,11 +165,11 @@ ggsave('Documents/Images/electricity_pca_vars.png', g, width = 6.5, height = 3, 
 ```
 
 ```{r}
-ggplot(cbecs_dfs$clean_df, aes(x=COOK, y=log(ELBTUPerSf))) + geom_boxplot()
-ggplot(cbecs_dfs$clean_df, aes(x=LAUNDR, y=log(ELBTUPerSf))) + geom_boxplot()
-ggplot(cbecs_dfs$clean_df, aes(x=CUBE, y=log(ELBTUPerSf))) + geom_boxplot()
-ggplot(cbecs_dfs$clean_df, aes(x=ELCPLT, y=(ELBTUPerSf))) + geom_boxplot()
-ggplot(cbecs_dfs$clean_df, aes(x=BLDPLT, y=(ELBTUPerSf))) + geom_boxplot()
+#ggplot(cbecs_dfs$clean_df, aes(x=COOK, y=log(ELBTUPerSf))) + geom_boxplot()
+#ggplot(cbecs_dfs$clean_df, aes(x=LAUNDR, y=log(ELBTUPerSf))) + geom_boxplot()
+#ggplot(cbecs_dfs$clean_df, aes(x=CUBE, y=log(ELBTUPerSf))) + geom_boxplot()
+#ggplot(cbecs_dfs$clean_df, aes(x=ELCPLT, y=(ELBTUPerSf))) + geom_boxplot()
+#ggplot(cbecs_dfs$clean_df, aes(x=BLDPLT, y=(ELBTUPerSf))) + geom_boxplot()
 ```
 
 
@@ -179,7 +181,7 @@ cbecs_elbtu_encoded_test_df <- cbecs_elbtu_encoded_df[-cbecs_train_list,]
 cbecs_elbtu_encoded_center_scale_train_df <- cbecs_elbtu_encoded_center_scale_df[cbecs_train_list,]
 cbecs_elbtu_encoded_center_scale_test_df <- cbecs_elbtu_encoded_center_scale_df[-cbecs_train_list,]
 #stratify training set
-folds <- 2
+folds <- 5
 cbecs_train_cv_list <- createFolds(y=cbecs_el_cleaned_df[cbecs_train_list,]$PBAPLUS, k = folds, returnTrain = TRUE)
 ```
 
@@ -192,19 +194,18 @@ control <- trainControl(index = cbecs_train_cv_list,
                         repeats = 1, 
                         search = 'grid', 
                         verboseIter = TRUE)
-tunegrid <- expand.grid(ncomp = seq(1, 30, 2))
+tunegrid <- expand.grid(ncomp = seq(1, 10, 1))
 pls_train <- caret::train(
   y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf^lmbda,
   x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
   method='pls',
   metric='RMSE',
-  maximize=FALSE,
   tuneGrid=tunegrid,
   trControl=control
 )
 print(pls_train)
 varImp(pls_train)
-pls_plot <- plot_fun(in_model=pls_train, n_features=top_n_rows, short_name='pls')
+pls_plot <- plot_fun(in_model=pls_train, n_features=top_n_rows, short_name='pls', alt_predict = TRUE)
 pls_plot$vars_plot
 plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
@@ -212,8 +213,8 @@ pls_imp_df <- pls_plot$imp_df
 
 #Plots
 ```{r}
-ggplot(cbecs_elbtu_encoded_center_scale_df, aes(x=((RFGWINPerSf)), y=(ELBTUPerSf)^lmbda)) + geom_point()
-ggplot(cbecs_elbtu_encoded_center_scale_df, aes(x=((RGSTRNPerSf)), y=(ELBTUPerSf)^lmbda)) + geom_point()
+#ggplot(cbecs_elbtu_encoded_center_scale_df, aes(x=((RFGWINPerSf)), y=(ELBTUPerSf)^lmbda)) + geom_point()
+#ggplot(cbecs_elbtu_encoded_center_scale_df, aes(x=((RGSTRNPerSf)), y=(ELBTUPerSf)^lmbda)) + geom_point()
 ```
 
 #Tree regression importance
@@ -225,7 +226,7 @@ control <- trainControl(index = cbecs_train_cv_list,
                         repeats = 1, 
                         search = 'grid', 
                         verboseIter = TRUE)
-tunegrid <- expand.grid(mtry = seq(100, 100, 100))
+tunegrid <- expand.grid(mtry = seq(50, 550, 100))
 rf_train <- caret::train(
   y = cbecs_elbtu_encoded_train_df$ELBTUPerSf,
   x = cbecs_elbtu_encoded_train_df %>% select(-ELBTUPerSf),
@@ -233,7 +234,7 @@ rf_train <- caret::train(
   metric='RMSE',
   tuneGrid=tunegrid,
   trControl=control,
-  maxnodes=30,
+  maxnodes=100,
   importance = TRUE
 )
 print(rf_train)
@@ -308,7 +309,7 @@ ctrl <- rfeControl(functions = treebagFuncs,
 
 rfe_train <- rfe(y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
                  x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
-                 sizes = c(1:20, seq(100, 700, 100)),
+                 sizes = c(1:20, seq(50, 700, 50)),
                  rfeControl = ctrl)
 
 rfe_train
@@ -324,12 +325,12 @@ control <- trainControl(index = cbecs_train_cv_list,
                         number = folds, 
                         repeats = 1, 
                         search = 'grid')
-tunegrid <- expand.grid(size = seq(110, 210, 100), 
-                        dropout = seq(0.1, 0.9, 0.8), 
-                        batch_size = seq(1000, 1000, 1000), 
-                        lr = seq(0.2, 0.7, 0.5),
-                        rho = seq(0.2, 0.7, 0.5),
-                        decay = seq(0.1, 0.4, 0.3), 
+tunegrid <- expand.grid(size = seq(10, 200, 10), 
+                        dropout = seq(0.1, 0.9, 0.2), 
+                        batch_size = seq(1000, 4000, 1000), 
+                        lr = seq(0.1, 0.9, 0.2),
+                        rho = seq(0.1, 0.9, 0.2),
+                        decay = seq(0.1, 0.9, 0.2), 
                         activation = c('relu'))
 nn_train <- caret::train(
   y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
