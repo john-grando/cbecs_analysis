@@ -20,7 +20,7 @@ library(doMC)
 
 #Load input data and assign as train/test/validation
 ```{r}
-load('nn_elbtu_input.RData')
+load('ModelSaves/elbtu_nn_input.RData')
 #stratify training set
 train_test_list <- createDataPartition(y=nn_input_pba_labels, 
                                         p=0.8, 

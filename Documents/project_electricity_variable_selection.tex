@@ -14,30 +14,43 @@ The response data appear to be unimodal and have a heavy right skew with a media
 
 The principle component analysis indicates that only 4.3\% of the variance in the data can be explained in the first principle component, which then drops to 1.7\% for the second principle component.  These results reveal that there does not appear to be clear axes that can explain the variance of the data very well, which indicates there may be some very complex interactions taking place in the predictors.  However, the top 2 predictors, based on contribution percentage to the principle components, will still be taken for further analysis:
 
-\begin{itemize}
+\begin{myitemize}
 \item \hyperref[appendix:electricity:pca]{Variables Selected} - \lstinline{COOK[NO]}, \lstinline{LAUNDR[NA]}
 \item RMSE - NA
 \item Rsquared - NA
-\end{itemize}
+\end{myitemize}
 
 \subsection{Variable Selection - PLS}
 
 This model returned a promising result with an Rsquared value of 0.4318, which is pretty good considering it is a simply construcsted model.  Looking at the result, it is obvious that the use of refrigeration equipment is dominating the variable importance plot as well as some other seemingly reasonable predictors, such as the number of registers per square foot of gross floor area.  The top 7 variables were selected for further review.
 
-\begin{itemize}
+\begin{myitemize}
 \item \hyperref[appendix:electricity:pls]{Variables Selected} - \lstinline{RFGWinPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{RFGICNPerSf}, \lstinline{FDSEATPerSF}, \lstinline{RFGCLNPerSf}, \lstinline{NWKERPerSf}, \lstinline{RFGOPNPerSf}
 \item RMSE - 53.48
 \item Rsquared - 0.4318
-\end{itemize}
+\end{myitemize}
 
 \subsection{Variable Selection - Random Forest}
 
 As with the PLS, model, the resulting error metrics were promising, with slightly better RMSE and Rsquared values.  The selected variables are ver similar with a few exceptions.  This model has placed higher importance on a yes/no response to the presence of walk in refrigerators as well as whether or not a building is a fast food establishment
 
-\begin{itemize}
+\begin{myitemize}
 \item \hyperref[appendix:electricity:rf]{Variables Selected} - \lstinline{RFGWinPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{NWKERPerSf}, \lstinline{RFGWI[YES]}, \lstinline{RFGICNPerSf}, \lstinline{FDSEATPerSf}, \lstinline{PBAPLUS.32[Fast Food]}
 \item RMSE - 52.33
 \item Rsquared - 0.4729
-\end{itemize}
+\end{myitemize}
 
-%Electricity - neural netowrk model
+\subsection{Variable Selection - Lasso}
+Test
+
+\subsection{Variable Selection - Leaps}
+Test
+
+\subsection{Variable Selection - Simple Neural Network}
+Test
+
+\subsection{Variable Selection - Recursive Feature Elimination}
+Test
+
+\subsection{Variable Selection - Selected Variable Analysis}
+Test

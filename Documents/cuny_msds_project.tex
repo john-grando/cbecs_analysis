@@ -9,10 +9,19 @@
 \usepackage{listings}
 \usepackage{subcaption}
 \usepackage{lscape}
+
+\newenvironment{myitemize}
+{ \begin{itemize}
+    \setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{0pt}
+    \setlength{\topsep}{0pt}     }
+{ \end{itemize}                  } 
+
 \lstset{
 	basicstyle=\small\ttfamily,
 	showstringspaces=False}
-\geometry{tmargin=1in, bmargin=1in}
+\geometry{margin=1in}
 \setlength{\emergencystretch}{3em}
 \author{John Grando}
 \title{CUNY MSDS Proposal}
@@ -53,9 +62,9 @@
 
 
 \begin{document}
-% ------------------------------------------------------------------------------
+%----------------------------------------------------------------
 % Maketitle
-% ------------------------------------------------------------------------------
+%---------------------------------------------------------------
 \thispagestyle{empty}		% Remove page numbering on this page
 \printtitle					% Print the title data as defined above
   	\vfill
@@ -68,9 +77,9 @@
   }
 \newpage
 \setcounter{page}{1}		% Set page numbering to begin on this page
-% ------------------------------------------------------------------------------
+%----------------------------------------------------------------
 % Begin document
-% ------------------------------------------------------------------------------
+%------------------------------------------------------------------------
 \input{project_abstract}
 \input{project_introduction}
 \input{project_related_work}
@@ -79,7 +88,10 @@
 \input{project_general_process}
 \input{project_pre_process_data}
 \input{project_electricity_variable_selection}
-
+\input{project_natural_gas_variable_selection}
+\input{project_district_heat_variable_selection}
+\input{project_fuel_oil_variable_selection}
+\input{project_neural_network_models}
 %Performance Experiments \\
 %Conclusion \\
 %Future Work \\
