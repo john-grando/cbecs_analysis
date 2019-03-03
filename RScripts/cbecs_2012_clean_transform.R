@@ -37,6 +37,9 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     filter(YRCON != 2012) %>% 
     #Drop month ready for occupancy in 2012, not useful
     select(-MONCON) %>% 
+    #YRCON identifies buildings older than 1946 as 995, which makes the numeric feature not accurate.  
+    #Remove and rely on categories in YRCONC
+    select(-YRCON) %>% 
     #If buidling was indicated to be not cooled, then percent cooled is zero
     mutate(COOLP = ifelse(COOL==2, 0, COOL)) %>% 
     #If one of the preceding non-electrical use questions is answered as yes, then zero for percent-lit
@@ -64,7 +67,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     #fix 999 flag which means 'dont know' - NA
     mutate(ELLUPCT = ifelse(ELLUPCT==999, NA, ELLUPCT)) %>% 
     ##### Remove ELLUPCT FOR NOW ####
-  select(-ELLUPCT) %>% 
+    select(-ELLUPCT) %>% 
     #Not interested in cost
     select(-WOEXP, -WOEXPC) %>%
     #if respondent did not indicate any residential refrigerators, then it is zero
@@ -135,99 +138,100 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     #create additional column that catches difference
     mutate(OTHPCT = 100 - ACT1PCT - ACT2PCT - ACT3PCT) %>% 
     #per sf values to track: electricity
-    mutate(ELCNSPerSf = ELCNS / SQFT) %>%
+    #mutate(ELCNSPerSf = ELCNS / SQFT) %>%
     #electricity btu
-    mutate(ELBTUPerSf = ELBTU / SQFT) %>%
+    #mutate(ELBTUPerSf = ELBTU / SQFT) %>%
     #electricity heating btu
-    mutate(ELHTBTUPerSf = ELHTBTU / SQFT) %>%
+    #mutate(ELHTBTUPerSf = ELHTBTU / SQFT) %>%
     #electricity cooling btu
-    mutate(ELCLBTUPerSf = ELCLBTU / SQFT) %>%
+    #mutate(ELCLBTUPerSf = ELCLBTU / SQFT) %>%
     #electricity ventilation btu
-    mutate(ELVNBTUPerSf = ELVNBTU / SQFT) %>%
+    #mutate(ELVNBTUPerSf = ELVNBTU / SQFT) %>%
     #electricity water heating btu
-    mutate(ELWTBTUPerSf = ELWTBTU / SQFT) %>%
+    #mutate(ELWTBTUPerSf = ELWTBTU / SQFT) %>%
     #electricity lighting btu
-    mutate(ELLTBTUPerSf = ELLTBTU / SQFT) %>%
+    #mutate(ELLTBTUPerSf = ELLTBTU / SQFT) %>%
     #electricity cooking btu
-    mutate(ELCKBTUPerSf = ELCKBTU / SQFT) %>%
+    #mutate(ELCKBTUPerSf = ELCKBTU / SQFT) %>%
     #electricity refrigeration btu
-    mutate(ELRFBTUPerSf = ELRFBTU / SQFT) %>%
+    #mutate(ELRFBTUPerSf = ELRFBTU / SQFT) %>%
     #electricity office equipment btu
-    mutate(ELOFBTUPerSf = ELOFBTU / SQFT) %>%
+    #mutate(ELOFBTUPerSf = ELOFBTU / SQFT) %>%
     #electricity computing btu
-    mutate(ELPCBTUPerSf = ELPCBTU / SQFT) %>%
+    #mutate(ELPCBTUPerSf = ELPCBTU / SQFT) %>%
     #electricity miscellaneous btu
-    mutate(ELOTBTUPerSf = ELOTBTU / SQFT) %>%
+    #mutate(ELOTBTUPerSf = ELOTBTU / SQFT) %>%
     #natural gas ccf
-    mutate(NGCNSPerSf = NGCNS / SQFT) %>%
+    #mutate(NGCNSPerSf = NGCNS / SQFT) %>%
     #natural gas BTU
-    mutate(NGBTUPerSf = NGBTU / SQFT) %>%
+    #mutate(NGBTUPerSf = NGBTU / SQFT) %>%
     #natural gas heating BTU
-    mutate(NGHTBTUPerSf = NGHTBTU / SQFT) %>%
+    #mutate(NGHTBTUPerSf = NGHTBTU / SQFT) %>%
     #natural gas cooling BTU
-    mutate(NGCLBTUPerSf = NGCLBTU / SQFT) %>%
+    #mutate(NGCLBTUPerSf = NGCLBTU / SQFT) %>%
     #natural gas water heating BTU
-    mutate(NGWTBTUPerSf = NGWTBTU / SQFT) %>%
+    #mutate(NGWTBTUPerSf = NGWTBTU / SQFT) %>%
     #natural gas cooking BTU
-    mutate(NGCKBTUPerSf = NGCKBTU / SQFT) %>%
+    #mutate(NGCKBTUPerSf = NGCKBTU / SQFT) %>%
     #natural gas misc BTU
-    mutate(NGOTBTUPerSf = NGOTBTU / SQFT) %>%
+    #mutate(NGOTBTUPerSf = NGOTBTU / SQFT) %>%
     #District heat thousand pounds
-    mutate(DHCNSPerSf = DHCNS / SQFT) %>%
+    #mutate(DHCNSPerSf = DHCNS / SQFT) %>%
     #District heat thousand btu
-    mutate(DHBTUPerSf = DHBTU / SQFT) %>% 
+    #mutate(DHBTUPerSf = DHBTU / SQFT) %>% 
     #District heat heating thousand btu
-    mutate(DHHTBTUPerSf = DHHTBTU / SQFT) %>% 
+    #mutate(DHHTBTUPerSf = DHHTBTU / SQFT) %>% 
     #District heat cooling thousand btu
-    mutate(DHCLBTUPerSf = DHCLBTU / SQFT) %>% 
+    #mutate(DHCLBTUPerSf = DHCLBTU / SQFT) %>% 
     #District heat water heating thousand btu
-    mutate(DHWTBTUPerSf = DHWTBTU / SQFT) %>% 
+    #mutate(DHWTBTUPerSf = DHWTBTU / SQFT) %>% 
     #District heat cooking thousand btu
-    mutate(DHCKBTUPerSf = DHCKBTU / SQFT) %>%
+    #mutate(DHCKBTUPerSf = DHCKBTU / SQFT) %>%
     #District heat misc thousand btu
-    mutate(DHOTBTUPerSf = DHOTBTU / SQFT) %>%
+    #mutate(DHOTBTUPerSf = DHOTBTU / SQFT) %>%
     #fuel oil
-    mutate(FKCNSPerSf = FKCNS / SQFT) %>%
+    #mutate(FKCNSPerSf = FKCNS / SQFT) %>%
     #Fuel oil thousand btu
-    mutate(FKBTUPerSf = FKBTU / SQFT) %>%
+    #mutate(FKBTUPerSf = FKBTU / SQFT) %>%
     #Fuel oil heating thousand btu
-    mutate(FKHTBTUPerSf = FKHTBTU / SQFT) %>%
+    #mutate(FKHTBTUPerSf = FKHTBTU / SQFT) %>%
     #Fuel oil cooling thousand btu
-    mutate(FKCLBTUPerSf = FKCLBTU / SQFT) %>%
+    #mutate(FKCLBTUPerSf = FKCLBTU / SQFT) %>%
     #Fuel oil water heating thousand btu
-    mutate(FKWTBTUPerSf = FKWTBTU / SQFT) %>%
+    #mutate(FKWTBTUPerSf = FKWTBTU / SQFT) %>%
     #Fuel oil cooking thousand btu
-    mutate(FKCKBTUPerSf = FKCKBTU / SQFT) %>%
+    #mutate(FKCKBTUPerSf = FKCKBTU / SQFT) %>%
     #Fuel oil misc thousand btu
-    mutate(FKOTBTUPerSf = FKOTBTU / SQFT) %>%
+    #mutate(FKOTBTUPerSf = FKOTBTU / SQFT) %>%
     #Major fuel btu
-    mutate(MFBTUPerSf = MFBTU / SQFT) %>%
+    #mutate(MFBTUPerSf = MFBTU / SQFT) %>%
     #Major fuel heating btu
-    mutate(MFHTBTUPerSf = MFHTBTU / SQFT) %>%
+    #mutate(MFHTBTUPerSf = MFHTBTU / SQFT) %>%
     #Major fuel cooling btu
-    mutate(MFCLBTUPerSf = MFCLBTU / SQFT) %>%
+    #mutate(MFCLBTUPerSf = MFCLBTU / SQFT) %>%
     #Major fuel ventilation btu
-    mutate(MFVNBTUPerSf = MFVNBTU / SQFT) %>%
+    #mutate(MFVNBTUPerSf = MFVNBTU / SQFT) %>%
     #Major fuel water heating btu
-    mutate(MFWTBTUPerSf = MFWTBTU / SQFT) %>%
+    #mutate(MFWTBTUPerSf = MFWTBTU / SQFT) %>%
     #Major fuel lighting btu
-    mutate(MFLTBTUPerSf = MFLTBTU / SQFT) %>%
+    #mutate(MFLTBTUPerSf = MFLTBTU / SQFT) %>%
     #Major fuel cooking btu
-    mutate(MFCKBTUPerSf = MFCKBTU / SQFT) %>%
+    #mutate(MFCKBTUPerSf = MFCKBTU / SQFT) %>%
     #Major fuel refrigeration btu
-    mutate(MFRFBTUPerSf = MFRFBTU / SQFT) %>%
+    #mutate(MFRFBTUPerSf = MFRFBTU / SQFT) %>%
     #Major fuel office equipment use btu
-    mutate(MFOFBTUPerSf = MFOFBTU / SQFT) %>%
+    #mutate(MFOFBTUPerSf = MFOFBTU / SQFT) %>%
     #Major fuel computing use btu
-    mutate(MFPCBTUPerSf = MFPCBTU / SQFT) %>%
+    #mutate(MFPCBTUPerSf = MFPCBTU / SQFT) %>%
     #Major fuel other btu
-    mutate(MFOTBTUPerSf = MFOTBTU / SQFT) %>%
+    #mutate(MFOTBTUPerSf = MFOTBTU / SQFT) %>%
     #columns not interested in tracking for this study (e.g. expenditures, total usage, etc.)
-    select(-ELCNS, -ELBTU, -ELHTBTU, -ELCLBTU, -ELCLBTU, -ELVNBTU, -ELWTBTU, -ELLTBTU, -ELCKBTU,
+    #select(-ELBTU, -NGBTU, -DHBTU, -FKBTU, -MFBTU) %>% 
+    select(-ELCNS, -ELHTBTU, -ELCLBTU, -ELCLBTU, -ELVNBTU, -ELWTBTU, -ELLTBTU, -ELCKBTU,
            -ELRFBTU, -ELOFBTU, -ELPCBTU, -ELOTBTU,
-           -NGCNS, -NGBTU, -NGHTBTU, -NGCLBTU, -NGWTBTU, -NGCKBTU, -NGOTBTU, -FKCNS, 
-           -DHBTU, -DHCNS, -DHHTBTU, -DHCLBTU, -DHWTBTU, -DHCKBTU, -DHOTBTU, 
-           -FKBTU, -FKHTBTU, -FKCLBTU, -FKWTBTU, -FKCKBTU, -FKOTBTU, -MFBTU,
+           -NGCNS, -NGHTBTU, -NGCLBTU, -NGWTBTU, -NGCKBTU, -NGOTBTU, -FKCNS, 
+           -DHCNS, -DHHTBTU, -DHCLBTU, -DHWTBTU, -DHCKBTU, -DHOTBTU, 
+           -FKHTBTU, -FKCLBTU, -FKWTBTU, -FKCKBTU, -FKOTBTU,
            -MFHTBTU, -MFCLBTU, -MFVNBTU, -MFWTBTU, -MFLTBTU, -MFCKBTU, 
            -MFRFBTU, -MFOFBTU, -MFPCBTU, -MFOTBTU,
            -ELEXP, -NGEXP, -FKEXP, -DHEXP, -MFEXP) %>% 
@@ -235,32 +239,31 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     mutate_at(vars(OCCUPYP, LODOCCP, RWSEAT, PBSEAT, EDSEAT, FDSEAT, HCBED, NRSBED, LODGRM, HEATP, FURNP, PKGHP, 
                    BOILP, STHWP, HTPHP, SLFCNP, OTHTP, RCACP, PKGCP, CHILP, CHWTP, HTPCP, ACWNWP, EVAPP, OTCLP, CONFSPP,
                    XRAYN, PRNTRN, FLUORP, CFLRP, BULBP, HALOP, HIDP, LEDP, FLUORP, CFLRP, BULBP, HALOP, HIDP, LEDP, 
-                   OTLTP, DAYLTP, PCTERMN, LAPTPN, SERVERN, TVVIDEON, RGSTRN, COPIERN,
-                   ELCNSPerSf, ELBTUPerSf, ELHTBTUPerSf, ELCLBTUPerSf, ELVNBTUPerSf, ELWTBTUPerSf, ELLTBTUPerSf,
-                   ELCKBTUPerSf, ELRFBTUPerSf, ELOFBTUPerSf, ELPCBTUPerSf, ELOTBTUPerSf, NGCNSPerSf, NGBTUPerSf, 
-                   NGHTBTUPerSf, NGCLBTUPerSf, NGWTBTUPerSf, 
-                   NGCKBTUPerSf, NGOTBTUPerSf, FKCNSPerSf, DHCNSPerSf, DHBTUPerSf, DHHTBTUPerSf, DHCLBTUPerSf,
-                   DHWTBTUPerSf, DHCKBTUPerSf, DHOTBTUPerSf, FKBTUPerSf, FKHTBTUPerSf, FKCLBTUPerSf, FKWTBTUPerSf, 
-                   FKCKBTUPerSf, FKOTBTUPerSf, MFBTUPerSf, MFHTBTUPerSf, MFCLBTUPerSf, MFVNBTUPerSf, MFWTBTUPerSf,
-                   MFLTBTUPerSf, MFCKBTUPerSf, MFRFBTUPerSf, MFOFBTUPerSf, MFPCBTUPerSf, MFOTBTUPerSf), 
+                   OTLTP, DAYLTP, PCTERMN, LAPTPN, SERVERN, TVVIDEON, RGSTRN, COPIERN#,
+                   #ELCNSPerSf, ELBTUPerSf, ELHTBTUPerSf, ELCLBTUPerSf, ELVNBTUPerSf, ELWTBTUPerSf, ELLTBTUPerSf,
+                   #ELCKBTUPerSf, ELRFBTUPerSf, ELOFBTUPerSf, ELPCBTUPerSf, ELOTBTUPerSf, NGCNSPerSf, NGBTUPerSf, 
+                   #NGHTBTUPerSf, NGCLBTUPerSf, NGWTBTUPerSf, 
+                   #NGCKBTUPerSf, NGOTBTUPerSf, FKCNSPerSf, DHCNSPerSf, DHBTUPerSf, DHHTBTUPerSf, DHCLBTUPerSf,
+                   #DHWTBTUPerSf, DHCKBTUPerSf, DHOTBTUPerSf, FKBTUPerSf, FKHTBTUPerSf, FKCLBTUPerSf, FKWTBTUPerSf, 
+                   #FKCKBTUPerSf, FKOTBTUPerSf, MFBTUPerSf, MFHTBTUPerSf, MFCLBTUPerSf, MFVNBTUPerSf, MFWTBTUPerSf,
+                   #MFLTBTUPerSf, MFCKBTUPerSf, MFRFBTUPerSf, MFOFBTUPerSf, MFPCBTUPerSf, MFOTBTUPerSf
+                   ), 
               funs(na_repl_num(., 0)))
   #Get appropriate numeric columns and divide to get PerSf metrics
   PerSfVector <- c('NFLOOR', 'BASEMNT', 'NELVTR', 'NESLTR', 'RWSEAT', 'PBSEAT',
                    'EDSEAT', 'FDSEAT', 'HCBED', 'NRSBED', 'LODGRM', 'NOCC', 'NWKER',
                    'XRAYN', 'RFGRSN', 'RFGCOMPN', 'RFGWIN', 'RFGOPN', 'RFGCLN', 'RFGVNN',
                    'RFGICN', 'PCTERMN', 'LAPTPN', 'PRNTRN', 'SERVERN', 'TVVIDEON', 'RGSTRN')
-  per_sf_df <- trim_df %>% select_(.dots = PerSfVector)
-  per_sf_df <- per_sf_df / trim_df[,c('SQFT')]
-  colnames(per_sf_df) <- paste(colnames(per_sf_df), "PerSf", sep="")
-  clean_df <- trim_df %>% 
-    select(names(trim_df[!(colnames(trim_df) %in% PerSfVector)])) %>% 
-    bind_cols(per_sf_df) #%>%
-  #keep sf?
-#    select(-SQFT)
-  
+  #per_sf_df <- trim_df %>% select_(.dots = PerSfVector)
+  #per_sf_df <- per_sf_df / trim_df[,c('SQFT')]
+  #colnames(per_sf_df) <- paste(colnames(per_sf_df), "PerSf", sep="")
+  clean_df <- trim_df #%>% 
+  #  select(names(trim_df[!(colnames(trim_df) %in% PerSfVector)])) %>% 
+  #  bind_cols(per_sf_df)
   #Make list of numeric column groups
   removed_response_list <- colnames(clean_df[,!grepl('EL.*PerSf|NG.*PerSf|DH.*PerSf|FK.*PerSf|MF.*PerSf', colnames(clean_df), ignore.case = TRUE)])
-  response_cols <- c('ELBTUPerSf', 'NGBTUPerSf', 'DHBTUPerSf', 'FKBTUPerSf', 'MFBTUPerSf')
+  #response_cols <- c('ELBTUPerSf', 'NGBTUPerSf', 'DHBTUPerSf', 'FKBTUPerSf', 'MFBTUPerSf')
+  response_cols <- c('ELBTU', 'NGBTU', 'DHBTU', 'FKBTU', 'MFBTU')
   tmp_column_list <- append(removed_response_list, response_cols)
   clean_numeric_cols <- names(clean_df[, unlist(lapply(clean_df, is.numeric)) & colnames(clean_df) %in% tmp_column_list])
   clean_non_numeric_cols <- names(clean_df[, !(colnames(clean_df) %in% clean_numeric_cols) & colnames(clean_df) %in% tmp_column_list])

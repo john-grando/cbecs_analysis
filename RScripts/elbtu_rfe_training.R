@@ -1,7 +1,7 @@
 source('RScripts/elbtu_base_training.R')
 
 #Initialize parallel processing on 2 cores
-cl <- makePSOCKcluster(5)
+cl <- makePSOCKcluster(2)
 registerDoParallel(cl)
 
 ctrl <- rfeControl(functions = treebagFuncs,
@@ -11,8 +11,8 @@ ctrl <- rfeControl(functions = treebagFuncs,
                    repeats = 1,
                    verbose = TRUE)
 
-rfe_train <- rfe(y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
-                 x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
+rfe_train <- rfe(y = cbecs_elbtu_encoded_center_scale_train_df$ELBTU,
+                 x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTU),
                  sizes = c(1:20, seq(50, 700, 50)),
                  rfeControl = ctrl)
 

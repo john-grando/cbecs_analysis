@@ -1,7 +1,7 @@
 source('RScripts/elbtu_base_training.R')
 
 #Initialize parallel processing on 2 cores
-cl <- makePSOCKcluster(5)
+cl <- makePSOCKcluster(2)
 registerDoParallel(cl)
 
 control <- trainControl(index = cbecs_train_cv_list, 
@@ -12,14 +12,14 @@ control <- trainControl(index = cbecs_train_cv_list,
                         verboseIter = TRUE)
 tunegrid <- expand.grid(fraction = seq(0.4, 0.5, .1))
 l_train <- caret::train(
-  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
-  x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
+  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTU,
+  x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTU),
   method='lasso',
   metric='RMSE',
   tuneGrid=tunegrid,
   trControl=control,
   preProcess = c('zv')#,
-  #weights = 1 / (cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf)
+  #weights = 1 / (cbecs_elbtu_encoded_center_scale_train_df$ELBTU)
 )
 
 #save model

@@ -6,7 +6,7 @@ source('RScripts/elbtu_nn_base_model.R')
 source('RScripts/elbtu_nn_model_functions_build.R')
 
 #Select model
-model <- model_selector(model_n = '3', df = train_df, n_dropout=0.1, n_units=100, n_l = 0.1)
+model <- model_selector(model_n = '3', df = train_df, n_dropout=0.6, n_units=110, n_l = 0.2)
 
 #Compile
 model %>% compile(
@@ -31,13 +31,13 @@ print_dot_callback <- callback_lambda(
 early_stop <- callback_early_stopping(monitor = "val_loss", patience = 50)
 
 #Run
-epochs <- 500
+epochs <- 1000
 history <- model %>% fit(
   as.matrix(train_df),
   as.matrix(train_labels),
   epochs = epochs,
   validation_data = list(as.matrix(test_df), as.matrix(test_labels)),
-  batch_size = 1000,
+  batch_size = 100,
   verbose = 0,
   callbacks = list(print_dot_callback, early_stop)
 )

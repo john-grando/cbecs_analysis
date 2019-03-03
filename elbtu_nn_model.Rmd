@@ -20,7 +20,7 @@ source('RScripts/elbtu_nn_model_functions_build.R')
 ```{r}
 s3load('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket = 'cuny-msds-final-project')
 hyper_summary <- hyper_results %>% 
-  group_by(model, dropout, units, reg) %>% 
+  group_by(model, dropout, units, reg, batch) %>% 
   summarize(loss = mean(loss), 
             mae = mean(mae), 
             pm = mean(pm))
@@ -36,7 +36,7 @@ s3load('ModelSaves/elbtu_nn_full_model_history.RData', bucket = 'cuny-msds-final
 ```
 
 #Predict and examine residuals
-```{r eval=FALSE, fig.width=10}
+```{r fig.width=10}
 plot(history)
 evaluation <- model %>% evaluate(as.matrix(validation_df), as.matrix(validation_labels), verbose=2)
 evaluation

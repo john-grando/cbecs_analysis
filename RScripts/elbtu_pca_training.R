@@ -3,7 +3,7 @@
 source('RScripts/elbtu_base_training.R')
 
 cbecs_pca <- prcomp(cbecs_elbtu_encoded_center_scale_df %>% 
-                    select(-ELBTUPerSf) %>%
+                    select(-ELBTU) %>%
                     select(-one_of(cbecs_dfs$response_cols)), center = TRUE, scale. = TRUE)
 
 #save model

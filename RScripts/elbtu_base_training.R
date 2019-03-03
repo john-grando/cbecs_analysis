@@ -42,12 +42,12 @@ cbecs_elbtu_encoded_df <- cbecs_el_encoded_df %>%
   #remove remaining pba values then reinsert all
   #select(-matches('^PBAPLUS')) %>% 
   #bind_cols(cbecs_el_encoded_df %>% select(matches('^PBAPLUS'))) %>% 
-  bind_cols(ELBTUPerSf = cbecs_el_encoded_df %>% select(ELBTUPerSf))
+  bind_cols(ELBTU = cbecs_el_encoded_df %>% select(ELBTU))
 
 cbecs_elbtu_encoded_numerics_cols <- colnames(
   cbecs_elbtu_encoded_df %>% 
     select(one_of(cbecs_dfs$encoded_numeric_cols)) %>% 
-    select(-ELBTUPerSf)) 
+    select(-ELBTU)) 
 cbecs_elbtu_encoded_non_numerics_cols <- colnames(
   cbecs_elbtu_encoded_df %>% 
     select(one_of(cbecs_dfs$encoded_non_numeric_cols)))

@@ -25,7 +25,7 @@ train_test_df <- nn_input_df %>%
 
 train_test_labels <- (train_test_df %>% 
                         slice(train_test_list) %>% 
-                        select(ELBTUPerSf))$ELBTUPerSf
+                        select(ELBTU))$ELBTU
 
 set.seed(20)
 train_list <- createDataPartition(y=train_test_df$PBA,
@@ -33,27 +33,27 @@ train_list <- createDataPartition(y=train_test_df$PBA,
                                   list=FALSE)
 train_df <- train_test_df %>% 
   slice(train_list) %>% 
-  select(-PBA, -ELBTUPerSf)
+  select(-PBA, -ELBTU)
 
 train_labels <- (train_test_df %>% 
                    slice(train_list) %>% 
-                   select(ELBTUPerSf))$ELBTUPerSf
+                   select(ELBTU))$ELBTU
 
 test_df <- train_test_df %>% 
   slice(-train_list) %>% 
-  select(-PBA, -ELBTUPerSf)
+  select(-PBA, -ELBTU)
 
 test_labels <- (train_test_df %>% 
                   slice(-train_list) %>% 
-                  select(ELBTUPerSf))$ELBTUPerSf
+                  select(ELBTU))$ELBTU
 
 validation_df <- nn_input_df %>% 
   slice(-train_test_list) %>% 
-  select(-ELBTUPerSf)
+  select(-ELBTU)
 
 validation_labels <- (nn_input_df %>%
                         slice(-train_test_list) %>% 
-                        select(ELBTUPerSf))$ELBTUPerSf
+                        select(ELBTU))$ELBTU
 
 #Custom loss funcitons
 custom_loss_func <- function(y_true, y_pred) {

@@ -3,7 +3,7 @@
 source('RScripts/elbtu_base_training.R')
 
 #Initialize parallel processing on 2 cores
-cl <- makePSOCKcluster(5)
+cl <- makePSOCKcluster(2)
 registerDoParallel(cl)
 
 #Simple neural network training
@@ -20,8 +20,8 @@ tunegrid <- expand.grid(size = seq(100, 200, 100),
                         decay = seq(0.3, 0.9, 0.3), 
                         activation = c('relu'))
 nn_train <- caret::train(
-  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
-  x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
+  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTU,
+  x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTU),
   method='mlpKerasDropout',
   metric='RMSE',
   tuneGrid=tunegrid,
