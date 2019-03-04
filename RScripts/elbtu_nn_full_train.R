@@ -6,7 +6,7 @@ source('RScripts/elbtu_nn_base_model.R')
 source('RScripts/elbtu_nn_model_functions_build.R')
 
 #Select model
-model <- model_selector(model_n = '3', df = train_df, n_dropout=0.6, n_units=110, n_l = 0.2)
+model <- model_selector(model_n = '3', df = train_df, n_dropout=0.6, n_units=85, n_l = 0)
 
 #Compile
 model %>% compile(

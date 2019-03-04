@@ -20,7 +20,7 @@ source('RScripts/elbtu_nn_model_functions_build.R')
 ```{r}
 s3load('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket = 'cuny-msds-final-project')
 hyper_summary <- hyper_results %>% 
-  group_by(model, dropout, units, reg, batch) %>% 
+  group_by(loss, opt, model, dropout, units, reg, batch) %>% 
   summarize(loss = mean(loss), 
             mae = mean(mae), 
             pm = mean(pm))
