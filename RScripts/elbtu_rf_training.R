@@ -10,9 +10,9 @@ control <- trainControl(index = cbecs_train_cv_list,
                         repeats = 1, 
                         search = 'grid', 
                         verboseIter = TRUE)
-tunegrid <- expand.grid(mtry = seq(50, 550, 100))
+tunegrid <- expand.grid(mtry = seq(50, 350, 100))
 rf_train <- caret::train(
-  y = cbecs_elbtu_encoded_train_df$ELBTU,
+  y = log(cbecs_elbtu_encoded_train_df$ELBTU + 1),
   x = cbecs_elbtu_encoded_train_df %>% select(-ELBTU),
   method='rf',
   metric='RMSE',

@@ -10,16 +10,16 @@ control <- trainControl(index = cbecs_train_cv_list,
                         repeats = 1, 
                         search = 'grid', 
                         verboseIter = TRUE)
-tunegrid <- expand.grid(fraction = seq(0.4, 0.5, .1))
+tunegrid <- expand.grid(fraction = seq(0.1, 0.5, .1))
 l_train <- caret::train(
-  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTU,
+  y = log(cbecs_elbtu_encoded_center_scale_train_df$ELBTU + 1),
   x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTU),
   method='lasso',
   metric='RMSE',
   tuneGrid=tunegrid,
   trControl=control,
   preProcess = c('zv')#,
-  #weights = 1 / (cbecs_elbtu_encoded_center_scale_train_df$ELBTU)
+  #weights = 1 / pmax(1, cbecs_elbtu_encoded_center_scale_train_df$ELBTU)
 )
 
 #save model

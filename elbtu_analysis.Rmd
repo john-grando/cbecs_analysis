@@ -18,7 +18,7 @@ library(aws.signature)
 
 #ploting funcitons
 ```{r}
-plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE) {
+plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE, log_tran=FALSE) {
   plot_df <- varImp(in_model)$importance %>% 
     rownames_to_column(var='feature') %>% 
     arrange(desc(Overall)) %>% 
@@ -30,13 +30,21 @@ plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE
   imp_df <- plot_df %>% 
     select(feature)
   
+  if(log_tran==TRUE){
+    response <- log(cbecs_elbtu_encoded_center_scale_train_df$ELBTU + 1)
+  }
+  
+  if(log_tran!=FALSE){
+    response <- cbecs_elbtu_encoded_center_scale_train_df$ELBTU
+  }
+  
   if(alt_predict==FALSE){
     tmp_model <- lm(predict(in_model$finalModel, cbecs_elbtu_encoded_center_scale_train_df) ~ 
-      cbecs_elbtu_encoded_center_scale_train_df$ELBTU)
+      response)
   }
   if(alt_predict!=FALSE){
     tmp_model <- lm(predict(in_model, cbecs_elbtu_encoded_center_scale_train_df) ~ 
-      cbecs_elbtu_encoded_center_scale_train_df$ELBTU)
+      response)
   }
   plot(tmp_model)
   png(paste0('Documents/Images/electricity_',short_name,'_res.png'), width = 6.5, height = 5, 
@@ -122,7 +130,7 @@ set.seed(20)
 s3load('ModelSaves/elbtu_pls.RData', bucket = 'cuny-msds-final-project')
 print(pls_train)
 varImp(pls_train)
-pls_plot <- plot_fun(in_model=pls_train, n_features=top_n_rows, short_name='pls', alt_predict = TRUE)
+pls_plot <- plot_fun(in_model=pls_train, n_features=top_n_rows, short_name='pls', alt_predict = TRUE, log_tran = TRUE)
 pls_plot$vars_plot
 plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
@@ -134,13 +142,14 @@ set.seed(20)
 s3load('ModelSaves/elbtu_rf.RData', bucket = 'cuny-msds-final-project')
 print(rf_train)
 varImp(rf_train)
-rf_plot <- plot_fun(in_model=rf_train, n_features=top_n_rows, short_name='rf')
+rf_plot <- plot_fun(in_model=rf_train, n_features=top_n_rows, short_name='rf', log_tran = TRUE)
 rf_plot$vars_plot
 plot(rf_plot$tmp_model)
 rf_imp_df <- rf_plot$imp_df
 
 #how to evaluate rows
-#View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% filter(rowname==507)))
+#View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974)))
+#View(t(cbecs_elbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974) %>% select(ELBTU, pred, one_of(rf_imp_df$feature))))
 ```
 
 lasso
@@ -149,7 +158,7 @@ set.seed(20)
 s3load('ModelSaves/elbtu_l.RData', bucket = 'cuny-msds-final-project')
 print(l_train)
 varImp(l_train)
-l_plot <- plot_fun(in_model=l_train, n_features=top_n_rows, short_name='l', alt_predict = TRUE)
+l_plot <- plot_fun(in_model=l_train, n_features=top_n_rows, short_name='l', alt_predict = TRUE, log_tran = TRUE)
 l_plot$vars_plot
 plot(l_plot$tmp_model)
 l_imp_df <- l_plot$imp_df
@@ -161,7 +170,7 @@ set.seed(20)
 s3load('ModelSaves/elbtu_lp.RData', bucket = 'cuny-msds-final-project')
 print(lp_train)
 varImp(lp_train)
-lp_plot <- plot_fun(in_model=lp_train, n_features=top_n_rows, short_name='lp', alt_predict = TRUE)
+lp_plot <- plot_fun(in_model=lp_train, n_features=top_n_rows, short_name='lp', alt_predict = TRUE, log_tran = TRUE)
 lp_plot$vars_plot
 plot(lp_plot$tmp_model)
 lp_imp_df <- lp_plot$imp_df

@@ -52,12 +52,22 @@ cbecs_elbtu_encoded_non_numerics_cols <- colnames(
   cbecs_elbtu_encoded_df %>% 
     select(one_of(cbecs_dfs$encoded_non_numeric_cols)))
 
+#Make offset for boxcox
+cbecs_elbtu_encoded_offset_df <- cbecs_elbtu_encoded_df %>% 
+  mutate_at(vars(cbecs_elbtu_encoded_numerics_cols), funs(.+1))
+
 #center and scale only numeric columns in data set, not encoder columns
 elbtu_pre_process <- preProcess(
-  cbecs_elbtu_encoded_df, 
-  method = list(center = cbecs_elbtu_encoded_numerics_cols, 
-                scale = cbecs_elbtu_encoded_numerics_cols))
-cbecs_elbtu_encoded_center_scale_df <- predict(elbtu_pre_process, cbecs_elbtu_encoded_df)
+  cbecs_elbtu_encoded_offset_df, 
+  method = list(
+    BoxCox = cbecs_elbtu_encoded_numerics_cols,
+    center = cbecs_elbtu_encoded_numerics_cols, 
+    scale = cbecs_elbtu_encoded_numerics_cols))
+
+#Apply transformations to dataframe
+cbecs_elbtu_encoded_center_scale_df <- predict(elbtu_pre_process, 
+                                               cbecs_elbtu_encoded_df %>% 
+                                                 mutate_at(vars(cbecs_elbtu_encoded_numerics_cols), funs(.+1)))
 
 #Train/Test split
 set.seed(20)

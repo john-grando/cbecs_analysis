@@ -12,7 +12,7 @@ control <- trainControl(index = cbecs_train_cv_list,
                         verboseIter = TRUE)
 tunegrid <- expand.grid(nvmax = seq(10, 100, 10))
 lp_train <- caret::train(
-  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTU,
+  y = log(cbecs_elbtu_encoded_center_scale_train_df$ELBTU + 1),
   x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTU),
   method='leapForward',
   metric='RMSE',

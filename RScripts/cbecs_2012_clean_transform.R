@@ -72,7 +72,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     select(-WOEXP, -WOEXPC) %>%
     #if respondent did not indicate any residential refrigerators, then it is zero
     #also, if the question didn't apply then assume zero
-    mutate(RFGRSN = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGRES==2, 0, RFGRES)) %>% 
+    mutate(RFGRSN = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGRES==2, 0, RFGRSN)) %>% 
     #same for compact refrigerators
     mutate(RFGCOMPN = ifelse(is.na(RFGEQP)|RFGEQP==2|RFGCOMP==2, 0, RFGCOMPN)) %>% 
     #same for walkins
@@ -93,6 +93,133 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     mutate(RGSTRN = ifelse(RGSTR==2, 0, RGSTRN)) %>% 
     #if copoer response was 'no', then it is zero
     mutate(COPIERN = ifelse(COPIER==2, 0, COPIERN)) %>% 
+    #NFLOOR has flags, 994 and 995 which are groupings, convert to a binned predictor and remove NFLOOR
+    mutate(NFLOOR_bin = as.factor(
+      ifelse(NFLOOR == 1, 1, 
+             ifelse(NFLOOR <= 5, 2,
+                    ifelse(NFLOOR <= 10, 3,
+                           ifelse(NFLOOR <= 14, 4,
+                                  ifelse(NFLOOR == 994, 5, 
+                                         ifelse(NFLOOR == 995, 6, NA)))))))) %>% 
+    select(-NFLOOR) %>% 
+    #FLCEILHT has flags, 995
+    mutate(FLCEILHT_bin = as.factor(
+      ifelse(FLCEILHT <= 10, 1, 
+             ifelse(FLCEILHT <= 15, 2, 
+                    ifelse(FLCEILHT <= 20, 3, 
+                           ifelse(FLCEILHT <= 35, 4,
+                                  ifelse(FLCEILHT <= 50, 5,
+                                         ifelse(FLCEILHT == 995, 6, NA)))))))) %>% 
+    select(-FLCEILHT) %>% 
+    #NELVTR has flags, 995
+    mutate(NELVTR_bin = as.factor(
+      ifelse(NELVTR == 0, 1,
+             ifelse(NELVTR <= 5, 2, 
+                    ifelse(NELVTR <= 10, 3, 
+                           ifelse(NELVTR <= 20, 4, 
+                                  ifelse(NELVTR <= 30, 5,
+                                         ifelse(NELVTR <= 40, 6,
+                                                ifelse(NELVTR <= 50, 7,
+                                                       ifelse(NELVTR == 995, 8, NA)))))))))) %>% 
+    select(-NELVTR) %>%
+    #NESLTR has flags, 995
+    mutate(NESLTR_bin = as.factor(
+      ifelse(NESLTR == 0, 1, 
+             ifelse(NESLTR <= 5, 2, 
+                    ifelse(NESLTR <= 15, 3, 
+                           ifelse(NESLTR <= 20, 4,
+                                  ifelse(NESLTR == 995, 7, NA))))))) %>% 
+    select(-NESLTR) %>%
+    #RWSEAT has flags, 99995
+    mutate(RWSEAT_bin = as.factor(
+      ifelse(RWSEAT == 0, 1, 
+             ifelse(RWSEAT <= 250, 2, 
+                    ifelse(RWSEAT <= 500, 3, 
+                           ifelse(RWSEAT <= 1000, 4,
+                                  ifelse(RWSEAT <= 1500, 5,
+                                          ifelse(RWSEAT == 99995, 6, NA)))))))) %>% 
+    select(-RWSEAT) %>%
+    #PBSEAT has flags, 999995
+    mutate(PBSEAT_bin = as.factor(
+      ifelse(PBSEAT == 0, 1, 
+             ifelse(PBSEAT <= 1250, 2, 
+                    ifelse(PBSEAT <= 2500, 3, 
+                           ifelse(PBSEAT <= 5000, 4,
+                                  ifelse(PBSEAT <= 15000, 5,
+                                         ifelse(PBSEAT == 999995, 6, NA)))))))) %>% 
+    select(-PBSEAT) %>%
+    #HCBED has flags, 9995
+    mutate(HCBED_bin = as.factor(
+      ifelse(HCBED == 0, 1, 
+             ifelse(HCBED <= 50, 2, 
+                    ifelse(HCBED <= 100, 3, 
+                           ifelse(HCBED <= 150, 4,
+                                  ifelse(HCBED <= 250, 5,
+                                         ifelse(HCBED == 9995, 6, NA)))))))) %>% 
+    select(-HCBED) %>%
+    #NRSBED has flags, 9995
+    mutate(NRSBED_bin = as.factor(
+      ifelse(NRSBED == 0, 1, 
+             ifelse(NRSBED <= 50, 2, 
+                    ifelse(NRSBED <= 100, 3, 
+                           ifelse(NRSBED <= 150, 4,
+                                  ifelse(NRSBED <= 250, 5,
+                                         ifelse(NRSBED == 9995, 6, NA)))))))) %>% 
+    select(-NRSBED) %>%
+    #LODGRM has flags, 99995
+    mutate(LODGRM_bin = as.factor(
+      ifelse(LODGRM == 0, 1, 
+             ifelse(LODGRM <= 50, 2, 
+                    ifelse(LODGRM <= 100, 3, 
+                           ifelse(LODGRM <= 200, 4,
+                                  ifelse(LODGRM <= 350, 5,
+                                         ifelse(LODGRM <= 500, 6,
+                                                ifelse(LODGRM <= 750, 7,
+                                                       ifelse(LODGRM == 99995, 8, NA)))))))))) %>% 
+    select(-LODGRM) %>%
+    #NOCC has flags, 995
+    #mutate(NOCC_bin = as.factor(
+    #  ifelse(NOCC == 0, 1, 
+    #         ifelse(NOCC <= 5, 2, 
+    #                ifelse(NOCC <= 50, 3, 
+    #                       ifelse(NOCC <= 100, 4,
+    #                              ifelse(NOCC <= 200, 5,
+    #                                     ifelse(NOCC == 995, 6, NA)))))))) %>% 
+    #NOCCAT ALREADY BINS THIS NUMERIC COLUMN
+    select(-NOCC) %>%
+    #XRAYN has flags, 995
+    mutate(XRAYN_bin = as.factor(
+      ifelse(XRAYN == 0, 1, 
+             ifelse(XRAYN <= 5, 2, 
+                    ifelse(XRAYN <= 10, 3, 
+                           ifelse(XRAYN <= 20, 4,
+                                  ifelse(XRAYN == 995, 5, NA))))))) %>% 
+    select(-XRAYN) %>%
+    #RFGCOMPN has flags, 995
+    mutate(RFGCOMPN_bin = as.factor(
+      ifelse(RFGCOMPN == 0, 1, 
+             ifelse(RFGCOMPN <= 50, 2, 
+                    ifelse(RFGCOMPN <= 250, 3, 
+                           ifelse(RFGCOMPN <= 1000, 4,
+                                  ifelse(RFGCOMPN == 99995, 5, NA))))))) %>% 
+    select(-RFGCOMPN) %>%
+    #SERVERN has flags, 9995
+    mutate(SERVERN_bin = as.factor(
+      ifelse(SERVERN == 0, 1, 
+             ifelse(SERVERN <= 50, 2, 
+                    ifelse(SERVERN <= 100, 3, 
+                           ifelse(SERVERN <= 200, 4,
+                                  ifelse(SERVERN <= 500, 5,
+                                         ifelse(SERVERN == 9995, 6, NA)))))))) %>% 
+    select(-SERVERN) %>%
+    #TVVIDEON has flags, 995
+    mutate(TVVIDEON_bin = as.factor(
+      ifelse(TVVIDEON == 0, 1, 
+             ifelse(TVVIDEON <= 50, 2, 
+                    ifelse(TVVIDEON <= 100, 3, 
+                           ifelse(TVVIDEON <= 200, 4,
+                                  ifelse(TVVIDEON == 995, 5, NA))))))) %>% 
+    select(-TVVIDEON) %>%
     #Categorical conversions with nas - If question not asked, then encode NA as -1
     mutate_at(vars(FREESTN, RENOV, OWNOCC, RDLTNF, EQGLSS, SUNGLS, ELEVTR, ESCLTR, ACT1, ACT2, ACT3, DATACNTR, DRYCL, VACANT, 
                    CUBE, CUBEC, CUBELOC, COURT, FEDFAC, FACACT, MANIND, PLANT, 
@@ -129,7 +256,10 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
                    NGUSED, FKUSED, PRUSED, STUSED, HWUSED, CWUSED, OTUSED, WOUSED, COUSED, SOUSED, 
                    RCAC, PKGCL, CHILLR, CHWT, HTPMPC, ACWNWL, EVAPCL, OTCLEQ, MAINCL, EMCS, RDCLNF, GENR, AMIMETER, 
                    ENRGYPLN, RFGEQP, PCTERM, PCTRMC, LAPTPC, SERVER, SERVERC, TVVIDEO, RGSTR, COPIER, FAX, LOHRPC,
-                   LNHRPC, LTEXPC, PKLT, WINTYP, REGION, CENDIV, RENOV, WKHRSC, PUBCLIM),
+                   LNHRPC, LTEXPC, PKLT, WINTYP, REGION, CENDIV, RENOV, WKHRSC, PUBCLIM,
+                   NFLOOR_bin, FLCEILHT_bin, NELVTR_bin, NESLTR_bin, RWSEAT_bin, PBSEAT_bin, HCBED_bin, NRSBED_bin,
+                   LODGRM_bin, XRAYN_bin, RFGCOMPN_bin, SERVERN_bin, TVVIDEON_bin, MONUSE #NOCC_bin
+                   ),
               funs(make_cat_w_repl(.))) %>%
     #Move down the order of activities and when there is a null, fill it in with the difference of 100 - sum
     mutate(ACT1PCT = ifelse(ACT1==-1, 100, ACT1PCT)) %>% 
@@ -236,19 +366,20 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
            -MFRFBTU, -MFOFBTU, -MFPCBTU, -MFOTBTU,
            -ELEXP, -NGEXP, -FKEXP, -DHEXP, -MFEXP) %>% 
     #replace nas with zeroes - if question not asked or applicable then assume zero as input
-    mutate_at(vars(OCCUPYP, LODOCCP, RWSEAT, PBSEAT, EDSEAT, FDSEAT, HCBED, NRSBED, LODGRM, HEATP, FURNP, PKGHP, 
-                   BOILP, STHWP, HTPHP, SLFCNP, OTHTP, RCACP, PKGCP, CHILP, CHWTP, HTPCP, ACWNWP, EVAPP, OTCLP, CONFSPP,
-                   XRAYN, PRNTRN, FLUORP, CFLRP, BULBP, HALOP, HIDP, LEDP, FLUORP, CFLRP, BULBP, HALOP, HIDP, LEDP, 
-                   OTLTP, DAYLTP, PCTERMN, LAPTPN, SERVERN, TVVIDEON, RGSTRN, COPIERN#,
-                   #ELCNSPerSf, ELBTUPerSf, ELHTBTUPerSf, ELCLBTUPerSf, ELVNBTUPerSf, ELWTBTUPerSf, ELLTBTUPerSf,
-                   #ELCKBTUPerSf, ELRFBTUPerSf, ELOFBTUPerSf, ELPCBTUPerSf, ELOTBTUPerSf, NGCNSPerSf, NGBTUPerSf, 
-                   #NGHTBTUPerSf, NGCLBTUPerSf, NGWTBTUPerSf, 
-                   #NGCKBTUPerSf, NGOTBTUPerSf, FKCNSPerSf, DHCNSPerSf, DHBTUPerSf, DHHTBTUPerSf, DHCLBTUPerSf,
-                   #DHWTBTUPerSf, DHCKBTUPerSf, DHOTBTUPerSf, FKBTUPerSf, FKHTBTUPerSf, FKCLBTUPerSf, FKWTBTUPerSf, 
-                   #FKCKBTUPerSf, FKOTBTUPerSf, MFBTUPerSf, MFHTBTUPerSf, MFCLBTUPerSf, MFVNBTUPerSf, MFWTBTUPerSf,
-                   #MFLTBTUPerSf, MFCKBTUPerSf, MFRFBTUPerSf, MFOFBTUPerSf, MFPCBTUPerSf, MFOTBTUPerSf
-                   ), 
-              funs(na_repl_num(., 0)))
+    #Removed and binned RWSEAT, PBSEAT,   HCBED, NRSBED, LODGRM, XRAYN, SERVERN, TVVIDEON
+    mutate_at(vars(OCCUPYP, LODOCCP, HEATP, FURNP, PKGHP, 
+                 BOILP, STHWP, HTPHP, SLFCNP, OTHTP, RCACP, PKGCP, CHILP, CHWTP, HTPCP, ACWNWP, EVAPP, OTCLP, CONFSPP,
+                 FDSEAT, EDSEAT, PRNTRN, FLUORP, CFLRP, BULBP, HALOP, HIDP, LEDP, FLUORP, CFLRP, BULBP, HALOP, HIDP, LEDP, 
+                 OTLTP, DAYLTP, PCTERMN, LAPTPN, RGSTRN, COPIERN, DHBTU, FKBTU, NGBTU#,
+                 #ELCNSPerSf, ELBTUPerSf, ELHTBTUPerSf, ELCLBTUPerSf, ELVNBTUPerSf, ELWTBTUPerSf, ELLTBTUPerSf,
+                 #ELCKBTUPerSf, ELRFBTUPerSf, ELOFBTUPerSf, ELPCBTUPerSf, ELOTBTUPerSf, NGCNSPerSf, NGBTUPerSf, 
+                 #NGHTBTUPerSf, NGCLBTUPerSf, NGWTBTUPerSf, 
+                 #NGCKBTUPerSf, NGOTBTUPerSf, FKCNSPerSf, DHCNSPerSf, DHBTUPerSf, DHHTBTUPerSf, DHCLBTUPerSf,
+                 #DHWTBTUPerSf, DHCKBTUPerSf, DHOTBTUPerSf, FKBTUPerSf, FKHTBTUPerSf, FKCLBTUPerSf, FKWTBTUPerSf, 
+                 #FKCKBTUPerSf, FKOTBTUPerSf, MFBTUPerSf, MFHTBTUPerSf, MFCLBTUPerSf, MFVNBTUPerSf, MFWTBTUPerSf,
+                 #MFLTBTUPerSf, MFCKBTUPerSf, MFRFBTUPerSf, MFOFBTUPerSf, MFPCBTUPerSf, MFOTBTUPerSf
+                 ), 
+            funs(na_repl_num(., 0)))
   #Get appropriate numeric columns and divide to get PerSf metrics
   PerSfVector <- c('NFLOOR', 'BASEMNT', 'NELVTR', 'NESLTR', 'RWSEAT', 'PBSEAT',
                    'EDSEAT', 'FDSEAT', 'HCBED', 'NRSBED', 'LODGRM', 'NOCC', 'NWKER',
