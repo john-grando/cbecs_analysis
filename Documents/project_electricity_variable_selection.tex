@@ -4,15 +4,15 @@
 
 \subsection{General}
 
-The preprocessed data was passed to the following process in order to determine the best possible set of candidate predictors with one additional filter.  Only buildings that indicated electricity being used \lstinline{ELUSED} were included in the samples for this major fuel use.  Then, one of each pair of predictors with correlations (above 0.75) were removed, to avoid model selection issues. Additionally, the other major fuel consumption values were removed from the set of possible predictors since separate models will be made to predict these values as well.
+The preprocessed data was passed to the following process in order to determine the best possible set of candidate predictors with one additional filter.  Only buildings that indicated electricity being used \lstinline{ELUSED} were included in the samples for this major fuel use.  Then, one of each pair of predictors with correlations above 0.75 were removed, to avoid model selection issues. Additionally, the other major fuel consumption values were removed from the set of possible predictors since separate models will be made to predict these values as well.  Also, the numeric predictors were transformed via BoxCox methodology as well as centered and scaled due to the varying scales and skewness.
 
 \subsection{\hyperref[appendix:electricity:response]{Response Analysis}}
 
-The response data appear to be unimodal and have a heavy right skew with a median of 39.0, mean of 57.9, and max of 971.9 BTU/SF.  After filtering for this model's end-use, there are 6500 samples in the data set.  Due to the varying scales of all the predictors, the numeric columns have been centered and scaled before use for the non-tree regression models.
+The response data appear to be unimodal and have a heavy right skew with a median of 39.0, mean of 57.9, and max of 971.9 BTU/SF.  After filtering for this model's end-use, there are 6500 samples in the data set.  The log of the response was taken in an attempt to maintain homoscadicity as the variance of the energy used also scales with the magnitude.
 
 \subsection{Variable Selection - PCA}
 
-The principle component analysis indicates that only 4.3\% of the variance in the data can be explained in the first principle component, which then drops to 1.7\% for the second principle component.  These results reveal that there does not appear to be clear axes that can explain the variance of the data very well, which indicates there may be some very complex interactions taking place in the predictors.  However, the top 2 predictors, based on contribution percentage to the principle components, will still be taken for further analysis:
+The principle component analysis indicates that only 4.6\% of the variance in the data can be explained in the first principle component, which then drops to 1.7\% for the second principle component.  These results reveal that there does not appear to be clear axes that can explain the variance of the data very well, which indicates there may be some very complex interactions taking place in the predictors.
 
 \begin{myitemize}
 \item \hyperref[appendix:electricity:pca]{Variables Selected} - \lstinline{COOK[NO]}, \lstinline{LAUNDR[NA]}
@@ -22,12 +22,12 @@ The principle component analysis indicates that only 4.3\% of the variance in th
 
 \subsection{Variable Selection - PLS}
 
-This model returned a promising result with an Rsquared value of 0.4318, which is pretty good considering it is a simply construcsted model.  Looking at the result, it is obvious that the use of refrigeration equipment is dominating the variable importance plot as well as some other seemingly reasonable predictors, such as the number of registers per square foot of gross floor area.  The top 7 variables were selected for further review.
+This model returned a promising result with an Rsquared value of 0.868; however, it must be noted that all predictors were used in this process.  Looking at the result, it is obvious that the use of refrigeration equipment is dominating the variable importance plot (RFG prefix) as well as some other seemingly reasonable predictors, such as the number of registers within the building.  
 
 \begin{myitemize}
 \item \hyperref[appendix:electricity:pls]{Variables Selected} - \lstinline{RFGWinPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{RFGICNPerSf}, \lstinline{FDSEATPerSF}, \lstinline{RFGCLNPerSf}, \lstinline{NWKERPerSf}, \lstinline{RFGOPNPerSf}
-\item RMSE - 53.48
-\item Rsquared - 0.4318
+\item RMSE - 33988268
+\item Rsquared - 0.8677
 \end{myitemize}
 
 \subsection{Variable Selection - Random Forest}
@@ -53,4 +53,4 @@ TBD
 TBD
 
 \subsection{Variable Selection - Selected Variable Analysis}
-TBD
+TBD - Take top 20 from each previous analysis, many will overlap.
