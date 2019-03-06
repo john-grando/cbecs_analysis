@@ -24,16 +24,25 @@ cbecs_raw_df <- s3read_using(read.csv,
                              header = TRUE)
 cbecs_dfs <- clean_encode_cbecs(cbecs_raw_df)
 
-#remove buildings that know the don't use electricity
-cbecs_el_encoded_df <- cbecs_dfs$encoded_df %>% 
-  filter(ELUSED.1==1)
-cbecs_el_cleaned_df <- cbecs_dfs$clean_df %>% 
-  filter(ELUSED==1)
+#remove buildings that know the don't use electricity and outliers
+cbecs_el_encoded_df <- cbecs_dfs$encoded_df #%>% 
+  #filter(ELUSED.1==1)
+cbecs_el_cleaned_df <- cbecs_dfs$clean_df #%>% 
+  #filter(ELUSED==1)
+
+zero_vals <- preProcess(cbecs_el_encoded_df, method = c('zv'))$method$remove
+
+if(is.null(zero_vals)){
+  tmp_df <- cbecs_el_encoded_df
+}
+
+if(!is.null(zero_vals)){
+  tmp_df <- cbecs_el_encoded_df %>% 
+    select(-one_of(preProcess(., method = c('zv'))$method$remove))
+}
 
 #Remove highly correlated pairs
-cbecs_elbtu_encoded_df <- cbecs_el_encoded_df %>% 
-  #remove zero variance variables
-  select(-one_of(preProcess(., method = c('zv'))$method$remove)) %>% 
+cbecs_elbtu_encoded_df <- tmp_df %>% 
   #remove response columns
   select(-one_of(cbecs_dfs$response_cols)) %>%
   #remove pba

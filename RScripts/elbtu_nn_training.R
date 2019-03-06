@@ -20,7 +20,7 @@ tunegrid <- expand.grid(size = seq(100, 200, 100),
                         decay = seq(0.3, 0.9, 0.3), 
                         activation = c('relu'))
 nn_train <- caret::train(
-  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTU,
+  y = log(cbecs_elbtu_encoded_center_scale_train_df$ELBTU + 1),
   x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTU),
   method='mlpKerasDropout',
   metric='RMSE',

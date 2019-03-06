@@ -27,10 +27,14 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
   #clean data frame
   trim_df <- data %>% 
     ###Remove outliers
-    #School with 1750 works and 12,000 sf does not make sense
-    filter(!(PBAPLUS==29&SQFT<13000&NWKER>1700)) %>% 
+    #Extremely large electricity use points influencing plots
+    filter(ELBTU < 5E8) %>% 
+    #reduce scale of response variables
+    mutate_at(vars(ELBTU, NGBTU, DHBTU, FKBTU, MFBTU), funs(./1000)) %>% 
     #Remove weight and imputation columns as well as IDs
     select(-one_of(weight_list), -one_of(impute_list), -PUBID) %>% 
+    #Remove MFUSED, no variance %>% 
+    select(-MFUSED) %>% 
     #Remove small buildings - not of interest and contain NAs - also remove NAs from this column implicitly
     filter(SQFT > 1000) %>% 
     #Remove buildings open for less than a year
@@ -388,7 +392,10 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
   #per_sf_df <- trim_df %>% select_(.dots = PerSfVector)
   #per_sf_df <- per_sf_df / trim_df[,c('SQFT')]
   #colnames(per_sf_df) <- paste(colnames(per_sf_df), "PerSf", sep="")
-  clean_df <- trim_df #%>% 
+  
+  #remove columns with only one factor
+  clean_df <- trim_df[, sapply(trim_df, function(col) length(unique(col)))>1]
+  #%>% 
   #  select(names(trim_df[!(colnames(trim_df) %in% PerSfVector)])) %>% 
   #  bind_cols(per_sf_df)
   #Make list of numeric column groups
