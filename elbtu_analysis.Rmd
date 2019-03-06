@@ -14,6 +14,7 @@ Libraries
 ```{r}
 library(aws.s3)
 library(aws.signature)
+library(kableExtra)
 ```
 
 #ploting funcitons
@@ -149,7 +150,20 @@ if(lmbda!=0){
                   sd(cbecs_dfs$clean_df$ELBTU^lmbda, na.rm = TRUE)
                 )
     ) +
-    ggtitle(paste('ELBTU Transformed via BoxCox, Lambda = ', lmbda, sep=""))
+    ggtitle(paste('ELBTU Transformed via BoxCox, Lambda = ', lmbda, sep="")) +
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          plot.title = element_text(hjust = 0.5,  size=16),
+          plot.background = element_rect(fill = "lightgrey"), 
+          panel.background = element_rect(fill = "white"), 
+          panel.grid.major.x = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"), 
+          title.text = element_text(size=16),
+          axis.text = element_text(size=12, color = "grey55"), 
+          axis.title = element_text(size=14, color = "grey55"), 
+          legend.title=element_text(size=7),
+          legend.text=element_text(size=6),
+          legend.key.height = unit(0.5, "cm"),
+          title = element_text(size=20, color = "grey55"))
 }
 if(lmbda==0){
   ggplot(cbecs_el_cleaned_df, aes(x=log(ELBTU))) + 
@@ -161,7 +175,19 @@ if(lmbda==0){
                   sd(log(cbecs_dfs$clean_df$ELBTU), na.rm = TRUE)
                 )
     ) +
-    ggtitle(paste('ELBTU Transformed via BoxCox, Lambda = ', lmbda, sep=""))
+    ggtitle(paste('ELBTU Transformed via BoxCox, Lambda = ', lmbda, sep="")) +
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          plot.title = element_text(hjust = 0.5,  size=16),
+          plot.background = element_rect(fill = "lightgrey"), 
+          panel.background = element_rect(fill = "white"), 
+          panel.grid.major.x = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"),
+          axis.text = element_text(size=12, color = "grey55"), 
+          axis.title = element_text(size=14, color = "grey55"), 
+          legend.title=element_text(size=7),
+          legend.text=element_text(size=6),
+          legend.key.height = unit(0.5, "cm"),
+          title = element_text(size=20, color = "grey55"))
 }
 ggsave('Documents/Images/electricity_response.png', width = 6.5, height = 2, units = 'in')
 #Reset to 1, not going to use it.
@@ -278,7 +304,7 @@ set.seed(20)
 s3load('ModelSaves/elbtu_rfe.RData', bucket = 'cuny-msds-final-project')
 rfe_train
 plot(rfe_train, type=c('g', 'o'))
-rfe_imp_df <- rfe_train$variables %>% filter(Variables == 7) %>% select(var) %>% distinct() %>% rename(feature = var)
+rfe_imp_df <- rfe_train$variables %>% filter(Variables == top_n_rows) %>% select(var) %>% distinct() %>% rename(feature = var)
 rfe_plot <- plot_pred_obs(in_model_sub = rfe_train, 
                           short_name_sub = 'rfe', 
                           alt_predict_sub = TRUE, 
@@ -332,6 +358,18 @@ resamps <- resamples(list(
   nn_fit = nn_train
 ))
 summary(resamps)
+
+manual_summary <- data.frame(
+  Model = c('partialLeastSquares', 'randomForest', 'lasso', 'leaps', 'recursiveFeatureExtraction', 'neuralNetwork'),
+  RMSE = c(pls_plot$RMSE, rf_plot$RMSE, l_plot$RMSE, lp_plot$RMSE, rfe_plot$RMSE, nn_plot$RMSE),
+  R2 = c(pls_plot$R2, rf_plot$R2, l_plot$R2, lp_plot$R2, rfe_plot$R2, nn_plot$R2),
+  MAE = c(pls_plot$MAE, rf_plot$MAE, l_plot$MAE, lp_plot$MAE, rfe_plot$MAE, nn_plot$MAE)
+)
+
+p <- manual_summary %>% 
+  arrange(RMSE) %>% 
+  kable('html') %>% 
+  kable_styling()
 ```
 
 #Save dataframes for full analysis
@@ -367,31 +405,78 @@ put_object(file = nn_input_data_name,
 #Plots for selected variables
 
 ```{r}
-plot_vars <- function(df, response, response_char, i, i_index){
+plot_vars <- function(df, response, response_char, i, file_index, trans_name){
   pre_p <- ggplot(df) #+
     #theme(axis.title = element_text(size=2))
   if(length(unique(df[,i])) > 15){
-    tmp_p <- pre_p + aes(x=df[,i], y=response) +
+    tmp_p <- pre_p + aes(x=df[,i], y=log(response)) +
       geom_point() +
-      labs(x=i, y=paste(response_char, 'BTU Per SF', sep=" "))
+      labs(x=i, y=paste(response_char, 'MBTU Logscale', sep=" ")) +
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          plot.title = element_text(hjust = 0.5,  size=16),
+          plot.background = element_rect(fill = "lightgrey"), 
+          panel.background = element_rect(fill = "white"), 
+          panel.grid.major.x = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"),
+          axis.text = element_text(size=12, color = "grey55"), 
+          axis.title = element_text(size=14, color = "grey55"), 
+          legend.title=element_text(size=7),
+          legend.text=element_text(size=6),
+          legend.key.height = unit(0.5, "cm"),
+          title = element_text(size=20, color = "grey55"))
   }
   if(length(unique(df[,i])) <= 15){
-    tmp_p <- pre_p +  aes(x=as.factor(df[,i]), y=response) +
+    tmp_p <- pre_p +  aes(x=as.factor(df[,i]), y=log(response)) +
       geom_violin() +
-      labs(x=i, y=paste(response_char, 'BTU Per SF', sep=" "))
+      labs(x=i, y=paste(response_char, 'MBTU Logscale', sep=" ")) +
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          plot.title = element_text(hjust = 0.5,  size=16),
+          plot.background = element_rect(fill = "lightgrey"), 
+          panel.background = element_rect(fill = "white"), 
+          panel.grid.major.x = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"),
+          axis.text = element_text(size=12, color = "grey55"), 
+          axis.title = element_text(size=14, color = "grey55"), 
+          legend.title=element_text(size=7),
+          legend.text=element_text(size=6),
+          legend.key.height = unit(0.5, "cm"),
+          title = element_text(size=20, color = "grey55"))
   }
-  ggsave(paste('Documents/Images/',response_char, '_var_', i_index, '.png', sep=""), tmp_p, width = 6.5, height = 3, units = 'in')
+  ggsave(paste('Documents/Images/',response_char, '_var_', trans_name, "_", file_index, '.png', sep=""), tmp_p, width = 6.5, height = 3, units = 'in')
   return(tmp_p)
 }
 ```
 
 #Plot selected variables
 ```{r}
-tst <- colnames(nn_input_df)
+tst <- colnames(nn_input_df %>% select(-ELBTU))
+iter <- 0
 for(i in tst){
-  plot_vars(cbecs_dfs$encoded_df, cbecs_dfs$encoded_df$ELBTU, 'electricity', i, match(i, tst))
+  plot_vars(cbecs_dfs$encoded_df, 
+            cbecs_dfs$encoded_df$ELBTU, 
+            'electricity', 
+            i, 
+            iter,
+            'original')
+  iter <- iter + 1
 }
-p1 <- plot_vars(nn_input_df, nn_input_df$ELBTU, 'electricity', 'RFGWIN', 2)
+iter <- 0
+for(i in tst){
+  plot_vars(cbecs_elbtu_encoded_center_scale_df, 
+            cbecs_elbtu_encoded_center_scale_df$ELBTU, 
+            'electricity', 
+            i, 
+            iter,
+            'transformed')
+  iter <- iter + 1
+}
+
+p1 <- plot_vars(
+  cbecs_dfs$encoded_df, 
+  cbecs_dfs$encoded_df$ELBTU, 
+  'electricity', 
+  'RFGWIN', 
+  match('RFGWIN', colnames(cbecs_dfs$encoded_df)))
 p1
 ```
 

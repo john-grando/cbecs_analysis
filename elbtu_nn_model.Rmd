@@ -30,7 +30,9 @@ hyper_summary %>% arrange(mae) %>% kable('html') %>% kable_styling()
 ```{r}
 model <- s3read_using(load_model_hdf5, 
                       object = 'ModelSaves/elbtu_nn_full_model.h5', 
-                      bucket = 'cuny-msds-final-project')
+                      bucket = 'cuny-msds-final-project', custom_objects = list(
+                        'keras::loss_mean_squared_logarithmic_error' = keras::loss_mean_squared_logarithmic_error,
+                        'custom_loss_func' = custom_loss_func))
 model %>% summary()
 s3load('ModelSaves/elbtu_nn_full_model_history.RData', bucket = 'cuny-msds-final-project')
 ```
@@ -48,8 +50,7 @@ residuals <- resid(resid_model)
 resid_df <- data.frame(resid = residuals, 
                        pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list),
                        elbtu_per_sf = validation_labels,
-                       pred = model %>% predict(as.matrix(validation_df)),
-                       ratio = abs(1 - (1 + model %>% predict(as.matrix(validation_df))) / (1 + validation_labels)))
+                       pred = model %>% predict(as.matrix(validation_df)))
 ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_df)),
                          obs=validation_labels),
        aes(x=pred, y=obs)) + 
@@ -60,7 +61,14 @@ ggplot(resid_df, aes(x=elbtu_per_sf, y=resid)) + geom_point()
 
 elbtu_impact_error_check_df <- resid_df %>% 
   group_by(pba) %>% 
-  summarize(avg_ratio = mean(ratio), 
-            elbtu_per_sf_error = mean(ratio * elbtu_per_sf))
+  summarize(avg_elbtu = mean(elbtu_per_sf),
+            avg_pred_elbtu = mean(pred),
+            RMSE = caret::RMSE(pred = pred, obs = elbtu_per_sf),
+            RMSE_ratio = RMSE / avg_elbtu,
+            R2 = caret::R2(pred=pred,obs=elbtu_per_sf),
+            instances = n())
+
+caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu_per_sf)
+caret::R2(pred = resid_df$pred, obs = resid_df$elbtu_per_sf)
 ```
 

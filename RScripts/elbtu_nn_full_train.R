@@ -6,16 +6,16 @@ source('RScripts/elbtu_nn_base_model.R')
 source('RScripts/elbtu_nn_model_functions_build.R')
 
 #Select model
-model <- model_selector(model_n = '3', df = train_df, n_dropout=0.6, n_units=85, n_l = 0)
+model <- model_selector(model_n = '3', df = train_df, n_dropout=0.6, n_units=100, n_l = 0)
 
 #Compile
 model %>% compile(
-  loss = 'mse',
+  #loss = 'mse',
   #loss = keras::loss_mean_squared_logarithmic_error,
-  #loss = custom_loss_func,
+  loss = custom_loss_func,
   #optimizer = keras::optimizer_sgd(lr = 0.01, decay = 0.0),
   optimizer = keras::optimizer_rmsprop(),
-  metrics = list("mean_absolute_error")
+  metrics = list("mean_squared_error", "mean_squared_logarithmic_error")
 )
 
 #Function for model building
@@ -39,7 +39,9 @@ history <- model %>% fit(
   validation_data = list(as.matrix(test_df), as.matrix(test_labels)),
   batch_size = 100,
   verbose = 0,
-  callbacks = list(print_dot_callback, early_stop)
+  callbacks = list(print_dot_callback, 
+                   early_stop
+                   )
 )
 
 #save model

@@ -55,11 +55,16 @@ validation_labels <- (nn_input_df %>%
                         slice(-train_test_list) %>% 
                         select(ELBTU))$ELBTU
 
+#train_summary_weight <- train_test_df %>% slice(train_list) %>% select(PBA) %>% group_by(PBA) %>% summarize(count = n())
+
+#train_weight_tmp <- as.matrix(train_test_df %>% slice(train_list) %>% select(PBA) %>% left_join(train_summary_weight, by =c('PBA' = 'PBA')) %>% select(count))
+
 #Custom loss funcitons
 custom_loss_func <- function(y_true, y_pred) {
   K <- backend()
-  second_y <- tf$multiply(K$relu(y_true), 0.01)
-  K$mean(tf$multiply(K$square(y_pred - y_true) / K$clip(y_true,0.1,1000), second_y))
+  true_log <- K$log(K$clip(y_true, 1, 1000000000))
+  pred_log <- K$log(K$clip(y_pred, 1, 1000000000))
+  K$mean(tf$multiply(K$square(true_log - pred_log) / K$clip(true_log,1,1000000000), true_log))
 }
 
 #Custom metrics
