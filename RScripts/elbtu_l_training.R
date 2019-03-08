@@ -26,7 +26,7 @@ l_train <- caret::train(
 model_name <- 'ModelSaves/elbtu_l.RData'
 save(l_train, file = model_name)
 put_object(file = model_name, 
-           bucket = 'cuny-msds-final-project', 
+           bucket = 'cuny-msds-final-project-cbecs', 
            object = model_name, 
            multipart = TRUE)
 #stop cluster

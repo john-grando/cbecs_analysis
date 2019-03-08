@@ -4,7 +4,7 @@ source('RScripts/cbecs_2012_clean_transform.R')
 library(aws.s3)
 library(aws.signature)
 library(gridExtra)
-library(factoextra)
+#library(factoextra)
 library(pls)
 library(randomForest)
 library(inTrees)
@@ -19,7 +19,7 @@ library(nnet)
 
 #Load and transform
 cbecs_raw_df <- s3read_using(read.csv, 
-                             bucket = 'cuny-msds-final-project',
+                             bucket = 'cuny-msds-final-project-cbecs',
                              object = '2012_public_use_data_aug2016.csv',
                              header = TRUE)
 cbecs_dfs <- clean_encode_cbecs(cbecs_raw_df)
