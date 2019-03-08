@@ -1,6 +1,9 @@
 #keras models
 *.h5
 
+#nohup output ignore
+nohup.out
+
 # History files
 .Rhistory
 .Rapp.history
