@@ -13,7 +13,7 @@ library(foreach)
 library(doMC)
 
 #Load input data and assign as train/test/validation
-s3load('ModelSaves/elbtu_nn_input.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/elbtu_nn_input.RData', bucket = 'cuny-msds-final-project-cbecs')
 #stratify training set
 set.seed(20)
 train_test_list <- createDataPartition(y=nn_input_pba_labels, 
