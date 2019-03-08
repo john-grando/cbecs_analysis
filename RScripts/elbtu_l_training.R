@@ -7,7 +7,7 @@ registerDoParallel(cl)
 control <- trainControl(index = cbecs_train_cv_list, 
                         method = 'repeatedcv', 
                         number = folds, 
-                        repeats = 1, 
+                        repeats = 2, 
                         search = 'grid', 
                         verboseIter = TRUE)
 tunegrid <- expand.grid(fraction = seq(0.1, 0.5, .1))

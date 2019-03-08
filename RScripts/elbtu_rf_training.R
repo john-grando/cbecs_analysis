@@ -7,12 +7,12 @@ registerDoParallel(cl)
 control <- trainControl(index = cbecs_train_cv_list, 
                         method = 'repeatedcv', 
                         number = folds, 
-                        repeats = 1, 
+                        repeats = 2, 
                         search = 'grid', 
                         verboseIter = TRUE)
 tunegrid <- expand.grid(mtry = seq(50, 350, 100))
 rf_train <- caret::train(
-  y = log(cbecs_elbtu_encoded_train_df$ELBTU + 1),
+  y = cbecs_elbtu_encoded_train_df$ELBTU,
   x = cbecs_elbtu_encoded_train_df %>% select(-ELBTU),
   method='rf',
   metric='RMSE',
@@ -26,7 +26,7 @@ rf_train <- caret::train(
 model_name <- 'ModelSaves/elbtu_rf.RData'
 save(rf_train, file = model_name)
 put_object(file = model_name, 
-           bucket = 'cuny-msds-final-project', 
+           bucket = 'cuny-msds-final-project-cbecs', 
            object = model_name, 
            multipart = TRUE)
 #stop cluster

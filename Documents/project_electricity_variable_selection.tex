@@ -8,49 +8,44 @@ The preprocessed data was passed to the following process in order to determine 
 
 \subsection{\hyperref[appendix:electricity:response]{Response Analysis}}
 
-The response data appear to be unimodal and have a heavy right skew with a median of 39.0, mean of 57.9, and max of 971.9 BTU/SF.  After filtering for this model's end-use, there are 6500 samples in the data set.  The log of the response was taken in an attempt to maintain homoscadicity as the variance of the energy used also scales with the magnitude.
+The response data appear to be unimodal and have a heavy right skew.  After filtering for this model's end-use, there are 6498 samples in the data set.  The energy use was convert to units mmBTU (1e6 BTU) and the log was taken in an attempt to maintain homoscadicity as the variance of the energy used also scales with the magnitude.
 
 \subsection{\hyperref[appendix:electricity:pca]{Variable Selection - PCA}}
-
-The principle component analysis indicates that only 4.6\% of the variance in the data can be explained in the first principle component, which then drops to 1.7\% for the second principle component.  These results reveal that there does not appear to be clear axes that can explain the variance of the data very well, which indicates there may be some very complex interactions taking place in the predictors.
-
-\begin{myitemize}
-\item Variables Selected - \lstinline{COOK[NO]}, \lstinline{LAUNDR[NA]}
-\item RMSE - NA
-\item Rsquared - NA
-\end{myitemize}
+RMSE: 0.0, Rsquared: NA, Top 5: \lstinline{RFG}
+\\[0.0in]
+\indent The principle component analysis indicates that only 4.6\% of the variance in the data can be explained in the first principle component, which then drops to 1.7\% for the second principle component.  These results reveal that there does not appear to be clear axes that can explain the variance of the data very well, which indicates there may be some very complex interactions taking place in the predictors.
 
 \subsection{\hyperref[appendix:electricity:pls]{Variable Selection - PLS}}
-
-This model returned a promising result with an Rsquared value of 0.868; however, it must be noted that all predictors were used in this process.  Looking at the result, it is obvious that the use of refrigeration equipment is dominating the variable importance plot (RFG prefix) as well as some other seemingly reasonable predictors, such as the number of registers within the building.  
-
-\begin{myitemize}
-\item Variables Selected - \lstinline{RFGWinPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{RFGICNPerSf}, \lstinline{FDSEATPerSF}, \lstinline{RFGCLNPerSf}, \lstinline{NWKERPerSf}, \lstinline{RFGOPNPerSf}
-\item RMSE - 33988268
-\item Rsquared - 0.8677
-\end{myitemize}
+RMSE: 0.0, Rsquared: NA, Top 5: \lstinline{RFG}
+\\[0.0in]
+\indent This model returned a promising result with an Rsquared value of 0.868; however, it must be noted that all predictors were used in this process.  Looking at the result, it is obvious that the use of refrigeration equipment is dominating the variable importance plot (RFG prefix) as well as some other seemingly reasonable predictors, such as the number of registers within the building.  
 
 \subsection{\hyperref[appendix:electricity:rf]{Variable Selection - Random Forest}}
-
-As with the PLS, model, the resulting error metrics were promising, with slightly better RMSE and Rsquared values.  The selected variables are ver similar with a few exceptions.  This model has placed higher importance on a yes/no response to the presence of walk in refrigerators as well as whether or not a building is a fast food establishment
-
-\begin{myitemize}
-\item Variables Selected - \lstinline{RFGWinPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{NWKERPerSf}, \lstinline{RFGWI[YES]}, \lstinline{RFGICNPerSf}, \lstinline{FDSEATPerSf}, \lstinline{PBAPLUS.32[Fast Food]}
-\item RMSE - 52.33
-\item Rsquared - 0.4729
-\end{myitemize}
+RMSE: 0.0, Rsquared: NA, Top 5: \lstinline{RFG}
+\\[0.0in]
+\indent As with the PLS, model, the resulting error metrics were promising, with slightly better RMSE and Rsquared values.  The selected variables are ver similar with a few exceptions.  This model has placed higher importance on a yes/no response to the presence of walk in refrigerators as well as whether or not a building is a fast food establishment
 
 \subsection{\hyperref[appendix:electricity:l]{Variable Selection - Lasso}}
-TBD
+RMSE: 0.0, Rsquared: NA, Top 5: \lstinline{RFG}
+\\[0.0in]
+\indent This resulted in a very poor fit, which is not unexpected.  Lasso models typically work when a few variables can be used to predict the response, which does not appear to be the case in this instance.  Due to the lack of fit, this model will not be used in the variable selection process.
 
 \subsection{\hyperref[appendix:electricity:lp]{Variable Selection - Forward Selection}}
-TBD
+RMSE: 0.0, Rsquared: NA, Top 5: \lstinline{RFG}
+\\[0.0in]
+\indent This model was building using the leaps package which iteratively selected the best predictor variable up to a limit of 100.  Unsurprisingly, the best model turned out to be the maximum setting; however, encouraging model metrics were returned.
 
 \subsection{\hyperref[appendix:electricity:snn]{Variable Selection - Simple Neural Network}}
-TBD
+RMSE: 0.0, Rsquared: NA, Top 5: \lstinline{RFG}
+\\[0.0in]
+\indent Given that the final model will be a neural network, it made sense to try a simple out-of-the-box training model to see if any particular features worked better with this specific process.  However, low metrics were returned but it was decided to keep the predictor set and include it in the final selection summary.
 
 \subsection{\hyperref[appendix:electricity:rfe]{Variable Selection - Recursive Feature Elimination}}
-TBD
+RMSE: 0.0, Rsquared: NA, Top 5: \lstinline{RFG}
+\\[0.0in]
+\indent A more direct approach was taken with this model, which is specifically used to extract useful features from data sets.  As can be seen, 
 
 \subsection{\hyperref[appendix:electricity:sv]{Variable Selection - Selected Variable Analysis}}
-TBD - Take top 20 from each previous analysis, many will overlap.
+In order to rank the most important features, the variable importance metrics from the selected models were all set to the same scale, the summed up.  The number of selected features were then used as hyperparameters in the final model training.  As a preliminary check, the top 20 predictors are plotted in the appendix and discussed here;
+
+

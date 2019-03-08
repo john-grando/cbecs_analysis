@@ -7,7 +7,7 @@ registerDoParallel(cl)
 control <- trainControl(index = cbecs_train_cv_list, 
                         method = 'repeatedcv', 
                         number = folds, 
-                        repeats = 1, 
+                        repeats = 2, 
                         search = 'grid', 
                         verboseIter = TRUE)
 tunegrid <- expand.grid(ncomp = seq(1, 20, 1))
@@ -24,7 +24,7 @@ pls_train <- caret::train(
 model_name <- 'ModelSaves/elbtu_pls.RData'
 save(pls_train, file = model_name)
 put_object(file = model_name, 
-           bucket = 'cuny-msds-final-project', 
+           bucket = 'cuny-msds-final-project-cbecs', 
            object = model_name, 
            multipart = TRUE)
 #stop cluster

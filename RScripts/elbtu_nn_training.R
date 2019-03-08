@@ -10,7 +10,7 @@ registerDoParallel(cl)
 control <- trainControl(index = cbecs_train_cv_list, 
                         method = 'repeatedcv', 
                         number = folds, 
-                        repeats = 1, 
+                        repeats = 2, 
                         search = 'grid')
 tunegrid <- expand.grid(size = seq(100, 200, 100), 
                         dropout = seq(0.3, 0.9, 0.3), 
@@ -33,7 +33,7 @@ nn_train <- caret::train(
 nn_model_name <- 'ModelSaves/elbtu_nn.RData'
 save(nn_train, file = nn_model_name)
 put_object(file = nn_model_name, 
-           bucket = 'cuny-msds-final-project', 
+           bucket = 'cuny-msds-final-project-cbecs', 
            object = nn_model_name, 
            multipart = TRUE)
 #stop cluster

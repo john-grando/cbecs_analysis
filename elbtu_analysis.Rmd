@@ -240,13 +240,13 @@ pls_plot$RMSE
 #Tree regression importance
 ```{r fig.height=10}
 set.seed(20)
-s3load('ModelSaves/elbtu_rf.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/elbtu_rf.RData', bucket = 'cuny-msds-final-project-cbecs')
 print(rf_train)
 varImp(rf_train)
 rf_plot <- plot_fun(in_model=rf_train, 
                     n_features=top_n_rows, 
                     short_name='rf', 
-                    log_tran = TRUE, 
+                    log_tran = FALSE, 
                     alt_predict = FALSE,
                     observed_df = cbecs_elbtu_encoded_center_scale_train_df)
 rf_plot$vars_plot
@@ -262,7 +262,7 @@ rf_plot$RMSE
 lasso
 ```{r eval}
 set.seed(20)
-s3load('ModelSaves/elbtu_l.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/elbtu_l.RData', bucket = 'cuny-msds-final-project-cbecs')
 print(l_train)
 varImp(l_train)
 l_plot <- plot_fun(in_model=l_train, 
@@ -302,7 +302,7 @@ lp_plot$RMSE
 #recursive feaure extraction
 ```{r}
 set.seed(20)
-s3load('ModelSaves/elbtu_rfe.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/elbtu_rfe.RData', bucket = 'cuny-msds-final-project-cbecs')
 rfe_train
 plot(rfe_train, type=c('g', 'o'))
 rfe_imp_df <- rfe_train$variables %>% 
@@ -316,7 +316,7 @@ rfe_imp_df <- rfe_train$variables %>%
 rfe_plot <- plot_pred_obs(in_model_sub = rfe_train, 
                           short_name_sub = 'rfe', 
                           alt_predict_sub = TRUE, 
-                          log_tran_sub = FALSE,
+                          log_tran_sub = TRUE,
                           observed_df = cbecs_elbtu_encoded_center_scale_train_df)
 
 varImp(rfe_train)
@@ -422,7 +422,7 @@ nn_input_df <- cbecs_elbtu_encoded_center_scale_df %>%
 
 nn_input_pba_labels <- cbecs_el_cleaned_df$PBAPLUS
 
-variables_by_importance <- data.frame(rbind(
+variable_by_importance_df <- data.frame(rbind(
   pca_imp_df, 
   pls_imp_df, 
   rf_imp_df, 
@@ -433,7 +433,9 @@ variables_by_importance <- data.frame(rbind(
     filter(!is.na(Overall)) %>% 
     group_by(feature) %>% 
     summarize(Overall = sum(Overall)) %>% 
-    arrange(desc(Overall)) %>% 
+    arrange(desc(Overall))
+
+variables_by_importance <- variable_by_importance_df  %>% 
   pull(feature)
 
 nn_input_data_name <- 'ModelSaves/elbtu_nn_input.RData'
@@ -499,9 +501,9 @@ plot_vars <- function(df, response, response_char, i, file_index, trans_name, ti
 
 #Plot selected variables
 ```{r}
-tst <- colnames(nn_input_df %>% select(-ELBTU))
+vars <- variables_by_importance[1:21]
 iter <- 0
-for(i in tst){
+for(i in vars){
   plot_vars(cbecs_dfs$encoded_df, 
             cbecs_dfs$encoded_df$ELBTU, 
             'electricity', 
@@ -513,7 +515,7 @@ for(i in tst){
   iter <- iter + 1
 }
 iter <- 0
-for(i in tst){
+for(i in vars){
   plot_vars(cbecs_elbtu_encoded_center_scale_df, 
             log(cbecs_elbtu_encoded_center_scale_df$ELBTU), 
             'electricity', 
