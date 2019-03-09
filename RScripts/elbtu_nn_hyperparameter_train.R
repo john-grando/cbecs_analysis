@@ -28,13 +28,16 @@ hyper_list$opt <- list(list(name = 'rmsprop_lr_001', func = keras::optimizer_rms
 #hyper_list$opt <- list(list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001)))
 
 #Initialize parallel processing on 2 cores
-cl <- makeCluster(3)
-registerDoMC(3)
+#cl <- makeCluster(2)
+registerDoMC(2)
 
 #Run model
 epochs <- 200
 hyper_results <- data.frame()
-for (v in seq(20, 1, -4)) {
+for(v in c(seq(1,length(variables_by_importance),100), 
+           length(variables_by_importance)-30, 
+           length(variables_by_importance)-20, 
+           length(variables_by_importance)-10)) {
   for (o in 1:length(hyper_list$opt)) {
     for (l in 1:length(hyper_list$loss)){
       for (m in hyper_list$model) {
@@ -49,20 +52,20 @@ for (v in seq(20, 1, -4)) {
                                     cv_train_df <- train_test_df %>% 
                                       slice(-ind) %>% 
                                       select(-PBA, -ELBTU) %>% 
-                                      select(variables_by_importance[1:v])
+                                      select(variables_by_importance[1:(length(variables_by_importance)-v)])
                                     cv_train_y <- train_test_df %>% 
                                       slice(-ind) %>% 
                                       select(ELBTU)
                                     cv_test_df <- train_test_df %>% 
                                       slice(ind) %>% 
                                       select(-PBA, -ELBTU) %>% 
-                                      select(variables_by_importance[1:v])
+                                      select(variables_by_importance[1:(length(variables_by_importance)-v)])
                                     cv_test_y <- train_test_df %>% 
                                       slice(ind) %>% 
                                       select(ELBTU)
                                     cv_model_t <- model_selector(model_n = m, 
                                                                  df = train_df %>% 
-                                                                   select(variables_by_importance[1:v]), 
+                                                                   select(variables_by_importance[1:(length(variables_by_importance)-v)]), 
                                                                  n_dropout = d, 
                                                                  n_units = u, 
                                                                  n_l=r)
@@ -82,7 +85,7 @@ for (v in seq(20, 1, -4)) {
 				    mse_val <- tail(history$metrics$val_mean_squared_error,1)
                                     pm_val <- tail(history$metrics$percentage_metric,1)
                                     #hyper_results <- rbind(hyper_results, data.frame(dropout=d, units=u, fold=f, loss= loss_val, mae = mae_val, pm = pm_val))
-                                    data.frame(num_vars=v,
+                                    data.frame(num_vars=length(variables_by_importance)-v,
                                                loss_f=hyper_list$loss[[l]]$name,
                                                opt=hyper_list$opt[[o]]$name,
                                                model=m, 
@@ -96,7 +99,7 @@ for (v in seq(20, 1, -4)) {
 					       mse = mse_val,
                                                pm = pm_val)
                                   }
-                print(paste('finished running model - variables:', v,
+                print(paste('finished running model - variables:', length(variables_by_importance)-v,
                             'loss:', hyper_list$loss[[l]]$name, 
                             'optimizer:', hyper_list$opt[[o]]$name, 
                             'model:', m, 
@@ -121,7 +124,7 @@ for (v in seq(20, 1, -4)) {
     }
   }
 }
-save hyperparameter df
+#save hyperparameter df
 model_name <- 'ModelSaves/elbtu_nn_hyperparameter_results.RData'
 save(hyper_results, file = model_name)
 put_object(file = model_name, 
@@ -129,5 +132,4 @@ put_object(file = model_name,
            object = model_name)
 
 #Stop parallel processing
-stopCluster(cl)
-
+#stopCluster(cl)

@@ -394,6 +394,8 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
   #colnames(per_sf_df) <- paste(colnames(per_sf_df), "PerSf", sep="")
   
   #remove columns with only one factor
+  print('removed columns with one factor or value')
+  print(colnames(trim_df[, sapply(trim_df, function(col) length(unique(col)))<=1]))
   clean_df <- trim_df[, sapply(trim_df, function(col) length(unique(col)))>1]
   #%>% 
   #  select(names(trim_df[!(colnames(trim_df) %in% PerSfVector)])) %>% 

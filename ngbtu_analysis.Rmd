@@ -7,7 +7,7 @@ output: html_document
 
 Source files
 ```{r}
-source('RScripts/elbtu_base_training.R')
+source('RScripts/ngbtu_base_training.R')
 ```
 
 Libraries
@@ -20,136 +20,27 @@ library(factoextra)
 
 #ploting funcitons
 ```{r}
-plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE, log_tran=FALSE, observed_df=NA) {
-  imp_df <- varImp(in_model)$importance %>% 
-    rownames_to_column(var='feature')
-  plot_df <- imp_df %>% 
-    arrange(desc(Overall)) %>% 
-    head(n_features)
-  p1 <- ggplot(data = data.frame(plot_df), aes(x=reorder(feature, desc(Overall)), y=Overall)) + 
-    geom_bar(stat='identity') +
-    ggtitle('Variable Importance') +
-    labs(x='Feature') +
-    theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0.5),
-          plot.background = element_rect(fill = "lightgrey"), 
-          panel.background = element_rect(fill = "white"), 
-          panel.grid.major.x = element_line(color = "lightgrey"), 
-          panel.grid.major.y = element_line(color = "lightgrey"), 
-          axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
-          legend.title=element_text(size=7),
-          legend.text=element_text(size=6),
-          legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
-  ggsave(paste0('Documents/Images/electricity_',short_name,'_vars.png'), p1, width = 6.5, height = 3.5, units = 'in')
-  plots <- plot_pred_obs(in_model = in_model,
-                         short_name_sub = short_name,
-                         alt_predict_sub = alt_predict, 
-                         log_tran_sub = log_tran,
-                         observed_df_sub = observed_df)
-  return(list(vars_plot = p1, 
-              pvo_plot = plots$p,
-              tmp_model = plots$tmp_mdl,
-              imp_df = imp_df,
-              RMSE = plots$RMSE_untransformed,
-              R2 = plots$R2_untransformed,
-              MAE = plots$MAE_untransformed)
-  )
-}
-
-plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_predict_sub=FALSE, log_tran_sub=FALSE, observed_df_sub=NA){
-  if(alt_predict_sub==FALSE){
-    final_model <- in_model_sub$finalModel
-  }
-  if(alt_predict_sub!=FALSE){
-    final_model <- in_model_sub
-  }
-  
-  if(log_tran_sub==TRUE){
-    tmp_model_sub <- lm(exp(predict(final_model, observed_df_sub)) ~ 
-      observed_df_sub$ELBTU)
-    p2 <- ggplot(data = data.frame(predicted = exp(predict(final_model, observed_df_sub)), 
-                                 observed = observed_df_sub$ELBTU))
-    RMSE_sub <- caret::RMSE(exp(predict(final_model, observed_df_sub)), 
-                 observed_df_sub$ELBTU)
-    R2_sub <- caret::R2(exp(predict(final_model, observed_df_sub)), 
-                 observed_df_sub$ELBTU)
-    MAE_sub <- caret::MAE(exp(predict(final_model, observed_df_sub)), 
-                 observed_df_sub$ELBTU)
-  }
-  if(log_tran_sub!=TRUE){
-    tmp_model_sub <- lm(predict(final_model, observed_df_sub) ~ 
-      observed_df_sub$ELBTU)
-    p2 <- ggplot(data = data.frame(predicted = predict(final_model, observed_df_sub), 
-                                 observed = observed_df_sub$ELBTU))
-    RMSE_sub <- caret::RMSE(predict(final_model, observed_df_sub),
-                 observed_df_sub$ELBTU)
-    R2_sub <- caret::R2(predict(final_model, observed_df_sub),
-                 observed_df_sub$ELBTU)
-    MAE_sub <- caret::MAE(predict(final_model, observed_df_sub),
-                 observed_df_sub$ELBTU)
-  }
-  p2 <- p2 + 
-    aes(x=predicted, y=observed) + 
-    geom_point(alpha=0.2) +
-    ggtitle('Predicted vs. Observed') +
-    geom_abline(slope = 1, intercept = 0) +
-    theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0.5),
-          plot.background = element_rect(fill = "lightgrey"), 
-          panel.background = element_rect(fill = "white"), 
-          panel.grid.major.x = element_line(color = "lightgrey"), 
-          panel.grid.major.y = element_line(color = "lightgrey"), 
-          axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
-          legend.title=element_text(size=7),
-          legend.text=element_text(size=6),
-          legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
-  ggsave(paste0('Documents/Images/electricity_',short_name_sub,'_pvo.png'), p2, width = 6.5, height = 3, units = 'in')
-  png(paste0('Documents/Images/electricity_',short_name_sub,'_res_1.png'), width = 7, height = 4, 
-      units = 'in', pointsize = 12,
-      bg='white', res=100)
-  par(mfrow=c(1,2))
-  plot(tmp_model_sub, c(1,2))
-  dev.off()
-  png(paste0('Documents/Images/electricity_',short_name_sub,'_res_2.png'), width = 7, height = 4, 
-      units = 'in', pointsize = 12,
-      bg='white', res=100)
-  par(mfrow=c(1,2))
-  plot(tmp_model_sub, c(3,5))
-  dev.off()
-  return(list(p = p2,
-              tmp_mdl = tmp_model_sub,
-              RMSE_untransformed = RMSE_sub,
-              R2_untransformed = R2_sub,
-              MAE_untransformed = MAE_sub))
-}
-```
-
-
-```{r}
+source('RScripts/cbecs_common_functions.R')
 #Set number of most important variables to take from each model
 top_n_rows <- 10
 ```
 
 Response Variable
 ```{r}
-ggplot(cbecs_el_cleaned_df, aes(x=ELBTU)) + 
+ggplot(cbecs_ng_cleaned_df, aes(x=NGBTU)) + 
   geom_density()
-lmbda <- BoxCoxTrans(cbecs_el_cleaned_df$ELBTU + 1)$lambda
+lmbda <- BoxCoxTrans(cbecs_ng_cleaned_df$NGBTU + 1)$lambda
 if(lmbda!=0){
-  ggplot(cbecs_el_cleaned_df, aes(x=ELBTU^lmbda)) + 
+  ggplot(cbecs_ng_cleaned_df, aes(x=NGBTU^lmbda)) + 
     geom_density() + 
     stat_function(fun=dnorm,
                 color="blue",
                 args=list(
-                  mean=mean(cbecs_dfs$clean_df$ELBTU^lmbda, na.rm = TRUE),
-                  sd(cbecs_dfs$clean_df$ELBTU^lmbda, na.rm = TRUE)
+                  mean=mean(cbecs_dfs$clean_df$NGBTU^lmbda, na.rm = TRUE),
+                  sd(cbecs_dfs$clean_df$NGBTU^lmbda, na.rm = TRUE)
                 )
     ) +
-    ggtitle(paste('ELBTU Transformed via BoxCox, Lambda = ', lmbda, sep="")) +
+    ggtitle(paste('NGBTU Transformed via BoxCox, Lambda = ', lmbda, sep="")) +
     theme(axis.text.x = element_text(angle=60, hjust=1),
           plot.title = element_text(hjust = 0.5,  size=16),
           plot.background = element_rect(fill = "lightgrey"), 
@@ -165,16 +56,16 @@ if(lmbda!=0){
           title = element_text(size=20, color = "grey55"))
 }
 if(lmbda==0){
-  ggplot(cbecs_el_cleaned_df, aes(x=log(ELBTU))) + 
+  ggplot(cbecs_ng_cleaned_df, aes(x=log(NGBTU))) + 
     geom_density() + 
     stat_function(fun=dnorm,
                 color="blue",
                 args=list(
-                  mean=mean(log(cbecs_dfs$clean_df$ELBTU), na.rm = TRUE),
-                  sd(log(cbecs_dfs$clean_df$ELBTU), na.rm = TRUE)
+                  mean=mean(log(cbecs_dfs$clean_df$NGBTU), na.rm = TRUE),
+                  sd(log(cbecs_dfs$clean_df$NGBTU), na.rm = TRUE)
                 )
     ) +
-    ggtitle(paste('ELBTU Transformed via BoxCox, Lambda = ', lmbda, sep="")) +
+    ggtitle(paste('NGBTU Transformed via BoxCox, Lambda = ', lmbda, sep="")) +
     theme(axis.text.x = element_text(angle=60, hjust=1),
           plot.title = element_text(hjust = 0.5,  size=16),
           plot.background = element_rect(fill = "lightgrey"), 
@@ -188,7 +79,7 @@ if(lmbda==0){
           legend.key.height = unit(0.5, "cm"),
           title = element_text(size=20, color = "grey55"))
 }
-ggsave('Documents/Images/electricity_response.png', width = 6.5, height = 2, units = 'in')
+ggsave('Documents/Images/natural_gas_response.png', width = 6.5, height = 2, units = 'in')
 #Reset to 1, not going to use it.
 lmbda <- 1
 ```
@@ -196,7 +87,7 @@ lmbda <- 1
 #PCA
 ```{r}
 set.seed(20)
-s3load('ModelSaves/elbtu_pca.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_pca.RData', bucket = 'cuny-msds-final-project-cbecs')
 p1 <- fviz_eig(cbecs_pca, addlabels = TRUE)
 var <- get_pca_var(cbecs_pca)
 p2 <- fviz_pca_var(cbecs_pca, select.var = list(contrib=20), repel = TRUE)
@@ -212,13 +103,13 @@ pca_imp_df <- fviz_contrib(cbecs_pca, choice = "var", axes = 1:20, top = 50)$dat
   mutate(Overall = 100 * Overall)
 grid.arrange(p1, p3, nrow=2)
 g <- arrangeGrob(p1, p3, nrow = 2)
-ggsave('Documents/Images/electricity_pca_vars.png', g, width = 7.5, height = 5, units = 'in')
+ggsave('Documents/Images/natural_gas_pca_vars.png', g, width = 7.5, height = 5, units = 'in')
 ```
 
 #PLS 
 ```{r}
 set.seed(20)
-s3load('ModelSaves/elbtu_pls.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_pls.RData', bucket = 'cuny-msds-final-project-cbecs')
 print(pls_train)
 varImp(pls_train)
 pls_plot <- plot_fun(in_model=pls_train, 
@@ -226,23 +117,22 @@ pls_plot <- plot_fun(in_model=pls_train,
                      short_name='pls', 
                      alt_predict = TRUE, 
                      log_tran = TRUE,
-                     observed_df = cbecs_elbtu_encoded_center_scale_train_df,
-                     fuel_type = 'electricity')
+                     observed_df = cbecs_ngbtu_encoded_center_scale_train_df)
 pls_plot$vars_plot
 pls_plot$pvo_plot
 plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
 pls_plot$RMSE
 
-#View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
+#View(t(cbecs_ng_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_ngbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(NGBTU, pred, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
 
-#View(t(cbecs_elbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, one_of(pls_imp_df$feature))))
+#View(t(cbecs_ngbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_ngbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(NGBTU, pred, one_of(pls_imp_df$feature))))
 ```
 
 #Tree regression importance
 ```{r fig.height=10}
 set.seed(20)
-s3load('ModelSaves/elbtu_rf.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_rf.RData', bucket = 'cuny-msds-final-project-cbecs')
 print(rf_train)
 varImp(rf_train)
 rf_plot <- plot_fun(in_model=rf_train, 
@@ -250,21 +140,21 @@ rf_plot <- plot_fun(in_model=rf_train,
                     short_name='rf', 
                     log_tran = FALSE, 
                     alt_predict = FALSE,
-                    observed_df = cbecs_elbtu_encoded_center_scale_train_df)
+                    observed_df = cbecs_ngbtu_encoded_center_scale_train_df)
 rf_plot$vars_plot
 rf_plot$pvo_plot
 plot(rf_plot$tmp_model)
 rf_imp_df <- rf_plot$imp_df
 rf_plot$RMSE
 #how to evaluate rows
-#View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974)))
-#View(t(cbecs_elbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974) %>% select(ELBTU, pred, one_of(rf_imp_df$feature))))
+#View(t(cbecs_ng_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_ngbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974)))
+#View(t(cbecs_ngbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_ngbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974) %>% select(NGBTU, pred, one_of(rf_imp_df$feature))))
 ```
 
 lasso
 ```{r eval}
 set.seed(20)
-s3load('ModelSaves/elbtu_l.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_l.RData', bucket = 'cuny-msds-final-project-cbecs')
 print(l_train)
 varImp(l_train)
 l_plot <- plot_fun(in_model=l_train, 
@@ -272,7 +162,7 @@ l_plot <- plot_fun(in_model=l_train,
                    short_name='l', 
                    alt_predict = TRUE, 
                    log_tran = TRUE,
-                   observed_df = cbecs_elbtu_encoded_center_scale_train_df)
+                   observed_df = cbecs_ngbtu_encoded_center_scale_train_df)
 l_plot$vars_plot
 l_plot$pvo_plot
 plot(l_plot$tmp_model)
@@ -285,7 +175,7 @@ l_plot$MAE
 leaps
 ```{r}
 set.seed(20)
-s3load('ModelSaves/elbtu_lp.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_lp.RData', bucket = 'cuny-msds-final-project')
 print(lp_train)
 varImp(lp_train)
 lp_plot <- plot_fun(in_model=lp_train, 
@@ -293,7 +183,7 @@ lp_plot <- plot_fun(in_model=lp_train,
                     short_name='lp', 
                     alt_predict = TRUE, 
                     log_tran = TRUE,
-                    observed_df = cbecs_elbtu_encoded_center_scale_train_df)
+                    observed_df = cbecs_ngbtu_encoded_center_scale_train_df)
 lp_plot$vars_plot
 lp_plot$pvo_plot
 plot(lp_plot$tmp_model)
@@ -304,7 +194,7 @@ lp_plot$RMSE
 #recursive feaure extraction
 ```{r}
 set.seed(20)
-s3load('ModelSaves/elbtu_rfe.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_rfe.RData', bucket = 'cuny-msds-final-project-cbecs')
 rfe_train
 plot(rfe_train, type=c('g', 'o'))
 rfe_imp_df <- rfe_train$variables %>% 
@@ -319,7 +209,7 @@ rfe_plot <- plot_pred_obs(in_model_sub = rfe_train,
                           short_name_sub = 'rfe', 
                           alt_predict_sub = TRUE, 
                           log_tran_sub = TRUE,
-                          observed_df = cbecs_elbtu_encoded_center_scale_train_df)
+                          observed_df = cbecs_ngbtu_encoded_center_scale_train_df)
 
 varImp(rfe_train)
 rfe_plot$p
@@ -354,7 +244,7 @@ p_rfe
 #Simple neural network training
 ```{r echo=FALSE, fig.width=10}
 set.seed(20)
-s3load('ModelSaves/elbtu_nn.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_nn.RData', bucket = 'cuny-msds-final-project')
 print(nn_train)
 varImp(nn_train)
 nn_plot <- plot_fun(in_model=nn_train, 
@@ -362,7 +252,7 @@ nn_plot <- plot_fun(in_model=nn_train,
                     short_name='nn', 
                     alt_predict = TRUE,
                     log_tran = TRUE,
-                    observed_df = cbecs_elbtu_encoded_center_scale_train_df)
+                    observed_df = cbecs_ngbtu_encoded_center_scale_train_df)
 nn_plot$vars_plot
 nn_plot$pvo_plot
 plot(nn_plot$tmp_model)
@@ -372,13 +262,13 @@ nn_plot$RMSE
 
 #load models, again if not done before
 ```{r}
-s3load('ModelSaves/elbtu_pca.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/elbtu_pls.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/elbtu_rf.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/elbtu_l.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/elbtu_lp.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/elbtu_rfe.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/elbtu_nn.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_pca.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_pls.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_rf.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_l.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_lp.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_rfe.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_nn.RData', bucket = 'cuny-msds-final-project')
 ```
 
 #trained model summaries
@@ -410,7 +300,7 @@ p
 
 #Save dataframes for full analysis
 ```{r}
-nn_input_df <- cbecs_elbtu_encoded_center_scale_df %>% 
+nn_input_df <- cbecs_ngbtu_encoded_center_scale_df %>% 
   select(one_of(pls_imp_df$feature), 
          one_of(pca_imp_df$feature),
          one_of(rf_imp_df$feature),
@@ -418,11 +308,11 @@ nn_input_df <- cbecs_elbtu_encoded_center_scale_df %>%
          one_of(lp_imp_df$feature),
          one_of(nn_imp_df$feature),
          one_of(rfe_imp_df$feature),
-         ELBTU
-         #one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'))))
+         NGBTU
+         #one_of(colnames(cbecs_ngbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'))))
   )
 
-nn_input_pba_labels <- cbecs_el_cleaned_df$PBAPLUS
+nn_input_pba_labels <- cbecs_ng_cleaned_df$PBAPLUS
 
 variable_by_importance_df <- data.frame(rbind(
   pca_imp_df, 
@@ -440,12 +330,12 @@ variable_by_importance_df <- data.frame(rbind(
 variables_by_importance <- variable_by_importance_df  %>% 
   pull(feature)
 
-nn_input_data_name <- 'ModelSaves/elbtu_nn_input.RData'
+nn_input_data_name <- 'ModelSaves/ngbtu_nn_input.RData'
 
 save(nn_input_pba_labels, 
      nn_input_df, 
-     elbtu_pre_process,
-     cbecs_elbtu_encoded_center_scale_df,
+     ngbtu_pre_process,
+     cbecs_ngbtu_encoded_center_scale_df,
      variables_by_importance,
      file= nn_input_data_name
 )
@@ -507,7 +397,7 @@ vars <- variables_by_importance[1:21]
 iter <- 0
 for(i in vars){
   plot_vars(cbecs_dfs$encoded_df, 
-            cbecs_dfs$encoded_df$ELBTU, 
+            cbecs_dfs$encoded_df$NGBTU, 
             'electricity', 
             i, 
             iter,
@@ -518,8 +408,8 @@ for(i in vars){
 }
 iter <- 0
 for(i in vars){
-  plot_vars(cbecs_elbtu_encoded_center_scale_df, 
-            log(cbecs_elbtu_encoded_center_scale_df$ELBTU), 
+  plot_vars(cbecs_ngbtu_encoded_center_scale_df, 
+            log(cbecs_ngbtu_encoded_center_scale_df$NGBTU), 
             'electricity', 
             i, 
             iter,
@@ -531,7 +421,7 @@ for(i in vars){
 
 p1 <- plot_vars(
   cbecs_dfs$encoded_df, 
-  cbecs_dfs$encoded_df$ELBTU, 
+  cbecs_dfs$encoded_df$NGBTU, 
   'electricity', 
   'RFGWIN', 
   match('RFGWIN', colnames(cbecs_dfs$encoded_df)),
