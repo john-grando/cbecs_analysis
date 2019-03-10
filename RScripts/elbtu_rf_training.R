@@ -27,7 +27,6 @@ model_name <- 'ModelSaves/elbtu_rf.RData'
 save(rf_train, file = model_name)
 put_object(file = model_name, 
            bucket = 'cuny-msds-final-project-cbecs', 
-           object = model_name, 
-           multipart = TRUE)
+           object = model_name)
 #stop cluster
 stopCluster(cl)
