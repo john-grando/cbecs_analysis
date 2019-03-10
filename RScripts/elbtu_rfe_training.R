@@ -13,7 +13,7 @@ ctrl <- rfeControl(functions = treebagFuncs,
 
 rfe_train <- rfe(y = cbecs_elbtu_encoded_center_scale_train_df$ELBTU,
                  x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTU),
-                 sizes = c(1:20, seq(50, 700, 50)),
+                 sizes = c(seq(50, 700, 50)),
                  rfeControl = ctrl)
 
 #save model
