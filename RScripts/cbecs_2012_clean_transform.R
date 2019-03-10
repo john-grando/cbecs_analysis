@@ -28,7 +28,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
   trim_df <- data %>% 
     ###Remove outliers
     #Extremely large electricity use points influencing plots
-    filter(ELBTU < 5E8) %>% 
+    #filter(ELBTU < 5E8) %>% 
     #reduce scale of response variables
     mutate_at(vars(ELBTU, NGBTU, DHBTU, FKBTU, MFBTU), funs(./1000)) %>% 
     #Remove weight and imputation columns as well as IDs

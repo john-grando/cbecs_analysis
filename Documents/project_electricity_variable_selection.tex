@@ -6,6 +6,8 @@
 
 The preprocessed data was passed to the following process in order to determine the best possible set of candidate predictors with one additional filter.  Only buildings that indicated electricity being used \lstinline{ELUSED} were included in the samples for this major fuel use.  Then, one of each pair of predictors with correlations above 0.75 were removed, to avoid model selection issues. Additionally, the other major fuel consumption values were removed from the set of possible predictors since separate models will be made to predict these values as well.  Also, the numeric predictors were transformed via BoxCox methodology as well as centered and scaled due to the varying scales and skewness.
 
+A poential outlier was found in the analysis. A public assembly space reported an energy consumption of 1E09 BTUs whereas the next highest consumption for this budiding type, with similar area, was  6E08 BTU (one third of the value).  It is noted that there were significantly higher indications of refrigeration use than other comparables so it will be included unless it prevents an actual model from fitting the data.  During the final model training, this point will be evaluated further.
+
 \subsection{\hyperref[appendix:electricity:response]{Response Analysis}}
 
 The response data appear to be unimodal and have a heavy right skew.  After filtering for this model's end-use, there are 6498 samples in the data set.  The energy use was convert to units mmBTU (1e6 BTU) and the log was taken in an attempt to maintain homoscadicity as the variance of the energy used also scales with the magnitude.

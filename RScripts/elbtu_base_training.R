@@ -25,9 +25,11 @@ cbecs_raw_df <- s3read_using(read.csv,
 cbecs_dfs <- clean_encode_cbecs(cbecs_raw_df)
 
 #remove buildings that know the don't use electricity and outliers
-cbecs_el_encoded_df <- cbecs_dfs$encoded_df #%>% 
+cbecs_el_encoded_df <- cbecs_dfs$encoded_df %>% 
+  filter(!is.na(ELBTU)) #%>% 
   #filter(ELUSED.1==1)
-cbecs_el_cleaned_df <- cbecs_dfs$clean_df #%>% 
+cbecs_el_cleaned_df <- cbecs_dfs$clean_df %>% 
+  filter(!is.na(ELBTU)) #%>% 
   #filter(ELUSED==1)
 
 zero_vals <- preProcess(cbecs_el_encoded_df, method = c('zv'))$method$remove
