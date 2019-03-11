@@ -4,7 +4,7 @@ source('RScripts/elbtu_nn_base_model.R')
 source('RScripts/elbtu_nn_model_functions_build.R')
 
 #Hyperparameter training
-n_folds <- 6
+n_folds <- 3
 folds <- createFolds(y = train_test_list, k=n_folds, list=FALSE)
 
 hyper_list <- list()
@@ -13,11 +13,21 @@ hyper_list$units <- seq(50, 200, 50)
 hyper_list$regularizer <- seq(0, 0.9, 0.45)
 hyper_list$model <- seq(3,0,-1)
 hyper_list$batch <- seq(50, 2050, 500)
-hyper_list$loss <- list(list(name = 'cusom_loss_func', func = custom_loss_func),
-			list(name = 'mse', func = 'mse'), 
-                        list(name = 'msle', func = keras::loss_mean_squared_logarithmic_error))
-hyper_list$opt <- list(list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001)),
-                    list(name = 'sgd_lr_01', func = keras::optimizer_sgd(lr=0.01)))
+hyper_list$loss <- list(
+      list(name = 'mse', func = 'mse'), 
+      list(name = 'msle', func = keras::loss_mean_squared_logarithmic_error),
+      list(name = 'cusom_loss_func', func = custom_loss_func))
+hyper_list$opt <- list(
+  list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.0001)),
+  list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.0005)),
+  list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001)),
+  list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.005)),
+  list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.009)),
+  list(name = 'sgd_lr_01', func = keras::optimizer_sgd(lr=0.001)),
+  list(name = 'sgd_lr_01', func = keras::optimizer_sgd(lr=0.005)),
+  list(name = 'sgd_lr_01', func = keras::optimizer_sgd(lr=0.01)),
+  list(name = 'sgd_lr_01', func = keras::optimizer_sgd(lr=0.05)),
+  list(name = 'sgd_lr_01', func = keras::optimizer_sgd(lr=0.09)))
 
 #hyper_list$dropout <- seq(0.6, 0.6, 0.3)
 #hyper_list$units <- seq(110, 110, 25)
@@ -32,7 +42,7 @@ hyper_list$opt <- list(list(name = 'rmsprop_lr_001', func = keras::optimizer_rms
 registerDoMC(2)
 
 #Run model
-epochs <- 200
+epochs <- 50
 hyper_results <- data.frame()
 for(v in c(seq(1,length(variables_by_importance),100), 
            length(variables_by_importance)-30, 
