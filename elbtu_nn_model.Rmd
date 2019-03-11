@@ -30,11 +30,11 @@ hyper_summary %>% arrange(mae) %>% kable('html') %>% kable_styling()
 ```{r}
 model <- s3read_using(load_model_hdf5, 
                       object = 'ModelSaves/elbtu_nn_full_model.h5', 
-                      bucket = 'cuny-msds-final-project', custom_objects = list(
+                      bucket = 'cuny-msds-final-project-cbecs', custom_objects = list(
                         'keras::loss_mean_squared_logarithmic_error' = keras::loss_mean_squared_logarithmic_error,
                         'custom_loss_func' = custom_loss_func))
 model %>% summary()
-s3load('ModelSaves/elbtu_nn_full_model_history.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/elbtu_nn_full_model_history.RData', bucket = 'cuny-msds-final-project-cbecs')
 ```
 
 #Predict and examine residuals
@@ -70,5 +70,6 @@ elbtu_impact_error_check_df <- resid_df %>%
 
 caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu_per_sf)
 caret::R2(pred = resid_df$pred, obs = resid_df$elbtu_per_sf)
+caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu_per_sf)
 ```
 

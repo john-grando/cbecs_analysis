@@ -12,7 +12,7 @@ hyper_list$dropout <- seq(0, 0.6, 0.3)
 hyper_list$units <- seq(50, 200, 50)
 hyper_list$regularizer <- seq(0, 0.9, 0.45)
 hyper_list$model <- seq(3,0,-1)
-hyper_list$batch <- seq(50, 150, 50)
+hyper_list$batch <- seq(50, 2050, 500)
 hyper_list$loss <- list(list(name = 'cusom_loss_func', func = custom_loss_func),
 			list(name = 'mse', func = 'mse'), 
                         list(name = 'msle', func = keras::loss_mean_squared_logarithmic_error))
@@ -72,7 +72,7 @@ for(v in c(seq(1,length(variables_by_importance),100),
                                     cv_model_t %>% compile(
                                       loss = hyper_list$loss[[l]]$func,
                                       optimizer = hyper_list$opt[[o]]$func,
-                                      metrics = list("mean_absolute_error", "mean_squared_error", percentage_metric))
+                                      metrics = list("mean_absolute_error", "mean_squared_error", 'mean_squared_logarithmic_error', percentage_metric))
                                     history <- cv_model_t %>% fit(
                                       as.matrix(cv_train_df),
                                       as.matrix(cv_train_y),
@@ -82,7 +82,8 @@ for(v in c(seq(1,length(variables_by_importance),100),
                                       verbose = 0)
                                     loss_val <- tail(history$metrics$val_loss,1)
                                     mae_val <- tail(history$metrics$val_mean_absolute_error,1)
-				    mse_val <- tail(history$metrics$val_mean_squared_error,1)
+                                    msle_val <- tail(history$metrics$val_mean_squared_logarithmic_error,1)
+				                            mse_val <- tail(history$metrics$val_mean_squared_error,1)
                                     pm_val <- tail(history$metrics$percentage_metric,1)
                                     #hyper_results <- rbind(hyper_results, data.frame(dropout=d, units=u, fold=f, loss= loss_val, mae = mae_val, pm = pm_val))
                                     data.frame(num_vars=length(variables_by_importance)-v,
@@ -96,7 +97,8 @@ for(v in c(seq(1,length(variables_by_importance),100),
                                                fold=f, 
                                                loss= loss_val, 
                                                mae = mae_val, 
-					       mse = mse_val,
+                                               msle = msle_val,
+					                                     mse = mse_val,
                                                pm = pm_val)
                                   }
                 print(paste('finished running model - variables:', length(variables_by_importance)-v,
@@ -110,10 +112,11 @@ for(v in c(seq(1,length(variables_by_importance),100),
                 hyper_results <- rbind(hyper_results, tmp_df)
                 print(hyper_results %>% 
                       group_by(num_vars, loss_f, opt, model, dropout, units, reg, batch) %>% 
-                      summarize(loss = mean(loss), 
-                                mae = mean(mae), 
-				mse = mean(mse),
-                                pm = mean(pm))%>% 
+                      summarize(mae = mean(mae), 
+				                        mse = mean(mse),
+				                        msle = mean(msle),
+				                        loss = mean(loss),
+				                        pm = mean(pm))%>% 
                       arrange(mse) %>% 
                       head(10))
               }

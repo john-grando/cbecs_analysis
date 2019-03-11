@@ -48,7 +48,7 @@ history <- model %>% fit(
 model_name <- 'ModelSaves/elbtu_nn_full_model.h5'
 model %>% save_model_hdf5(model_name)
 put_object(file = model_name, 
-           bucket = 'cuny-msds-final-project', 
+           bucket = 'cuny-msds-final-project-cbecs', 
            object = model_name, 
            multipart = TRUE)
 
@@ -56,6 +56,6 @@ put_object(file = model_name,
 history_name <- 'ModelSaves/elbtu_nn_full_model_history.RData'
 save(history, file = history_name)
 put_object(file = history_name, 
-           bucket = 'cuny-msds-final-project', 
+           bucket = 'cuny-msds-final-project-cbecs', 
            object = history_name, 
            multipart = TRUE)
