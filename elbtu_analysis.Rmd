@@ -125,7 +125,7 @@ pls_plot$pvo_plot
 plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
 pls_plot$RMSE
-
+pls_plot$R2
 #View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
 
 #View(t(cbecs_elbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, one_of(pls_imp_df$feature))))
@@ -148,6 +148,7 @@ rf_plot$pvo_plot
 plot(rf_plot$tmp_model)
 rf_imp_df <- rf_plot$imp_df
 rf_plot$RMSE
+rf_plot$R2
 #how to evaluate rows
 #View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974)))
 #View(t(cbecs_elbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974) %>% select(ELBTU, pred, one_of(rf_imp_df$feature))))
@@ -178,7 +179,7 @@ l_plot$MAE
 leaps
 ```{r}
 set.seed(20)
-s3load('ModelSaves/elbtu_lp.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/elbtu_lp.RData', bucket = 'cuny-msds-final-project-cbecs')
 print(lp_train)
 varImp(lp_train)
 lp_plot <- plot_fun(in_model=lp_train, 
@@ -192,6 +193,7 @@ lp_plot$pvo_plot
 plot(lp_plot$tmp_model)
 lp_imp_df <- lp_plot$imp_df %>% mutate(Overall = 100 * Overall) %>% filter(!is.na(Overall))
 lp_plot$RMSE
+lp_plot$R2
 ```
 
 #recursive feaure extraction
@@ -209,15 +211,16 @@ rfe_imp_df <- rfe_train$variables %>%
   select(var, Overall) %>% 
   rename(feature = var)
 rfe_plot <- plot_pred_obs(in_model_sub = rfe_train, 
-                          short_name_sub = 'rfe', 
+                          short_name_sub = 'rfe',
                           alt_predict_sub = TRUE, 
-                          log_tran_sub = TRUE,
+                          log_tran_sub = FALSE,
                           observed_df = cbecs_elbtu_encoded_center_scale_train_df)
 
 varImp(rfe_train)
 rfe_plot$p
 plot(rfe_plot$tmp_mdl)
 rfe_plot$RMSE_untransformed
+rfe_plot$R2_untransformed
 
 #specific graph needs to be made
 p_rfe <- ggplot(data = data.frame(varImp(rfe_train) %>% 
@@ -247,7 +250,7 @@ p_rfe
 #Simple neural network training
 ```{r echo=FALSE, fig.width=10}
 set.seed(20)
-s3load('ModelSaves/elbtu_nn.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/elbtu_nn.RData', bucket = 'cuny-msds-final-project-cbecs')
 print(nn_train)
 varImp(nn_train)
 nn_plot <- plot_fun(in_model=nn_train, 
@@ -261,6 +264,7 @@ nn_plot$pvo_plot
 plot(nn_plot$tmp_model)
 nn_imp_df <- nn_plot$imp_df %>% mutate(Overall = 100 * Overall)
 nn_plot$RMSE
+nn_plot$R2
 ```
 
 #load models, again if not done before
