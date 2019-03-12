@@ -53,8 +53,9 @@ RMSE: 13080, Rsquared: 0.725\\
 Top 5: \lstinline{PUBCLIM[WITHELD]}, \lstinline{HCBED_bin[>250]}, \lstinline{TVVIDEON_bin[>200]}, \lstinline{PRNTRN}, \lstinline{MRI[YES]}
 \\[0.1in]
 \indent Given that the final model will be a neural network, it made sense to try a simple out-of-the-box training model to see if any particular features worked better with this specific process.  However, low metrics were returned but it was decided to keep the predictor set and include it in the final selection summary.
-
+\newpage
 \subsection{\hyperref[appendix:electricity:sv]{Variable Selection - Selected Variable Analysis}}
+
+\includegraphics[width=.99\textwidth, height=0.35\textheight]{Images/electricity_all_vars.png}
+\\[0.2in]
 In order to rank the most important features, the variable importance metrics from the selected models were all set to the same scale, the summed up.  The number of selected features were then used as hyperparameters in the final model training.  As a preliminary check, the top 20 predictors are plotted in the appendix and are generally discussed here.  It seems the attempts to create stratified random samples, by building type, may have been beneficial in this case since there are some very building type specific end-uses that are highly ranked.  It does cause some concern that there are some odd selections, such as the 'witheld' column of the climate encoded variables being selected; however, it seems as though whatever reasoning to classify these types of buidlings this way is a direct indicator of electrical consumption.  When evaluating multiple selected atypical variables (e.g. LAUNDR.3[laundry provided by offsite services]) it seems that just the applicability of the question influences the consumption (building types - lodgining, healthcare, nursing).  In an attempt to truly follow the imporant predictors, no variables have been removed from this set and the order of importance remains unchanged.
-
-

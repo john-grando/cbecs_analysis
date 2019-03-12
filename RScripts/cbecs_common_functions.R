@@ -1,4 +1,4 @@
-plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE, log_tran=FALSE, observed_df=NA, fuel_type = NA) {
+plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE, log_tran=FALSE, observed_df=NA, response=NA, fuel_type = NA) {
   imp_df <- varImp(in_model)$importance %>% 
     rownames_to_column(var='feature')
   plot_df <- imp_df %>% 
@@ -26,6 +26,7 @@ plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE
                          alt_predict_sub = alt_predict, 
                          log_tran_sub = log_tran,
                          observed_df_sub = observed_df,
+                         response_sub = response,
                          fuel_type_sub = fuel_type)
   return(list(vars_plot = p1, 
               pvo_plot = plots$p,
@@ -37,7 +38,7 @@ plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE
   )
 }
 
-plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_predict_sub=FALSE, log_tran_sub=FALSE, observed_df_sub=NA, fuel_type_sub = NA){
+plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_predict_sub=FALSE, log_tran_sub=FALSE, observed_df_sub=NA, response_sub=NA, fuel_type_sub = NA){
   if(alt_predict_sub==FALSE){
     final_model <- in_model_sub$finalModel
   }
@@ -47,27 +48,27 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
   
   if(log_tran_sub==TRUE){
     tmp_model_sub <- lm(exp(predict(final_model, observed_df_sub)) ~ 
-                          observed_df_sub$ELBTU)
+                          response_sub)
     p2 <- ggplot(data = data.frame(predicted = exp(predict(final_model, observed_df_sub)), 
-                                   observed = observed_df_sub$ELBTU))
+                                   observed = response_sub))
     RMSE_sub <- caret::RMSE(exp(predict(final_model, observed_df_sub)), 
-                            observed_df_sub$ELBTU)
+                            response_sub)
     R2_sub <- caret::R2(exp(predict(final_model, observed_df_sub)), 
-                        observed_df_sub$ELBTU)
+                        response_sub)
     MAE_sub <- caret::MAE(exp(predict(final_model, observed_df_sub)), 
-                          observed_df_sub$ELBTU)
+                          response_sub)
   }
   if(log_tran_sub!=TRUE){
     tmp_model_sub <- lm(predict(final_model, observed_df_sub) ~ 
-                          observed_df_sub$ELBTU)
+                          response_sub)
     p2 <- ggplot(data = data.frame(predicted = predict(final_model, observed_df_sub), 
-                                   observed = observed_df_sub$ELBTU))
+                                   observed = response_sub))
     RMSE_sub <- caret::RMSE(predict(final_model, observed_df_sub),
-                            observed_df_sub$ELBTU)
+                            response_sub)
     R2_sub <- caret::R2(predict(final_model, observed_df_sub),
-                        observed_df_sub$ELBTU)
+                        response_sub)
     MAE_sub <- caret::MAE(predict(final_model, observed_df_sub),
-                          observed_df_sub$ELBTU)
+                          response_sub)
   }
   p2 <- p2 + 
     aes(x=predicted, y=observed) + 

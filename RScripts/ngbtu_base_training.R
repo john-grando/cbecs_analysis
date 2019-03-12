@@ -26,8 +26,10 @@ cbecs_dfs <- clean_encode_cbecs(cbecs_raw_df)
 
 #remove buildings that know the don't use electricity and outliers
 cbecs_ng_encoded_df <- cbecs_dfs$encoded_df %>% 
+  filter(!is.na(ELBTU)) %>%
   filter(NGUSED.1==1)
 cbecs_ng_cleaned_df <- cbecs_dfs$clean_df %>% 
+  filter(!is.na(ELBTU)) %>%
   filter(NGUSED==1)
 
 zero_vals <- preProcess(cbecs_ng_encoded_df, method = c('zv'))$method$remove
