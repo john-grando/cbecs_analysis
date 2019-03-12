@@ -11,7 +11,7 @@ hyper_list <- list()
 hyper_list$dropout <- seq(0, 0.6, 0.3)
 hyper_list$units <- seq(50, 200, 50)
 hyper_list$regularizer <- seq(0, 0.9, 0.45)
-hyper_list$model <- seq(3,0,-1)
+hyper_list$model <- seq(7,0,-1)
 hyper_list$batch <- seq(50, 2050, 500)
 hyper_list$loss <- list(
       list(name = 'mse', func = 'mse'), 
