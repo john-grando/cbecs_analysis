@@ -6,12 +6,12 @@ build_3h_tri_rev_2_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) 
     layer_dense(units =  floor(n_units / 3 / 3), 
                 activation = "relu",
                 input_shape = dim(df)[2],
-                kernel_regularizer = regularizer_l2(l = n_l / 3)
+                kernel_regularizer = regularizer_l2(l = n_l / 3 / 3)
     ) %>%
     layer_dropout(n_dropout / 3) %>%
     layer_dense(units = floor(n_units / 3), 
                 activation = "relu",
-                kernel_regularizer = regularizer_l2(l = n_l)
+                kernel_regularizer = regularizer_l2(l = n_l / 3)
     ) %>%
     layer_dropout(n_dropout) %>%
     layer_dense(units = n_units, 
@@ -62,12 +62,12 @@ build_3h_tri_2_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) {
     layer_dropout(n_dropout) %>%
     layer_dense(units = floor(n_units / 3), 
                 activation = "relu",
-                kernel_regularizer = regularizer_l2(l = n_l)
+                kernel_regularizer = regularizer_l2(l = n_l / 3)
     ) %>%
     layer_dropout(n_dropout / 3) %>%
     layer_dense(units = floor(n_units / 3 / 3), 
                 activation = "relu",
-                kernel_regularizer = regularizer_l2(l = n_l / 3)
+                kernel_regularizer = regularizer_l2(l = n_l / 3 / 3)
     ) %>%
     layer_dropout(n_dropout) %>%
     layer_dense(units = 1)
