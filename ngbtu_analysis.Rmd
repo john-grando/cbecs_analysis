@@ -126,7 +126,7 @@ plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
 pls_plot$RMSE
 pls_plot$R2
-View(t(cbecs_ng_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_ngbtu_encoded_center_scale_df))) %>% filter(rowname==177|rowname==1938) %>% select(NGBTU, pred, PBA, SQFT, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
+#View(t(cbecs_ng_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_ngbtu_encoded_center_scale_df))) %>% filter(rowname==177|rowname==1938) %>% select(NGBTU, pred, PBA, SQFT, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
 
 #View(t(cbecs_ngbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_ngbtu_encoded_center_scale_df))) %>% filter(rowname==177|rowname==1938) %>% select(NGBTU, pred, one_of(pls_imp_df$feature))))
 ```
@@ -150,6 +150,7 @@ rf_plot$pvo_plot
 plot(rf_plot$tmp_model)
 rf_imp_df <- rf_plot$imp_df
 rf_plot$RMSE
+rf_plot$R2
 #how to evaluate rows
 #View(t(cbecs_ng_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_ngbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974)))
 #View(t(cbecs_ngbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_ngbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974) %>% select(NGBTU, pred, one_of(rf_imp_df$feature))))
