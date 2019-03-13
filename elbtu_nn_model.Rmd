@@ -18,13 +18,24 @@ source('RScripts/elbtu_nn_model_functions_build.R')
 ```
 
 ```{r}
-s3load('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket = 'cuny-msds-final-project-cbecs')
 hyper_summary <- hyper_results %>% 
-  group_by(loss, opt, model, dropout, units, reg, batch) %>% 
-  summarize(loss = mean(loss), 
-            mae = mean(mae), 
+  group_by(
+    num_vars, 
+    loss_f, 
+    opt, 
+    model, 
+    dropout, 
+    units, 
+    reg, 
+    batch
+  ) %>% 
+  summarize(mae = mean(mae), 
+            mse = mean(mse),
+            msle = mean(msle),
+            loss = mean(loss),
             pm = mean(pm))
-hyper_summary %>% arrange(mae) %>% kable('html') %>% kable_styling()
+hyper_summary %>% arrange(mlse) %>% kable('html') %>% kable_styling()
 ```
 
 ```{r}
