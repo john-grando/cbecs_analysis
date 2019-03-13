@@ -44,21 +44,61 @@ evaluation <- model %>% evaluate(as.matrix(validation_df), as.matrix(validation_
 evaluation
 resid_model <- lm(model %>% predict(as.matrix(validation_df))~as.matrix(validation_labels))
 summary(resid_model)
-par(mfrow=c(2,2))
-plot(resid_model)
+png(paste0('Documents/Images/electricity_nn_full_resid_1.png'), width = 7, height = 4, 
+      units = 'in', pointsize = 12,
+      bg='white', res=100)
+par(mfrow=c(1,2))
+plot(resid_model, c(1,2))
+dev.off()
+png(paste0('Documents/Images/electricity_nn_full_resid_2.png'), width = 7, height = 4, 
+      units = 'in', pointsize = 12,
+      bg='white', res=100)
+par(mfrow=c(1,2))
+plot(resid_model, c(3,5))
+dev.off()
 residuals <- resid(resid_model)
 resid_df <- data.frame(resid = residuals, 
                        pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list),
                        elbtu_per_sf = validation_labels,
                        pred = model %>% predict(as.matrix(validation_df)))
-ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_df)),
+p1 <- ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_df)),
                          obs=validation_labels),
        aes(x=pred, y=obs)) + 
-  geom_point() + 
-  geom_abline(slope = 1)
-#ggplot(resid_df, aes(x=resid)) + geom_density() + facet_wrap(~pba, scales = 'free')
-ggplot(resid_df, aes(x=elbtu_per_sf, y=resid)) + geom_point()
-
+    geom_point(alpha=0.2) +
+    ggtitle('Predicted vs. Observed') +
+    geom_abline(slope = 1, intercept = 0) +
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          plot.title = element_text(hjust = 0.5),
+          plot.background = element_rect(fill = "lightgrey"), 
+          panel.background = element_rect(fill = "white"), 
+          panel.grid.major.x = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"), 
+          axis.text = element_text(size=12, color = "grey55"), 
+          axis.title = element_text(size=14, color = "grey55"), 
+          legend.title=element_text(size=7),
+          legend.text=element_text(size=6),
+          legend.key.height = unit(0.5, "cm"),
+          title = element_text(size=20, color = "grey55"))
+ggsave(paste0('Documents/Images/electricity_nn_full_pvo.png'), p1, width = 6.5, height = 3, units = 'in')
+p1
+p2 <- ggplot(resid_df, aes(x=elbtu_per_sf, y=resid)) + 
+    geom_point(alpha=0.2) +
+    ggtitle('Predicted vs. Residual') +
+    geom_abline(slope = 0, intercept = 0) +
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          plot.title = element_text(hjust = 0.5),
+          plot.background = element_rect(fill = "lightgrey"), 
+          panel.background = element_rect(fill = "white"), 
+          panel.grid.major.x = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"), 
+          axis.text = element_text(size=12, color = "grey55"), 
+          axis.title = element_text(size=14, color = "grey55"), 
+          legend.title=element_text(size=7),
+          legend.text=element_text(size=6),
+          legend.key.height = unit(0.5, "cm"),
+          title = element_text(size=20, color = "grey55"))
+ggsave(paste0('Documents/Images/electricity_nn_full_pvr.png'), p2, width = 6.5, height = 3, units = 'in')
+p2
 elbtu_impact_error_check_df <- resid_df %>% 
   group_by(pba) %>% 
   summarize(avg_elbtu = mean(elbtu_per_sf),

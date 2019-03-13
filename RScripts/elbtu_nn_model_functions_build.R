@@ -78,7 +78,6 @@ build_3h_tri_2_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) {
 
 #Build 3h triangular model
 build_3h_tri_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) {
-  
   model <- keras_model_sequential() %>%
     layer_dense(units = n_units, 
                 activation = "relu",
@@ -97,14 +96,72 @@ build_3h_tri_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) {
     ) %>%
     layer_dropout(n_dropout) %>%
     layer_dense(units = 1)
-  
   model
-  
+}
+
+#Build 5h model
+build_5h_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) {
+  model <- keras_model_sequential() %>%
+    layer_dense(units = n_units, 
+                activation = "relu",
+                input_shape = dim(df)[2],
+                kernel_regularizer = regularizer_l2(l = n_l)
+    ) %>%
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
+                activation = "relu",
+                kernel_regularizer = regularizer_l2(l = n_l)
+    ) %>%
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
+                activation = "relu",
+                kernel_regularizer = regularizer_l2(l = n_l)
+    ) %>%
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
+                activation = "relu",
+                kernel_regularizer = regularizer_l2(l = n_l)
+    ) %>%
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
+                activation = "relu",
+                kernel_regularizer = regularizer_l2(l = n_l)
+    ) %>%
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = 1)
+  model
+}
+
+#Build 4h model
+build_4h_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) {
+  model <- keras_model_sequential() %>%
+    layer_dense(units = n_units, 
+                activation = "relu",
+                input_shape = dim(df)[2],
+                kernel_regularizer = regularizer_l2(l = n_l)
+    ) %>%
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
+                activation = "relu",
+                kernel_regularizer = regularizer_l2(l = n_l)
+    ) %>%
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
+                activation = "relu",
+                kernel_regularizer = regularizer_l2(l = n_l)
+    ) %>%
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = n_units, 
+                activation = "relu",
+                kernel_regularizer = regularizer_l2(l = n_l)
+    ) %>%
+    layer_dropout(n_dropout) %>%
+    layer_dense(units = 1)
+  model
 }
 
 #Build 3h model
 build_3h_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) {
-  
   model <- keras_model_sequential() %>%
     layer_dense(units = n_units, 
                 activation = "relu",
@@ -123,9 +180,7 @@ build_3h_model <- function(df = NA, n_dropout=0, n_units=10, n_l = 0) {
     ) %>%
     layer_dropout(n_dropout) %>%
     layer_dense(units = 1)
-
   model
-  
 }
 
 #build 2h model
@@ -199,18 +254,26 @@ model_selector <- function(model_n = '1', ...){
     m_selected <- 1
   }
   if(model_n=='4'){
-    x <- build_3h_tri_model(...)
+    x <- build_4h_model(...)
     m_selected <- 1
   }
   if(model_n=='5'){
-    x <- build_3h_tri_2_model(...)
+    x <- build_5h_model(...)
     m_selected <- 1
   }
   if(model_n=='6'){
-    x <- build_3h_tri_rev_model(...)
+    x <- build_3h_tri_model(...)
     m_selected <- 1
   }
   if(model_n=='7'){
+    x <- build_3h_tri_2_model(...)
+    m_selected <- 1
+  }
+  if(model_n=='8'){
+    x <- build_3h_tri_rev_model(...)
+    m_selected <- 1
+  }
+  if(model_n=='9'){
     x <- build_3h_tri_rev_2_model(...)
     m_selected <- 1
   }

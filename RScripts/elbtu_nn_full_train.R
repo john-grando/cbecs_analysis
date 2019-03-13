@@ -10,8 +10,8 @@ model <- model_selector(model_n = '3', df = train_df, n_dropout=0, n_units=200, 
 
 #Compile
 model %>% compile(
-  loss = 'mse',
-  #loss = keras::loss_mean_squared_logarithmic_error,
+  #loss = 'mse',
+  loss = keras::loss_mean_squared_logarithmic_error,
   #loss = custom_loss_func,
   #optimizer = keras::optimizer_sgd(lr = 0.01, decay = 0.0),
   optimizer = keras::optimizer_rmsprop(),
@@ -28,7 +28,7 @@ print_dot_callback <- callback_lambda(
 )
 
 # The patience parameter is the amount of epochs to check for improvement.
-early_stop <- callback_early_stopping(monitor = "val_loss", patience = 50)
+early_stop <- callback_early_stopping(monitor = "val_loss", patience = 200)
 
 #Run
 epochs <- 1000
@@ -49,13 +49,11 @@ model_name <- 'ModelSaves/elbtu_nn_full_model.h5'
 model %>% save_model_hdf5(model_name)
 put_object(file = model_name, 
            bucket = 'cuny-msds-final-project-cbecs', 
-           object = model_name, 
-           multipart = TRUE)
+           object = model_name)
 
 #save history
 history_name <- 'ModelSaves/elbtu_nn_full_model_history.RData'
 save(history, file = history_name)
 put_object(file = history_name, 
            bucket = 'cuny-msds-final-project-cbecs', 
-           object = history_name, 
-           multipart = TRUE)
+           object = history_name)

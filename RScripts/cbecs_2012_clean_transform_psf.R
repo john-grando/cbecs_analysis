@@ -403,9 +403,10 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
               funs(as.numeric(. * TVVIDEON / SQFT))) %>% 
     select(-TVVIDEON) %>% 
     rename(TVVIDEONPerSf = `TVVIDEON_bin.1`)
-  encoded_numeric_cols <- append(clean_numeric_cols, c('NFLOORPerSf', 'FLCEILHTPerSf', 'NELVTRPerSf', 'NESLTRPerSf', 
-                                                       'RWSEATPerSf', 'PBSEATPerSf', 'HCBEDPerSf', 'NRSBEDPerSf', 'LODGRMPerSf', 
-                                                       'XRAYNPerSf', 'NOCCPerSf', 'RFGCOMPNPerSf', 'SERVERNPerSf', 'TVVIDEONPerSf'))
+  encoded_numeric_cols <- append(clean_numeric_cols, 
+                                 c('NFLOORPerSf', 'FLCEILHTPerSf', 'NELVTRPerSf', 'NESLTRPerSf', 
+                                   'RWSEATPerSf', 'PBSEATPerSf', 'HCBEDPerSf', 'NRSBEDPerSf', 'LODGRMPerSf', 
+                                   'XRAYNPerSf', 'NOCCPerSf', 'RFGCOMPNPerSf', 'SERVERNPerSf', 'TVVIDEONPerSf'))
   encoded_non_numeric_cols <- names(encoded_df[, !(colnames(encoded_df) %in% encoded_numeric_cols)])
   encoded_full_column_list <- append(encoded_numeric_cols, encoded_non_numeric_cols)
   return(
