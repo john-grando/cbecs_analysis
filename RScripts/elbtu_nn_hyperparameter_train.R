@@ -3,6 +3,15 @@ source('RScripts/elbtu_nn_base_model.R')
 #Get model types
 source('RScripts/elbtu_nn_model_functions_build.R')
 
+#if hyperparameter df exists then use it
+tst <- head_object('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket='cuny-msds-final-project-cbecs')
+if(head_object('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket='cuny-msds-final-project-cbecs')[1]==TRUE){
+  s3load('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket = 'cuny-msds-final-project-cbecs')
+}
+if(head_object('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket='cuny-msds-final-project-cbecs')[1]==FALSE){
+  hyper_results <- data.frame()
+}
+
 #Hyperparameter training
 n_folds <- 3
 folds <- createFolds(y = train_test_list, k=n_folds, list=FALSE)
@@ -32,7 +41,6 @@ registerDoMC(2)
 
 #Run model
 epochs <- 50
-hyper_results <- data.frame()
 for(v in c(seq(1,length(variables_by_importance),100), 
            length(variables_by_importance)-30, 
            length(variables_by_importance)-20, 
