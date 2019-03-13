@@ -17,22 +17,22 @@ n_folds <- 3
 folds <- createFolds(y = train_test_list, k=n_folds, list=FALSE)
 
 hyper_list <- list()
-hyper_list$dropout <- seq(0.6, 0.6, 0.6)
-hyper_list$units <- seq(300, 300, 100)
-hyper_list$regularizer <- seq(0.9, 0.9, 0.9)
-hyper_list$model <- seq(5,5,1)
-hyper_list$batch <- seq(150, 150, 100)
+hyper_list$dropout <- seq(0, 0.6, 0.3)
+hyper_list$units <- seq(200, 300, 100)
+hyper_list$regularizer <- seq(0, 0.9, 0.45)
+hyper_list$model <- seq(3,5,1)
+hyper_list$batch <- seq(50, 150, 100)
 hyper_list$loss <- list(
       #list(name = 'mse', func = 'mse'), 
       list(name = 'msle', func = keras::loss_mean_squared_logarithmic_error)#,
       #list(name = 'cusom_loss_func', func = custom_loss_func)
 )
 hyper_list$opt <- list(
-  #list(name = 'rmsprop_lr_0005', func = keras::optimizer_rmsprop(lr = 0.0005)),
-  #list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001)),
-  #list(name = 'rmsprop_lr_005', func = keras::optimizer_rmsprop(lr = 0.005)),
-  #list(name = 'sgd_lr_005', func = keras::optimizer_sgd(lr=0.005)),
-  #list(name = 'sgd_lr_01', func = keras::optimizer_sgd(lr=0.01)),
+  list(name = 'rmsprop_lr_0005', func = keras::optimizer_rmsprop(lr = 0.0005)),
+  list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001)),
+  list(name = 'rmsprop_lr_005', func = keras::optimizer_rmsprop(lr = 0.005)),
+  list(name = 'sgd_lr_005', func = keras::optimizer_sgd(lr=0.005)),
+  list(name = 'sgd_lr_01', func = keras::optimizer_sgd(lr=0.01)),
   list(name = 'sgd_lr_05', func = keras::optimizer_sgd(lr=0.05)))
 
 #Initialize parallel processing on 2 cores
