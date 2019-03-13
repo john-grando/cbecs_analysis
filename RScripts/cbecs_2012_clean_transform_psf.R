@@ -30,7 +30,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     #Extremely large electricity use points influencing plots
     #filter(ELBTU < 5E8) %>% 
     #reduce scale of response variables
-    mutate_at(vars(ELBTU, NGBTU, DHBTU, FKBTU, MFBTU), funs(./1000)) %>% 
+    mutate_at(vars(ELBTU, NGBTU, DHBTU, FKBTU, MFBTU), funs(. * 1000)) %>% 
     #Remove weight and imputation columns as well as IDs
     select(-one_of(weight_list), -one_of(impute_list), -PUBID) %>% 
     #Remove MFUSED, no variance %>% 
@@ -378,7 +378,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('NRSBED_bin\\.[^2]')))), 
               funs(as.numeric(. * NRSBED / SQFT))) %>%
     select(-NRSBED) %>% 
-    rename(NRESBEDPerSf = `NRSBED_bin.1`) %>% 
+    rename(NRSBEDPerSf = `NRSBED_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('LODGRM_bin\\.[^2]')))), 
               funs(as.numeric(. * LODGRM / SQFT))) %>%
     select(-LODGRM) %>% 

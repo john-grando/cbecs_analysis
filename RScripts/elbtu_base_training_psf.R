@@ -24,7 +24,7 @@ cbecs_raw_df <- s3read_using(read.csv,
                              header = TRUE)
 cbecs_dfs <- clean_encode_cbecs(cbecs_raw_df)
 
-#remove buildings that know the don't use electricity and outliers
+#remove buildings that know the don't use electricity
 cbecs_el_encoded_df <- cbecs_dfs$encoded_df %>% 
   filter(!is.na(ELBTUPerSf))
 cbecs_el_cleaned_df <- cbecs_dfs$clean_df %>% 
@@ -61,9 +61,10 @@ cbecs_elbtu_encoded_non_numerics_cols <- colnames(
   cbecs_elbtu_encoded_df %>% 
     select(one_of(cbecs_dfs$encoded_non_numeric_cols)))
 
-#Make offset for boxcox
-cbecs_elbtu_encoded_offset_df <- cbecs_elbtu_encoded_df #%>% 
-  #mutate_at(vars(cbecs_elbtu_encoded_numerics_cols), funs(.+0.001))
+#Make offset for boxcox, 50% of column minimum value
+cbecs_elbtu_encoded_offset_df <- cbecs_elbtu_encoded_df %>% 
+  select(one_of(cbecs_dfs$encoded_numeric_cols)) %>% 
+  mutate_at(vars(one_of(cbecs_dfs$encoded_numeric_cols)), funs(. + 0.5 * min(.[which(. > 0)])))
 
 #center and scale only numeric columns in data set, not encoder columns
 elbtu_pre_process <- preProcess(
@@ -75,8 +76,8 @@ elbtu_pre_process <- preProcess(
 
 #Apply transformations to dataframe
 cbecs_elbtu_encoded_center_scale_df <- predict(elbtu_pre_process, 
-                                               cbecs_elbtu_encoded_df #%>% 
-                                                 #mutate_at(vars(cbecs_elbtu_encoded_numerics_cols), funs(.+0.001))
+                                               cbecs_elbtu_encoded_df %>%
+                                                 mutate_at(vars(one_of(cbecs_dfs$encoded_numeric_cols)), funs(. + 0.5 * min(.[which(. > 0)])))
                                                )
 
 #Train/Test split

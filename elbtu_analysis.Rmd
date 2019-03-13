@@ -158,7 +158,7 @@ rf_plot$R2
 ```
 
 lasso
-```{r eval}
+```{r eval=FALSE}
 set.seed(20)
 s3load('ModelSaves/elbtu_l.RData', bucket = 'cuny-msds-final-project-cbecs')
 print(l_train)
@@ -478,16 +478,5 @@ for(i in vars){
             'Logscale Electricity')
   iter <- iter + 1
 }
-
-p1 <- plot_vars(
-  cbecs_dfs$encoded_df, 
-  cbecs_dfs$encoded_df$ELBTU, 
-  'electricity', 
-  'RFGWIN', 
-  match('RFGWIN', colnames(cbecs_dfs$encoded_df)),
-  'tst',
-  'tst1',
-  'tst2')
-p1
 ```
 

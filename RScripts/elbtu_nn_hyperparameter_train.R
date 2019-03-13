@@ -28,12 +28,13 @@ hyper_list$loss <- list(
       #list(name = 'cusom_loss_func', func = custom_loss_func)
 )
 hyper_list$opt <- list(
-  list(name = 'rmsprop_lr_0005', func = keras::optimizer_rmsprop(lr = 0.0005)),
+  #list(name = 'rmsprop_lr_0005', func = keras::optimizer_rmsprop(lr = 0.0005)),
   list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001)),
-  list(name = 'rmsprop_lr_005', func = keras::optimizer_rmsprop(lr = 0.005)),
-  list(name = 'sgd_lr_005', func = keras::optimizer_sgd(lr=0.005)),
-  list(name = 'sgd_lr_01', func = keras::optimizer_sgd(lr=0.01)),
-  list(name = 'sgd_lr_05', func = keras::optimizer_sgd(lr=0.05)))
+  #list(name = 'rmsprop_lr_005', func = keras::optimizer_rmsprop(lr = 0.005)),
+  #list(name = 'sgd_lr_005', func = keras::optimizer_sgd(lr=0.005)),
+  list(name = 'sgd_lr_01', func = keras::optimizer_sgd(lr=0.01))
+  #list(name = 'sgd_lr_05', func = keras::optimizer_sgd(lr=0.05))
+)
 
 #Initialize parallel processing on 2 cores
 #cl <- makeCluster(2)

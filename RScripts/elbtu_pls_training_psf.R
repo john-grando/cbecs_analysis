@@ -12,7 +12,7 @@ control <- trainControl(index = cbecs_train_cv_list,
                         verboseIter = TRUE)
 tunegrid <- expand.grid(ncomp = seq(1, 20, 1))
 pls_train <- caret::train(
-  y = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
+  y = log(cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf + 1),
   x = cbecs_elbtu_encoded_center_scale_train_df %>% select(-ELBTUPerSf),
   method='pls',
   metric='RMSE',
