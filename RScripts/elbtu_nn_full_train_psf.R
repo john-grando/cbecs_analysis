@@ -1,7 +1,7 @@
 #Train full neural network model
 
 #Set up base and compile
-source('RScripts/elbtu_nn_base_model.R')
+source('RScripts/elbtu_nn_base_model_psf.R')
 
 #Compile
 model %>% compile(
@@ -40,14 +40,14 @@ history <- model %>% fit(
 )
 
 #save model
-model_name <- 'ModelSaves/elbtu_nn_full_model.h5'
+model_name <- 'ModelSaves/elbtu_nn_full_model_psf.h5'
 model %>% save_model_hdf5(model_name)
 put_object(file = model_name, 
            bucket = 'cuny-msds-final-project-cbecs', 
            object = model_name)
 
 #save history
-history_name <- 'ModelSaves/elbtu_nn_full_model_history.RData'
+history_name <- 'ModelSaves/elbtu_nn_full_model_history_psf.RData'
 save(history, file = history_name)
 put_object(file = history_name, 
            bucket = 'cuny-msds-final-project-cbecs', 

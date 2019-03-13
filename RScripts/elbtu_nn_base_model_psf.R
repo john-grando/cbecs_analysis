@@ -16,7 +16,7 @@ library(doMC)
 source('RScripts/elbtu_nn_model_functions_build.R')
 
 #Load input data and assign as train/test/validation
-s3load('ModelSaves/elbtu_nn_input.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/elbtu_nn_input_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
 #stratify training set
 set.seed(20)
 train_test_list <- createDataPartition(y=nn_input_pba_labels, 
@@ -28,7 +28,8 @@ train_test_df <- nn_input_df %>%
 
 train_test_labels <- (train_test_df %>% 
                         slice(train_test_list) %>% 
-                        select(ELBTU))$ELBTU
+                        select(ELBTUPerSf))$ELBTUPerSf
+
 
 set.seed(20)
 train_list <- createDataPartition(y=train_test_df$PBA,
@@ -36,27 +37,27 @@ train_list <- createDataPartition(y=train_test_df$PBA,
                                   list=FALSE)
 train_df <- train_test_df %>% 
   slice(train_list) %>% 
-  select(-PBA, -ELBTU)
+  select(-PBA, -ELBTUPerSf)
 
 train_labels <- (train_test_df %>% 
                    slice(train_list) %>% 
-                   select(ELBTU))$ELBTU
+                   select(ELBTUPerSf))$ELBTUPerSf
 
 test_df <- train_test_df %>% 
   slice(-train_list) %>% 
-  select(-PBA, -ELBTU)
+  select(-PBA, -ELBTUPerSf)
 
 test_labels <- (train_test_df %>% 
                   slice(-train_list) %>% 
-                  select(ELBTU))$ELBTU
+                  select(ELBTUPerSf))$ELBTUPerSf
 
 validation_df <- nn_input_df %>% 
   slice(-train_test_list) %>% 
-  select(-ELBTU)
+  select(-ELBTUPerSf)
 
 validation_labels <- (nn_input_df %>%
                         slice(-train_test_list) %>% 
-                        select(ELBTU))$ELBTU
+                        select(ELBTUPerSf))$ELBTUPerSf
 
 #train_summary_weight <- train_test_df %>% slice(train_list) %>% select(PBA) %>% group_by(PBA) %>% summarize(count = n())
 
@@ -75,7 +76,6 @@ percentage_metric <- custom_metric('percentage_metric', function(y_true, y_pred)
   K <- backend()
   K$mean(tf$multiply(K$abs(1 - K$abs(y_true - y_pred) / K$clip(y_true,0.1,1000)), y_true))
 })
-
 
 #Select model parameters
 model <- model_selector(model_n = '3', df = train_df, n_dropout=0.6, n_units=200, n_l = 0)
