@@ -57,13 +57,13 @@ if(lmbda!=0){
           title = element_text(size=20, color = "grey55"))
 }
 if(lmbda==0){
-  ggplot(cbecs_el_cleaned_df, aes(x=log(ELBTU))) + 
+  ggplot(cbecs_el_cleaned_df, aes(x=log(ELBTU+1))) + 
     geom_density() + 
     stat_function(fun=dnorm,
                 color="blue",
                 args=list(
-                  mean=mean(log(cbecs_dfs$clean_df$ELBTU), na.rm = TRUE),
-                  sd(log(cbecs_dfs$clean_df$ELBTU), na.rm = TRUE)
+                  mean=mean(log(cbecs_dfs$clean_df$ELBTU+1), na.rm = TRUE),
+                  sd(log(cbecs_dfs$clean_df$ELBTU+1), na.rm = TRUE)
                 )
     ) +
     ggtitle(paste('ELBTU Transformed via BoxCox, Lambda = ', lmbda, sep="")) +

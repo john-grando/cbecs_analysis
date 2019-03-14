@@ -56,13 +56,13 @@ if(lmbda!=0){
           title = element_text(size=20, color = "grey55"))
 }
 if(lmbda==0){
-  ggplot(cbecs_ng_cleaned_df, aes(x=log(NGBTU))) + 
+  ggplot(cbecs_ng_cleaned_df, aes(x=log(NGBTU+1))) + 
     geom_density() + 
     stat_function(fun=dnorm,
                 color="blue",
                 args=list(
-                  mean=mean(log(cbecs_dfs$clean_df$NGBTU), na.rm = TRUE),
-                  sd(log(cbecs_dfs$clean_df$NGBTU), na.rm = TRUE)
+                  mean=mean(log(cbecs_dfs$clean_df$NGBTU+1), na.rm = TRUE),
+                  sd(log(cbecs_dfs$clean_df$NGBTU+1), na.rm = TRUE)
                 )
     ) +
     ggtitle(paste('NGBTU Transformed via BoxCox, Lambda = ', lmbda, sep="")) +

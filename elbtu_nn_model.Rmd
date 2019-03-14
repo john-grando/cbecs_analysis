@@ -84,6 +84,7 @@ p1 <- ggplot(hyper_summary_best,
        aes(x=num_vars, y=msle)) + 
   geom_line() +
   ggtitle('Loss vs Number of Variables') +
+  labs(x='Number of Variables', y='Mean Squared Loss Error') +
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),
         plot.background = element_rect(fill = "lightgrey"), 

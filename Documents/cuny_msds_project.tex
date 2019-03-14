@@ -72,11 +72,14 @@
 \printauthor				% Print the author data as defined above
 \newpage
 %Table of contents
+\pagestyle{empty}
 \setcounter{secnumdepth}{-1}
 {\hypersetup{linkcolor =black}
+	\renewcommand{\thispagestyle}[1]{}
   \tableofcontents
   }
 \newpage
+\pagestyle{fancy}
 \setcounter{page}{1}		% Set page numbering to begin on this page
 %----------------------------------------------------------------
 % Begin document
@@ -102,8 +105,15 @@
 %Future Work \\
 %Acknowledgements \\
 %Citations \\
+\FloatBarrier
 \newpage
 %\begin{landscape}
 \input{project_appendix_electricity}
+\FloatBarrier
+\newpage
+\input{project_appendix_natural_gas}
+\FloatBarrier
+\newpage
+\input{project_appendix_neural_networks}
 %\end{landscape}
 \end{document}
