@@ -7,14 +7,23 @@ The choice to use neural networks for the final model was multi-faceted.  First,
 
 \subsection{Hyperparameter Training}
 In order to select the most optimized set of parameters, some hyperparameter training was performed.  Some standard searches were made, such as varying the dropout rate, regularization, learning rate, and batch size; however, one additional training set was incorporated to highlight the goals of this study.  A series of models were tested which had an incrementally decreasing number of variables, by least importance, in order to test the loss of accuracy.
-
+\newpage
 \subsection{Electricity}
+The final selected model consisted of a 3 hidden layers of 300 nodes, using a dropout rate of 0.6, no regularization, batch sizes of 50 and XXX variables for selection.  The number of variables is greatly reduced while maintaining relativively similar performance
 
-\subsubsection{Summary}
-Test
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth, height=0.4\textheight]{Images/electricity_nn_error.png}
+\end{figure}
 
-\subsubsection{Performance}
-Test
+The final selected model has a msle of XXX and mse of XXX.  Comparing this to the previous feature extraction models, which used many more variables, the performance is ....
+
+The resdiuals indicate.... It is noted that the variance scales with the response variable, by design; however, since neural network models do not operate on a principle of homoscedacitity, only underlying patterns are of concern.  
+
+In summary, the resulting predictions appear to be ....  \textit{\hyperref[appendix:electricity:nn_full]{Appendix}}
+
+\subsubsection{Future Work}
+While it was determined that some heteroscedacitity would be acceptable, there does appear to be area for improvement.  Additionally, as mentioned at the beginning of this report, the sampling of this data set was stratified to reflect the building population.  However, it is noted that there are some classes that have greater variance than others.  Therefore, it may be useful to use this stratification as a weighted method, based on \lstinline{PBAPLUS}, in order to try and emphasize accuracy on the most prevalent budiding types. 
 
 \subsection{Natural Gas}
 

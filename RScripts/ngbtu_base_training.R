@@ -26,10 +26,10 @@ cbecs_dfs <- clean_encode_cbecs(cbecs_raw_df)
 
 #remove buildings that know the don't use electricity and outliers
 cbecs_ng_encoded_df <- cbecs_dfs$encoded_df %>% 
-  filter(!is.na(ELBTU)) %>%
+  filter(!is.na(NGBTU)) %>%
   filter(NGUSED.1==1)
 cbecs_ng_cleaned_df <- cbecs_dfs$clean_df %>% 
-  filter(!is.na(ELBTU)) %>%
+  filter(!is.na(NGBTU)) %>%
   filter(NGUSED==1)
 
 zero_vals <- preProcess(cbecs_ng_encoded_df, method = c('zv'))$method$remove
@@ -65,7 +65,7 @@ cbecs_ngbtu_encoded_non_numerics_cols <- colnames(
 
 #Make offset for boxcox
 cbecs_ngbtu_encoded_offset_df <- cbecs_ngbtu_encoded_df %>% 
-  mutate_at(vars(cbecs_ngbtu_encoded_numerics_cols), funs(.+1))
+  mutate_at(vars(cbecs_ngbtu_encoded_numerics_cols), funs(. + 0.5 * min(.[which(. > 0)])))
 
 #center and scale only numeric columns in data set, not encoder columns
 ngbtu_pre_process <- preProcess(
@@ -78,7 +78,8 @@ ngbtu_pre_process <- preProcess(
 #Apply transformations to dataframe
 cbecs_ngbtu_encoded_center_scale_df <- predict(ngbtu_pre_process, 
                                                cbecs_ngbtu_encoded_df %>% 
-                                                 mutate_at(vars(cbecs_ngbtu_encoded_numerics_cols), funs(.+1)))
+                                                 mutate_at(vars(cbecs_ngbtu_encoded_numerics_cols), 
+                                                           funs(. + 0.5 * min(.[which(. > 0)]))))
 
 #Train/Test split
 set.seed(20)

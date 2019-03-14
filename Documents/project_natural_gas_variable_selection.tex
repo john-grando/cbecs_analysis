@@ -3,4 +3,20 @@
 \addcontentsline{toc}{section}{\nameref{sec:natural_gas}}
 
 \subsection{General}
-Test
+As previously noted, only buildings that indicated natural gas being used \lstinline{NGUSED} were included in the samples for this major fuel use.  Then, one of each pair of predictors with correlations above 0.75 were removed, to avoid model selection issues. Numeric predictors were transformed via BoxCox methodology as well as centered and scaled due to the varying scales and skewness.  Note, no further commentary will be made in the following sections unless it differs from previous sections.
+
+\subsection{Response Analysis}
+
+After filtering for this model's end-use, there are 4355 samples in the data set.  The same transformations were applied to this response variable as electricity. \textit{\hyperref[appendix:natural_gas:response]{Appendix}}
+
+\subsection{Variable Selection - PCA}
+RMSE: 0.0, Rsquared: NA\\
+Top 5: \lstinline{NWKER}, \lstinline{EDSEAT}, \lstinline{PBA.14[EDUCATION]}, \lstinline{STRLZR..1[NA]}, \lstinline{PRINTRN}
+\\[0.1in]
+\indent No further commentary.  \textit{\hyperref[appendix:natural_gas:pca]{Appendix}}
+
+\subsection{Variable Selection - PLS}
+RMSE: 11784, Rsquared: 0.776\\
+Top 5: \lstinline{NWKER}, \lstinline{PRINTRN}, \lstinline{NELVTR}, \lstinline{RFGVNN}, \lstinline{RFGWIN}
+\\[0.1in]
+\indent No further commentary.  \textit{\hyperref[appendix:natural_gas:pls]{Appendix}}

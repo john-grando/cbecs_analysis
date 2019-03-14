@@ -17,7 +17,48 @@ source('RScripts/elbtu_nn_base_model.R')
 
 ```{r}
 s3load('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket = 'cuny-msds-final-project-cbecs')
-hyper_summary <- hyper_results %>% 
+#Remove old postings
+time_summary <- hyper_results %>% 
+  group_by(
+    num_vars, 
+    loss_f, 
+    opt, 
+    model, 
+    dropout, 
+    units, 
+    reg, 
+    batch
+  ) %>% 
+  arrange(desc(run_time)) %>% 
+  filter(row_number()==1) %>% 
+  select(num_vars, 
+         loss_f, 
+         opt, 
+         model, 
+         dropout, 
+         units, 
+         reg, 
+         batch, 
+         run_time) %>% 
+  rename(end_time = run_time) %>% 
+  mutate(end_time = end_time + 1) %>% 
+  mutate(start_time = end_time - 60 * 10)
+
+hyper_parsed_results <- hyper_results %>% 
+  left_join(time_summary, 
+            by = c('num_vars'='num_vars', 
+                   'loss_f'='loss_f', 
+                   'opt'='opt', 
+                   'model'='model', 
+                   'dropout'='dropout', 
+                   'units'='units', 
+                   'reg'='reg', 
+                   'batch'='batch')) %>% 
+  mutate(run_flag = ifelse(run_time > start_time & run_time < end_time, 1, 0)) %>% 
+  filter(run_flag==1) %>% 
+  select(-run_flag, -start_time, -end_time)
+
+hyper_summary <- hyper_parsed_results %>% 
   group_by(
     num_vars, 
     loss_f, 
@@ -33,7 +74,36 @@ hyper_summary <- hyper_results %>%
             msle = mean(msle),
             loss = mean(loss),
             pm = mean(pm))
-hyper_summary %>% arrange(mlse) %>% kable('html') %>% kable_styling()
+
+hyper_summary_best <- hyper_summary %>% 
+               group_by(num_vars) %>% 
+               arrange(msle) %>% 
+               filter(row_number()==1)
+
+p1 <- ggplot(hyper_summary_best, 
+       aes(x=num_vars, y=msle)) + 
+  geom_line() +
+  ggtitle('Loss vs Number of Variables') +
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0.5),
+        plot.background = element_rect(fill = "lightgrey"), 
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_line(color = "lightgrey"), 
+        panel.grid.major.y = element_line(color = "lightgrey"), 
+        axis.text = element_text(size=12, color = "grey55"), 
+        axis.title = element_text(size=14, color = "grey55"), 
+        legend.title=element_text(size=7),
+        legend.text=element_text(size=6),
+        legend.key.height = unit(0.5, "cm"),
+        title = element_text(size=20, color = "grey55"))
+ggsave(paste0('Documents/Images/electricity_nn_error.png'), p1, width = 6.5, height = 3.5, units = 'in')
+p1
+
+hyper_summary %>% 
+  arrange(msle) %>% 
+  head(20) %>% 
+  kable('html') %>% 
+  kable_styling()
 ```
 
 ```{r}
@@ -50,7 +120,11 @@ s3load('ModelSaves/elbtu_nn_full_model_history.RData', bucket = 'cuny-msds-final
 
 #Predict and examine residuals
 ```{r fig.width=10}
+png(paste0('Documents/Images/electricity_nn_full_train_results.png'), width = 7, height = 4, 
+      units = 'in', pointsize = 12,
+      bg='white', res=100)
 plot(history)
+dev.off()
 evaluation <- model %>% evaluate(as.matrix(validation_df), as.matrix(validation_labels), verbose=2)
 evaluation
 resid_model <- lm(model %>% predict(as.matrix(validation_df))~as.matrix(validation_labels))

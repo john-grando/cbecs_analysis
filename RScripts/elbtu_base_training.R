@@ -83,7 +83,8 @@ elbtu_pre_process <- preProcess(
 #Apply transformations to dataframe
 cbecs_elbtu_encoded_center_scale_df <- predict(elbtu_pre_process, 
                                                cbecs_elbtu_encoded_df %>% 
-                                                 mutate_at(vars(cbecs_elbtu_encoded_numerics_cols), funs(. + 0.5 * min(.[which(. > 0)]))))
+                                                 mutate_at(vars(cbecs_elbtu_encoded_numerics_cols), 
+                                                           funs(. + 0.5 * min(.[which(. > 0)]))))
 
 #Train/Test split
 set.seed(20)

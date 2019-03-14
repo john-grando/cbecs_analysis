@@ -167,7 +167,9 @@ l_plot <- plot_fun(in_model=l_train,
                    short_name='l', 
                    alt_predict = TRUE, 
                    log_tran = TRUE,
-                   observed_df = cbecs_ngbtu_encoded_center_scale_train_df)
+                   observed_df = cbecs_ngbtu_encoded_center_scale_train_df,
+                    response = cbecs_ngbtu_encoded_center_scale_train_df$NGBTU,
+                    fuel_type = 'natural_gas')
 l_plot$vars_plot
 l_plot$pvo_plot
 plot(l_plot$tmp_model)
@@ -180,7 +182,7 @@ l_plot$MAE
 leaps
 ```{r}
 set.seed(20)
-s3load('ModelSaves/ngbtu_lp.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_lp.RData', bucket = 'cuny-msds-final-project-cbecs')
 print(lp_train)
 varImp(lp_train)
 lp_plot <- plot_fun(in_model=lp_train, 
@@ -188,7 +190,9 @@ lp_plot <- plot_fun(in_model=lp_train,
                     short_name='lp', 
                     alt_predict = TRUE, 
                     log_tran = TRUE,
-                    observed_df = cbecs_ngbtu_encoded_center_scale_train_df)
+                    observed_df = cbecs_ngbtu_encoded_center_scale_train_df,
+                    response = cbecs_ngbtu_encoded_center_scale_train_df$NGBTU,
+                    fuel_type = 'natural_gas')
 lp_plot$vars_plot
 lp_plot$pvo_plot
 plot(lp_plot$tmp_model)
@@ -214,7 +218,9 @@ rfe_plot <- plot_pred_obs(in_model_sub = rfe_train,
                           short_name_sub = 'rfe', 
                           alt_predict_sub = TRUE, 
                           log_tran_sub = TRUE,
-                          observed_df = cbecs_ngbtu_encoded_center_scale_train_df)
+                          observed_df = cbecs_ngbtu_encoded_center_scale_train_df,
+                          response = cbecs_ngbtu_encoded_center_scale_train_df$NGBTU,
+                          fuel_type = 'natural_gas')
 
 varImp(rfe_train)
 rfe_plot$p
@@ -241,7 +247,7 @@ p_rfe <- ggplot(data = data.frame(varImp(rfe_train) %>%
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
           title = element_text(size=20, color = "grey55"))
-ggsave(paste0('Documents/Images/electricity_rfe_vars.png'), p_rfe, width = 6.5, height = 3.5, units = 'in')
+ggsave(paste0('Documents/Images/natural_gas_rfe_vars.png'), p_rfe, width = 6.5, height = 3.5, units = 'in')
 p_rfe
 ```
 
@@ -249,7 +255,7 @@ p_rfe
 #Simple neural network training
 ```{r echo=FALSE, fig.width=10}
 set.seed(20)
-s3load('ModelSaves/ngbtu_nn.RData', bucket = 'cuny-msds-final-project')
+s3load('ModelSaves/ngbtu_nn.RData', bucket = 'cuny-msds-final-project-cbecs')
 print(nn_train)
 varImp(nn_train)
 nn_plot <- plot_fun(in_model=nn_train, 
@@ -257,7 +263,9 @@ nn_plot <- plot_fun(in_model=nn_train,
                     short_name='nn', 
                     alt_predict = TRUE,
                     log_tran = TRUE,
-                    observed_df = cbecs_ngbtu_encoded_center_scale_train_df)
+                    observed_df = cbecs_ngbtu_encoded_center_scale_train_df,
+                    response = cbecs_ngbtu_encoded_center_scale_train_df$NGBTU,
+                    fuel_type = 'natural_gas')
 nn_plot$vars_plot
 nn_plot$pvo_plot
 plot(nn_plot$tmp_model)
@@ -266,14 +274,14 @@ nn_plot$RMSE
 ```
 
 #load models, again if not done before
-```{r}
-s3load('ModelSaves/ngbtu_pca.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/ngbtu_pls.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/ngbtu_rf.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/ngbtu_l.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/ngbtu_lp.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/ngbtu_rfe.RData', bucket = 'cuny-msds-final-project')
-s3load('ModelSaves/ngbtu_nn.RData', bucket = 'cuny-msds-final-project')
+```{r eval=FALSE}
+s3load('ModelSaves/ngbtu_pca.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_pls.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_rf.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_l.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_lp.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_rfe.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_nn.RData', bucket = 'cuny-msds-final-project-cbecs')
 ```
 
 #trained model summaries
@@ -403,12 +411,12 @@ iter <- 0
 for(i in vars){
   plot_vars(cbecs_dfs$encoded_df, 
             cbecs_dfs$encoded_df$NGBTU, 
-            'electricity', 
+            'natural_gas', 
             i, 
             iter,
             'original',
             'Untransformed',
-            'Electricity')
+            'Natural Gas')
   iter <- iter + 1
 }
 iter <- 0
@@ -420,19 +428,8 @@ for(i in vars){
             iter,
             'transformed',
             'Transformed',
-            'Logscale Electricity')
+            'Logscale Natural Gas')
   iter <- iter + 1
 }
-
-p1 <- plot_vars(
-  cbecs_dfs$encoded_df, 
-  cbecs_dfs$encoded_df$NGBTU, 
-  'electricity', 
-  'RFGWIN', 
-  match('RFGWIN', colnames(cbecs_dfs$encoded_df)),
-  'tst',
-  'tst1',
-  'tst2')
-p1
 ```
 
