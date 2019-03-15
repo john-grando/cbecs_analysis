@@ -28,6 +28,7 @@ hyper_list$loss <- list(
       #list(name = 'cusom_loss_func', func = custom_loss_func)
 )
 hyper_list$opt <- list(
+  list(name = 'rmsprop_lr_0005', func = keras::optimizer_rmsprop(lr = 0.0001)),
   list(name = 'rmsprop_lr_0005', func = keras::optimizer_rmsprop(lr = 0.0005)),
   list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001)),
   list(name = 'rmsprop_lr_005', func = keras::optimizer_rmsprop(lr = 0.005)),
