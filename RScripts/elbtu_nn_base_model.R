@@ -76,9 +76,5 @@ percentage_metric <- custom_metric('percentage_metric', function(y_true, y_pred)
   K$mean(tf$multiply(K$abs(1 - K$abs(y_true - y_pred) / K$clip(y_true,0.1,1000)), y_true))
 })
 
-
-#Select model parameters
-model <- model_selector(model_n = '3', df = train_df, n_dropout=0.6, n_units=200, n_l = 0)
-batch_size <- 150
-optimizer_func <- keras::optimizer_rmsprop(lr=0.001)
-loss_func <- keras::loss_mean_squared_logarithmic_error
+#Set variable size
+num_vars <- 14

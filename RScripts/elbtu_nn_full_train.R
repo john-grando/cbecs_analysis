@@ -3,6 +3,15 @@
 #Set up base and compile
 source('RScripts/elbtu_nn_base_model.R')
 
+train_reduced_df <- train_df %>% select(one_of(variables_by_importance[1:num_vars]))
+test_reduced_df <- test_df %>% select(one_of(variables_by_importance[1:num_vars]))
+
+#Select model parameters
+model <- model_selector(model_n = '3', df = train_reduced_df, n_dropout=0.6, n_units=200, n_l = 0)
+batch_size <- 150
+optimizer_func <- keras::optimizer_rmsprop(lr=0.001)
+loss_func <- keras::loss_mean_squared_logarithmic_error
+
 #Compile
 model %>% compile(
   #loss = 'mse',
@@ -28,10 +37,10 @@ early_stop <- callback_early_stopping(monitor = "val_loss", patience = 200)
 #Run
 epochs <- 1000
 history <- model %>% fit(
-  as.matrix(train_df),
+  as.matrix(train_reduced_df),
   as.matrix(train_labels),
   epochs = epochs,
-  validation_data = list(as.matrix(test_df), as.matrix(test_labels)),
+  validation_data = list(as.matrix(test_reduced_df), as.matrix(test_labels)),
   batch_size = batch_size,
   verbose = 0,
   callbacks = list(print_dot_callback, 
