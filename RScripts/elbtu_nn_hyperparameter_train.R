@@ -14,6 +14,7 @@ if(head_object('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket='cuny-
 
 #Hyperparameter training
 n_folds <- 3
+set.seed(20)
 folds <- createFolds(y = train_test_list, k=n_folds, list=FALSE)
 
 hyper_list <- list()

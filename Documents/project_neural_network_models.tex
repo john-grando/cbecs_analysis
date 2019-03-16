@@ -14,14 +14,12 @@ The final selected model consisted of a 3 hidden layers of 300 nodes, using a dr
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth, height=0.4\textheight]{Images/electricity_nn_error.png}
+\includegraphics[width=\textwidth, height=0.25\textheight]{Images/electricity_nn_error.png}
 \end{figure}
 
-The final selected model has a msle of XXX and mse of XXX.  Comparing this to the previous feature extraction models, which used many more variables, the performance is ....
+The final selected model has a msle of XXX and mse of XXX (XX rmse).  Comparing this to the previous feature extraction models, which used many more variables, the performance is ....
 
-The resdiuals indicate.... It is noted that the variance scales with the response variable, by design; however, since neural network models do not operate on a principle of homoscedacitity, only underlying patterns are of concern.  
-
-In summary, the resulting predictions appear to be ....  \textit{\hyperref[appendix:electricity:nn_full]{Appendix}}
+The resdiuals indicate that the variance scales with the response variable; however, since neural network models do not operate on a principle of homoscedacitity, only underlying patterns are of concern. Additionally, the noted error pattern is by design so that higher error in higher consumption projects are acceptable.  \textit{\hyperref[appendix:electricity:nn_full]{Appendix}}
 
 \subsubsection{Future Work}
 While it was determined that some heteroscedacitity would be acceptable, there does appear to be area for improvement.  Additionally, as mentioned at the beginning of this report, the sampling of this data set was stratified to reflect the building population.  However, it is noted that there are some classes that have greater variance than others.  Therefore, it may be useful to use this stratification as a weighted method, based on \lstinline{PBAPLUS}, in order to try and emphasize accuracy on the most prevalent budiding types. 
