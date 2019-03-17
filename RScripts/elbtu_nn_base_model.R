@@ -14,10 +14,22 @@ library(doMC)
 
 #Get model types
 source('RScripts/elbtu_nn_model_functions_build.R')
-
+  
 #Load input data and assign as train/test/validation
 s3load('ModelSaves/elbtu_nn_input.RData', bucket = 'cuny-msds-final-project-cbecs')
 #stratify training set
+
+for(i in 1:2){
+  nn_alt_df <- nn_input_df
+  nn_alt_labels <- nn_input_pba_labels
+  nn_jitter_input_df <- nn_input_df %>% 
+    select(one_of(numeric_cols)) %>% 
+    mutate_at(vars(numeric_cols), funs(jitter(., factor = 1)))
+  nn_alt_df <- rbind(nn_alt_df, nn_jitter_input_df)
+  nn_alt_labels <- rbind(nn_alt_labels, nn_input_pba_labels)
+}
+
+
 set.seed(20)
 train_test_list <- createDataPartition(y=nn_input_pba_labels, 
                                        p=0.8, 

@@ -28,7 +28,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
   trim_df <- data %>% 
     ###Remove outliers
     #Extremely large electricity use points influencing plots
-    #filter(ELBTU < 5E8) %>% 
+    filter(ELBTU < 5E8) %>% 
     #reduce scale of response variables
     mutate_at(vars(ELBTU, NGBTU, DHBTU, FKBTU, MFBTU), funs(. * 1000)) %>% 
     #Remove weight and imputation columns as well as IDs
@@ -329,7 +329,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
   print(colnames(trim_df[, sapply(trim_df, function(col) length(unique(col)))<=1]))
   clean_df <- trim_df[, sapply(trim_df, function(col) length(unique(col)))>1]
   clean_df <- clean_df %>% 
-    select(names(trim_df[!(colnames(trim_df) %in% PerSfVector)])) %>% 
+    select(names(clean_df[!(colnames(clean_df) %in% PerSfVector)])) %>% 
     bind_cols(per_sf_df)
   #Make list of numeric column groups
   removed_response_list <- colnames(clean_df[,!grepl('EL.*PerSf|NG.*PerSf|DH.*PerSf|FK.*PerSf|MF.*PerSf', colnames(clean_df), ignore.case = TRUE)])

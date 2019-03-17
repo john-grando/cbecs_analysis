@@ -6,11 +6,7 @@ source('RScripts/elbtu_nn_base_model.R')
 train_reduced_df <- train_df %>% select(one_of(variables_by_importance[1:num_vars]))
 test_reduced_df <- test_df %>% select(one_of(variables_by_importance[1:num_vars]))
 
-#Select model parameters
-model <- model_selector(model_n = '3', df = train_reduced_df, n_dropout=0.6, n_units=200, n_l = 0)
-batch_size <- 150
-optimizer_func <- keras::optimizer_rmsprop(lr=0.001)
-loss_func <- keras::loss_mean_squared_logarithmic_error
+source('RScripts/elbtu_nn_model_parameters.R')
 
 #Compile
 model %>% compile(

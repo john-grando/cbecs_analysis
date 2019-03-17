@@ -278,7 +278,7 @@ nn_plot$R2
 ```
 
 #load models, again if not done before
-```{r}
+```{r eval=FALSE}
 s3load('ModelSaves/elbtu_pca.RData', bucket = 'cuny-msds-final-project-cbecs')
 s3load('ModelSaves/elbtu_pls.RData', bucket = 'cuny-msds-final-project-cbecs')
 s3load('ModelSaves/elbtu_rf.RData', bucket = 'cuny-msds-final-project-cbecs')
@@ -371,11 +371,16 @@ variables_by_importance <- variable_by_importance_df  %>%
 
 nn_input_data_name <- 'ModelSaves/elbtu_nn_input.RData'
 
+numeric_cols <- cbecs_dfs$encoded_numeric_cols
+non_numeric_cols <- cbecs_dfs$encoded_non_numeric_cols
+
 save(nn_input_pba_labels, 
      nn_input_df, 
      elbtu_pre_process,
      cbecs_elbtu_encoded_center_scale_df,
      variables_by_importance,
+     numeric_cols,
+     non_numeric_cols,
      file= nn_input_data_name
 )
 put_object(file = nn_input_data_name, 
