@@ -3,9 +3,6 @@
 #Set up base and compile
 source('RScripts/elbtu_nn_base_model.R')
 
-train_reduced_df <- train_df %>% select(one_of(variables_by_importance[1:num_vars]))
-test_reduced_df <- test_df %>% select(one_of(variables_by_importance[1:num_vars]))
-
 source('RScripts/elbtu_nn_model_parameters.R')
 
 #Compile
@@ -22,7 +19,7 @@ model %>% compile(
 # Display training progress by printing a single dot for each completed epoch.
 print_dot_callback <- callback_lambda(
   on_epoch_end = function(epoch, logs) {
-    if (epoch %% 80 == 0) cat("\n")
+    if (epoch %% 100 == 0) cat("\n")
     cat(".")
   }
 )

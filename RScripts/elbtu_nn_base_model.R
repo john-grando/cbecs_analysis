@@ -17,19 +17,8 @@ source('RScripts/elbtu_nn_model_functions_build.R')
   
 #Load input data and assign as train/test/validation
 s3load('ModelSaves/elbtu_nn_input.RData', bucket = 'cuny-msds-final-project-cbecs')
+
 #stratify training set
-
-for(i in 1:2){
-  nn_alt_df <- nn_input_df
-  nn_alt_labels <- nn_input_pba_labels
-  nn_jitter_input_df <- nn_input_df %>% 
-    select(one_of(numeric_cols)) %>% 
-    mutate_at(vars(numeric_cols), funs(jitter(., factor = 1)))
-  nn_alt_df <- rbind(nn_alt_df, nn_jitter_input_df)
-  nn_alt_labels <- rbind(nn_alt_labels, nn_input_pba_labels)
-}
-
-
 set.seed(20)
 train_test_list <- createDataPartition(y=nn_input_pba_labels, 
                                        p=0.8, 
@@ -46,13 +35,26 @@ set.seed(20)
 train_list <- createDataPartition(y=train_test_df$PBA,
                                   p=0.8,
                                   list=FALSE)
-train_df <- train_test_df %>% 
+train_raw_df <- train_test_df %>% 
   slice(train_list) %>% 
   select(-PBA, -ELBTU)
 
-train_labels <- (train_test_df %>% 
+#Add points by jittering
+scale_factor <- 0.5
+set.seed(20)
+random_rows <- runif(n=nrow(train_raw_df)*scale_factor, 
+                     min=1, 
+                     max=nrow(train_raw_df))
+
+train_df <- train_raw_df[random_rows,] %>% 
+  mutate_at(vars(one_of(numeric_cols)), funs(jitter(., factor = 1))) %>% 
+  bind_rows(train_raw_df)
+
+train_raw_labels <- (train_test_df %>% 
                    slice(train_list) %>% 
                    select(ELBTU))$ELBTU
+
+train_labels <- append(train_raw_labels[random_rows], train_raw_labels)
 
 test_df <- train_test_df %>% 
   slice(-train_list) %>% 
@@ -70,10 +72,6 @@ validation_labels <- (nn_input_df %>%
                         slice(-train_test_list) %>% 
                         select(ELBTU))$ELBTU
 
-#train_summary_weight <- train_test_df %>% slice(train_list) %>% select(PBA) %>% group_by(PBA) %>% summarize(count = n())
-
-#train_weight_tmp <- as.matrix(train_test_df %>% slice(train_list) %>% select(PBA) %>% left_join(train_summary_weight, by =c('PBA' = 'PBA')) %>% select(count))
-
 #Custom loss funcitons
 custom_loss_func <- function(y_true, y_pred) {
   K <- backend()
@@ -90,3 +88,5 @@ percentage_metric <- custom_metric('percentage_metric', function(y_true, y_pred)
 
 #Set variable size
 num_vars <- 14
+train_reduced_df <- train_df %>% select(one_of(variables_by_importance[1:num_vars]))
+test_reduced_df <- test_df %>% select(one_of(variables_by_importance[1:num_vars]))
