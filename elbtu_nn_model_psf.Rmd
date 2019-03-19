@@ -13,10 +13,11 @@ library(kableExtra)
 ```{r}
 #Set up base and compile
 source('RScripts/elbtu_nn_base_model_psf.R')
+source('RScripts/elbtu_nn_model_parameters_psf.R')
 ```
 
 ```{r}
-s3load('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/elbtu_nn_hyperparameter_results_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
 hyper_summary <- hyper_results %>% 
   group_by(
     num_vars, 
@@ -50,18 +51,24 @@ s3load('ModelSaves/elbtu_nn_full_model_history_psf.RData', bucket = 'cuny-msds-f
 
 #Predict and examine residuals
 ```{r fig.width=10}
+png(paste0('Documents/Images/electricity_psf_nn_full_train_results.png'), width = 7, height = 4, 
+      units = 'in', pointsize = 12,
+      bg='white', res=100)
 plot(history)
-evaluation <- model %>% evaluate(as.matrix(validation_df), as.matrix(validation_labels), verbose=2)
+dev.off()
+#get variables used in model
+validation_reduced_df <- validation_df %>% select(one_of(variables_by_importance[1:num_vars])) 
+evaluation <- model %>% evaluate(as.matrix(validation_reduced_df), as.matrix(validation_labels), verbose=2)
 evaluation
-resid_model <- lm(model %>% predict(as.matrix(validation_df))~as.matrix(validation_labels))
+resid_model <- lm(model %>% predict(as.matrix(validation_reduced_df))~as.matrix(validation_labels))
 summary(resid_model)
-png(paste0('Documents/Images/electricity_nn_full_resid_1.png'), width = 7, height = 4, 
+png(paste0('Documents/Images/electricity_psf_nn_full_resid_1.png'), width = 7, height = 4, 
       units = 'in', pointsize = 12,
       bg='white', res=100)
 par(mfrow=c(1,2))
 plot(resid_model, c(1,2))
 dev.off()
-png(paste0('Documents/Images/electricity_nn_full_resid_2.png'), width = 7, height = 4, 
+png(paste0('Documents/Images/electricity_psf_nn_full_resid_2.png'), width = 7, height = 4, 
       units = 'in', pointsize = 12,
       bg='white', res=100)
 par(mfrow=c(1,2))
@@ -71,12 +78,13 @@ residuals <- resid(resid_model)
 resid_df <- data.frame(resid = residuals, 
                        pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list),
                        elbtu = validation_labels,
-                       pred = model %>% predict(as.matrix(validation_df)))
-p1 <- ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_df)),
+                       pred = model %>% predict(as.matrix(validation_reduced_df)))
+p1 <- ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_reduced_df)),
                          obs=validation_labels),
        aes(x=pred, y=obs)) + 
     geom_point(alpha=0.2) +
     ggtitle('Predicted vs. Observed') +
+    labs(x='Predicted BTU Per SF', y='Observed BTU Per SF') +
     geom_abline(slope = 1, intercept = 0) +
     theme(axis.text.x = element_text(angle=60, hjust=1),
           plot.title = element_text(hjust = 0.5),
@@ -95,6 +103,7 @@ p1
 p2 <- ggplot(resid_df, aes(x=elbtu, y=resid)) + 
     geom_point(alpha=0.2) +
     ggtitle('Predicted vs. Residual') +
+    labs(x='Predicted BTU Per SF', y='Residuals') +
     geom_abline(slope = 0, intercept = 0) +
     theme(axis.text.x = element_text(angle=60, hjust=1),
           plot.title = element_text(hjust = 0.5),
@@ -108,7 +117,7 @@ p2 <- ggplot(resid_df, aes(x=elbtu, y=resid)) +
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
           title = element_text(size=20, color = "grey55"))
-ggsave(paste0('Documents/Images/electricity_nn_full_pvr.png'), p2, width = 6.5, height = 3, units = 'in')
+ggsave(paste0('Documents/Images/electricity_psf_nn_full_pvr.png'), p2, width = 6.5, height = 3, units = 'in')
 p2
 elbtu_impact_error_check_df <- resid_df %>% 
   group_by(pba) %>% 
@@ -119,6 +128,29 @@ elbtu_impact_error_check_df <- resid_df %>%
             R2 = caret::R2(pred=pred,obs=elbtu),
             instances = n())
 
+caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu)
+caret::R2(pred = resid_df$pred, obs = resid_df$elbtu)
+caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu)
+```
+
+```{r}
+#compute gross values and compare
+
+resid_model <- lm(model %>% predict(as.matrix(validation_reduced_df))*validation_sqft_values~as.matrix(validation_labels*validation_sqft_values))
+summary(resid_model)
+residuals <- resid(resid_model)
+resid_df <- data.frame(resid = residuals, 
+                       pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list),
+                       elbtu = validation_labels*validation_sqft_values,
+                       pred = model %>% predict(as.matrix(validation_reduced_df))*validation_sqft_values)
+elbtu_impact_error_check_df <- resid_df %>% 
+  group_by(pba) %>% 
+  summarize(avg_elbtu = mean(elbtu),
+            avg_pred_elbtu = mean(pred),
+            RMSE = caret::RMSE(pred = pred, obs = elbtu),
+            RMSE_ratio = RMSE / avg_elbtu,
+            R2 = caret::R2(pred=pred,obs=elbtu),
+            instances = n())
 caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu)
 caret::R2(pred = resid_df$pred, obs = resid_df$elbtu)
 caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu)

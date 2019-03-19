@@ -17,6 +17,7 @@ source('RScripts/elbtu_nn_model_functions_build.R')
 
 #Load input data and assign as train/test/validation
 s3load('ModelSaves/elbtu_nn_input_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
+
 #stratify training set
 set.seed(20)
 train_test_list <- createDataPartition(y=nn_input_pba_labels, 
@@ -30,18 +31,30 @@ train_test_labels <- (train_test_df %>%
                         slice(train_test_list) %>% 
                         select(ELBTUPerSf))$ELBTUPerSf
 
-
 set.seed(20)
 train_list <- createDataPartition(y=train_test_df$PBA,
                                   p=0.8,
                                   list=FALSE)
-train_df <- train_test_df %>% 
+train_raw_df <- train_test_df %>% 
   slice(train_list) %>% 
   select(-PBA, -ELBTUPerSf)
 
-train_labels <- (train_test_df %>% 
-                   slice(train_list) %>% 
-                   select(ELBTUPerSf))$ELBTUPerSf
+#Add points by jittering
+scale_factor <- 0.5
+set.seed(20)
+random_rows <- runif(n=nrow(train_raw_df)*scale_factor, 
+                     min=1, 
+                     max=nrow(train_raw_df))
+
+train_df <- train_raw_df[random_rows,] %>% 
+  mutate_at(vars(one_of(numeric_cols)), funs(jitter(., factor = 1))) %>% 
+  bind_rows(train_raw_df)
+
+train_raw_labels <- (train_test_df %>% 
+                       slice(train_list) %>% 
+                       select(ELBTUPerSf))$ELBTUPerSf
+
+train_labels <- append(train_raw_labels[random_rows], train_raw_labels)
 
 test_df <- train_test_df %>% 
   slice(-train_list) %>% 
@@ -59,9 +72,7 @@ validation_labels <- (nn_input_df %>%
                         slice(-train_test_list) %>% 
                         select(ELBTUPerSf))$ELBTUPerSf
 
-#train_summary_weight <- train_test_df %>% slice(train_list) %>% select(PBA) %>% group_by(PBA) %>% summarize(count = n())
-
-#train_weight_tmp <- as.matrix(train_test_df %>% slice(train_list) %>% select(PBA) %>% left_join(train_summary_weight, by =c('PBA' = 'PBA')) %>% select(count))
+validation_sqft_values <- sqft_values[-train_test_list]
 
 #Custom loss funcitons
 custom_loss_func <- function(y_true, y_pred) {
@@ -77,8 +88,7 @@ percentage_metric <- custom_metric('percentage_metric', function(y_true, y_pred)
   K$mean(tf$multiply(K$abs(1 - K$abs(y_true - y_pred) / K$clip(y_true,0.1,1000)), y_true))
 })
 
-#Select model parameters
-model <- model_selector(model_n = '3', df = train_df, n_dropout=0.6, n_units=200, n_l = 0)
-batch_size <- 150
-optimizer_func <- keras::optimizer_rmsprop(lr=0.001)
-loss_func <- keras::loss_mean_squared_logarithmic_error
+#Set variable size
+num_vars <- 14
+train_reduced_df <- train_df %>% select(one_of(variables_by_importance[1:num_vars]))
+test_reduced_df <- test_df %>% select(one_of(variables_by_importance[1:num_vars]))

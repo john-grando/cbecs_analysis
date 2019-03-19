@@ -1,5 +1,5 @@
 ---
-title: "cbecs_electrical_analysis"
+title: "cbecs_electricity_analysis"
 author: "John Grando"
 date: "February 11, 2019"
 output: html_document
@@ -27,12 +27,12 @@ top_n_rows <- 10
 
 Response Variable
 ```{r}
-ggplot(cbecs_el_cleaned_df, aes(x=ELBTU)) + 
+ggplot(cbecs_fk_cleaned_df, aes(x=ELBTU)) + 
   geom_density()
-#lmbda <- BoxCoxTrans(cbecs_el_cleaned_df$ELBTU + 1)$lambda
+#lmbda <- BoxCoxTrans(cbecs_fk_cleaned_df$ELBTU + 1)$lambda
 lmbda <- 0
 if(lmbda!=0){
-  ggplot(cbecs_el_cleaned_df, aes(x=ELBTU^lmbda)) + 
+  ggplot(cbecs_fk_cleaned_df, aes(x=ELBTU^lmbda)) + 
     geom_density() + 
     stat_function(fun=dnorm,
                 color="blue",
@@ -57,7 +57,7 @@ if(lmbda!=0){
           title = element_text(size=20, color = "grey55"))
 }
 if(lmbda==0){
-  ggplot(cbecs_el_cleaned_df, aes(x=log(ELBTU+1))) + 
+  ggplot(cbecs_fk_cleaned_df, aes(x=log(ELBTU+1))) + 
     geom_density() + 
     stat_function(fun=dnorm,
                 color="blue",
@@ -127,7 +127,7 @@ plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
 pls_plot$RMSE
 pls_plot$R2
-#View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
+#View(t(cbecs_fk_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
 
 #View(t(cbecs_elbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, one_of(pls_imp_df$feature))))
 ```
@@ -153,7 +153,7 @@ rf_imp_df <- rf_plot$imp_df
 rf_plot$RMSE
 rf_plot$R2
 #how to evaluate rows
-#View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974)))
+#View(t(cbecs_fk_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974)))
 #View(t(cbecs_elbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974) %>% select(ELBTU, pred, one_of(rf_imp_df$feature))))
 ```
 
@@ -349,7 +349,7 @@ nn_input_df <- cbecs_elbtu_encoded_center_scale_df %>%
          #one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'))))
   )
 
-nn_input_pba_labels <- cbecs_el_cleaned_df$PBAPLUS
+nn_input_pba_labels <- cbecs_fk_cleaned_df$PBAPLUS
 
 variable_by_importance_df <- data.frame(rbind(
   pca_imp_df, 
@@ -410,52 +410,6 @@ ggsave(paste0('Documents/Images/electricity_all_vars.png'), p_all_v, width = 6.5
 p_all_v
 ```
 
-#Plots for selected variables
-
-```{r}
-plot_vars <- function(df, response, response_char, i, file_index, trans_name, title_text, yname){
-  pre_p <- ggplot(df) +
-    ggtitle(paste(i, '-', title_text, sep = " ")) #+
-    #theme(axis.title = element_text(size=2))
-  if(length(unique(df[,i])) > 15){
-    tmp_p <- pre_p + aes(x=df[,i], y=response) +
-      geom_point() +
-      labs(x=i, y=paste(yname, 'MBTU', sep=" ")) +
-    theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0.5,  size=16),
-          plot.background = element_rect(fill = "lightgrey"), 
-          panel.background = element_rect(fill = "white"), 
-          panel.grid.major.x = element_line(color = "lightgrey"), 
-          panel.grid.major.y = element_line(color = "lightgrey"),
-          axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
-          legend.title=element_text(size=7),
-          legend.text=element_text(size=6),
-          legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
-  }
-  if(length(unique(df[,i])) <= 15){
-    tmp_p <- pre_p +  aes(x=as.factor(df[,i]), y=response) +
-      geom_violin() +
-      labs(x=i, y=paste(yname, 'MBTU', sep=" ")) +
-    theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0.5,  size=16),
-          plot.background = element_rect(fill = "lightgrey"), 
-          panel.background = element_rect(fill = "white"), 
-          panel.grid.major.x = element_line(color = "lightgrey"), 
-          panel.grid.major.y = element_line(color = "lightgrey"),
-          axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
-          legend.title=element_text(size=7),
-          legend.text=element_text(size=6),
-          legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
-  }
-  ggsave(paste('Documents/Images/',response_char, '_var_', trans_name, "_", file_index, '.png', sep=""), tmp_p, width = 6.5, height = 3, units = 'in')
-  return(tmp_p)
-}
-```
-
 #Plot selected variables
 ```{r}
 vars <- variables_by_importance[1:21]
@@ -480,7 +434,7 @@ for(i in vars){
             iter,
             'transformed',
             'Transformed',
-            'Logscale Electricity')
+            'Logscale Electrcity')
   iter <- iter + 1
 }
 ```

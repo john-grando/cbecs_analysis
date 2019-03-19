@@ -2,6 +2,7 @@
 
 #Set up base and compile
 source('RScripts/elbtu_nn_base_model_psf.R')
+source('RScripts/elbtu_nn_model_parameters_psf.R')
 
 #Compile
 model %>% compile(
@@ -17,7 +18,7 @@ model %>% compile(
 # Display training progress by printing a single dot for each completed epoch.
 print_dot_callback <- callback_lambda(
   on_epoch_end = function(epoch, logs) {
-    if (epoch %% 80 == 0) cat("\n")
+    if (epoch %% 100 == 0) cat("\n")
     cat(".")
   }
 )
@@ -28,15 +29,15 @@ early_stop <- callback_early_stopping(monitor = "val_loss", patience = 200)
 #Run
 epochs <- 1000
 history <- model %>% fit(
-  as.matrix(train_df),
+  as.matrix(train_reduced_df),
   as.matrix(train_labels),
   epochs = epochs,
-  validation_data = list(as.matrix(test_df), as.matrix(test_labels)),
+  validation_data = list(as.matrix(test_reduced_df), as.matrix(test_labels)),
   batch_size = batch_size,
   verbose = 0,
   callbacks = list(print_dot_callback, 
                    early_stop
-                   )
+  )
 )
 
 #save model

@@ -106,3 +106,45 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
               R2_untransformed = R2_sub,
               MAE_untransformed = MAE_sub))
 }
+
+plot_vars <- function(df, response, response_char, i, file_index, trans_name, title_text, yname){
+  pre_p <- ggplot(df) +
+    ggtitle(paste(i, '-', title_text, sep = " ")) #+
+  #theme(axis.title = element_text(size=2))
+  if(length(unique(df[,i])) > 15){
+    tmp_p <- pre_p + aes(x=df[,i], y=response) +
+      geom_point() +
+      labs(x=i, y=paste(yname, 'MBTU', sep=" ")) +
+      theme(axis.text.x = element_text(angle=60, hjust=1),
+            plot.title = element_text(hjust = 0.5,  size=16),
+            plot.background = element_rect(fill = "lightgrey"), 
+            panel.background = element_rect(fill = "white"), 
+            panel.grid.major.x = element_line(color = "lightgrey"), 
+            panel.grid.major.y = element_line(color = "lightgrey"),
+            axis.text = element_text(size=12, color = "grey55"), 
+            axis.title = element_text(size=14, color = "grey55"), 
+            legend.title=element_text(size=7),
+            legend.text=element_text(size=6),
+            legend.key.height = unit(0.5, "cm"),
+            title = element_text(size=20, color = "grey55"))
+  }
+  if(length(unique(df[,i])) <= 15){
+    tmp_p <- pre_p +  aes(x=as.factor(df[,i]), y=response) +
+      geom_violin() +
+      labs(x=i, y=paste(yname, 'MBTU', sep=" ")) +
+      theme(axis.text.x = element_text(angle=60, hjust=1),
+            plot.title = element_text(hjust = 0.5,  size=16),
+            plot.background = element_rect(fill = "lightgrey"), 
+            panel.background = element_rect(fill = "white"), 
+            panel.grid.major.x = element_line(color = "lightgrey"), 
+            panel.grid.major.y = element_line(color = "lightgrey"),
+            axis.text = element_text(size=12, color = "grey55"), 
+            axis.title = element_text(size=14, color = "grey55"), 
+            legend.title=element_text(size=7),
+            legend.text=element_text(size=6),
+            legend.key.height = unit(0.5, "cm"),
+            title = element_text(size=20, color = "grey55"))
+  }
+  ggsave(paste('Documents/Images/',response_char, '_var_', trans_name, "_", file_index, '.png', sep=""), tmp_p, width = 6.5, height = 3, units = 'in')
+  return(tmp_p)
+}

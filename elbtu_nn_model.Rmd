@@ -13,7 +13,6 @@ library(kableExtra)
 ```{r}
 #Set up base and compile
 source('RScripts/elbtu_nn_base_model.R')
-source('RScripts/elbtu_nn_model_parameters.R')
 ```
 
 ```{r}
@@ -122,11 +121,11 @@ s3load('ModelSaves/elbtu_nn_full_model_history.RData', bucket = 'cuny-msds-final
 ```
 
 #Predict and examine residuals
-```{r}
+```{r fig.width=10}
 png(paste0('Documents/Images/electricity_nn_full_train_results.png'), width = 7, height = 4, 
       units = 'in', pointsize = 12,
       bg='white', res=100)
-plot(history) + theme(strip.text.y = element_text(size = 7))
+plot(history)
 dev.off()
 #get variables used in model
 validation_reduced_df <- validation_df %>% select(one_of(variables_by_importance[1:num_vars])) 
@@ -155,8 +154,8 @@ p1 <- ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_reduc
                          obs=validation_labels),
        aes(x=pred, y=obs)) + 
     geom_point(alpha=0.2) +
-    labs(x='Predicted', y='Observed') +
     ggtitle('Predicted vs. Observed') +
+    labs(x='Predicted mmBTU', y="Observed mmBTU") +
     geom_abline(slope = 1, intercept = 0) +
     theme(axis.text.x = element_text(angle=60, hjust=1),
           plot.title = element_text(hjust = 0.5),
@@ -174,8 +173,8 @@ ggsave(paste0('Documents/Images/electricity_nn_full_pvo.png'), p1, width = 6.5, 
 p1
 p2 <- ggplot(resid_df, aes(x=elbtu, y=resid)) + 
     geom_point(alpha=0.2) +
-    labs(x='ELBTU', y='Residuals') +
     ggtitle('Predicted vs. Residual') +
+    labs(x='Predicted mmBTU', y="Residuals") +
     geom_abline(slope = 0, intercept = 0) +
     theme(axis.text.x = element_text(angle=60, hjust=1),
           plot.title = element_text(hjust = 0.5),
@@ -200,16 +199,8 @@ elbtu_impact_error_check_df <- resid_df %>%
             R2 = caret::R2(pred=pred,obs=elbtu),
             instances = n())
 
-nn_rmse <- caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu)
-nn_r2 <- caret::R2(pred = resid_df$pred, obs = resid_df$elbtu)
-nn_mae <- caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu)
-
-data.frame('Model' = 'Neural Network',
-           'RMSE' = nn_rmse,
-           'R2' = nn_r2,
-           'MAE' = nn_mae) %>% 
-  kable('html', 
-        caption = 'Neural Network Model Results') %>% 
-  kable_styling()
+caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu)
+caret::R2(pred = resid_df$pred, obs = resid_df$elbtu)
+caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu)
 ```
 
