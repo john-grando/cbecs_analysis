@@ -13,6 +13,7 @@ library(kableExtra)
 ```{r}
 #Set up base and compile
 source('RScripts/elbtu_nn_base_model.R')
+source('RScripts/elbtu_nn_model_parameters.R')
 ```
 
 ```{r}

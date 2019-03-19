@@ -1,13 +1,13 @@
 #Set up base and compile
-source('RScripts/elbtu_nn_base_model.R')
+source('RScripts/elbtu_nn_base_model_psf.R')
 #Get model types
 source('RScripts/elbtu_nn_model_functions_build.R')
 
 #if hyperparameter df exists then use it
-if(head_object('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket='cuny-msds-final-project-cbecs')[1]==TRUE){
-  s3load('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket = 'cuny-msds-final-project-cbecs')
+if(head_object('ModelSaves/elbtu_nn_hyperparameter_results_psf.RData', bucket='cuny-msds-final-project-cbecs')[1]==TRUE){
+  s3load('ModelSaves/elbtu_nn_hyperparameter_results_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
 }
-if(head_object('ModelSaves/elbtu_nn_hyperparameter_results.RData', bucket='cuny-msds-final-project-cbecs')[1]==FALSE){
+if(head_object('ModelSaves/elbtu_nn_hyperparameter_results_psf.RData', bucket='cuny-msds-final-project-cbecs')[1]==FALSE){
   hyper_results <- data.frame()
 }
 
@@ -31,19 +31,19 @@ hyper_list$opt <- list(
   list(name = 'rmsprop_lr_00005', func = keras::optimizer_rmsprop(lr = 0.00005)),
   list(name = 'rmsprop_lr_0001', func = keras::optimizer_rmsprop(lr = 0.0001)),
   list(name = 'rmsprop_lr_0005', func = keras::optimizer_rmsprop(lr = 0.0005)),
-  list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001))
-  #list(name = 'sgd_lr_005_m_0_d_0_n_T', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=0.0, nesterov=TRUE)),
+  list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001)),
+  list(name = 'sgd_lr_005_m_0_d_0_n_T', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=0.0, nesterov=TRUE)),
   #list(name = 'sgd_lr_01_m_0_d_0_n_T', func = keras::optimizer_sgd(lr=0.01, momentum=0.0, decay=0.0, nesterov=TRUE)),
   #list(name = 'sgd_lr_015_m_0_d_0_n_T', func = keras::optimizer_sgd(lr=0.015, momentum=0.0, decay=0.0, nesterov=TRUE)),
-  #list(name = 'sgd_lr_005_m_0_d_0_n_F', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=0.0, nesterov=FALSE)),
+  list(name = 'sgd_lr_005_m_0_d_0_n_F', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=0.0, nesterov=FALSE)),
   #list(name = 'sgd_lr_01_m_5_d_0_n_T', func = keras::optimizer_sgd(lr=0.01, momentum=0.5, decay=0.0, nesterov=TRUE)),
   #list(name = 'sgd_lr_015_m_9_d_0_n_T', func = keras::optimizer_sgd(lr=0.015, momentum=0.9, decay=0.0, nesterov=TRUE)),
   #list(name = 'sgd_lr_005_m_0_d_1E6_n_T', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=1e-6, nesterov=TRUE)),
-  #list(name = 'sgd_lr_01_m_5_d_1E3_n_T', func = keras::optimizer_sgd(lr=0.01, momentum=0.5, decay=1e-3, nesterov=TRUE)),
+  list(name = 'sgd_lr_01_m_5_d_1E3_n_T', func = keras::optimizer_sgd(lr=0.01, momentum=0.5, decay=1e-3, nesterov=TRUE)),
   #list(name = 'sgd_lr_015_m_9_d_1_n_T', func = keras::optimizer_sgd(lr=0.015, momentum=0.9, decay=0.1, nesterov=TRUE)),
   #list(name = 'sgd_lr_005_m_0_d_1E6_n_T', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=1e-6, nesterov=TRUE)),
   #list(name = 'sgd_lr_01_m_0_d_1E3_n_T', func = keras::optimizer_sgd(lr=0.01, momentum=0.0, decay=1e-3, nesterov=TRUE)),
-  #list(name = 'sgd_lr_015_m_0_d_1_n_T', func = keras::optimizer_sgd(lr=0.015, momentum=0.0, decay=0.1, nesterov=TRUE))
+  list(name = 'sgd_lr_015_m_0_d_1_n_T', func = keras::optimizer_sgd(lr=0.015, momentum=0.0, decay=0.1, nesterov=TRUE))
 )
 
 #Initialize parallel processing on 2 cores
@@ -69,18 +69,18 @@ for(v in c(seq(0,length(variables_by_importance),300),
                                     ind <- which(folds == f)
                                     cv_train_df <- train_test_df %>% 
                                       slice(-ind) %>% 
-                                      select(-PBA, -ELBTU) %>% 
+                                      select(-PBA, -ELBTUPerSf) %>% 
                                       select(variables_by_importance[1:(length(variables_by_importance)-v)])
                                     cv_train_y <- train_test_df %>% 
                                       slice(-ind) %>% 
-                                      select(ELBTU)
+                                      select(ELBTUPerSf)
                                     cv_test_df <- train_test_df %>% 
                                       slice(ind) %>% 
-                                      select(-PBA, -ELBTU) %>% 
+                                      select(-PBA, -ELBTUPerSf) %>% 
                                       select(variables_by_importance[1:(length(variables_by_importance)-v)])
                                     cv_test_y <- train_test_df %>% 
                                       slice(ind) %>% 
-                                      select(ELBTU)
+                                      select(ELBTUPerSf)
                                     cv_model_t <- model_selector(model_n = m, 
                                                                  df = train_df %>% 
                                                                    select(variables_by_importance[1:(length(variables_by_importance)-v)]), 
@@ -147,14 +147,14 @@ for(v in c(seq(0,length(variables_by_importance),300),
   }
   print('intermittent print to df')
   #save hyperparameter df
-  model_name <- 'ModelSaves/elbtu_nn_hyperparameter_results.RData'
+  model_name <- 'ModelSaves/elbtu_nn_hyperparameter_results_psf.RData'
   save(hyper_results, file = model_name)
   put_object(file = model_name, 
              bucket = 'cuny-msds-final-project-cbecs', 
              object = model_name)
 }
 #save hyperparameter df
-model_name <- 'ModelSaves/elbtu_nn_hyperparameter_results.RData'
+model_name <- 'ModelSaves/elbtu_nn_hyperparameter_results_psf.RData'
 save(hyper_results, file = model_name)
 put_object(file = model_name, 
            bucket = 'cuny-msds-final-project-cbecs', 
