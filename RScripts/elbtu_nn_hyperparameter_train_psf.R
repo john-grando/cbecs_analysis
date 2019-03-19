@@ -12,7 +12,7 @@ if(head_object('ModelSaves/elbtu_nn_hyperparameter_results_psf.RData', bucket='c
 }
 
 #Hyperparameter training
-n_folds <- 3
+n_folds <- 6
 set.seed(20)
 folds <- createFolds(y = train_test_list, k=n_folds, list=FALSE)
 
@@ -48,7 +48,7 @@ hyper_list$opt <- list(
 
 #Initialize parallel processing on 2 cores
 #cl <- makeCluster(2)
-registerDoMC(2)
+registerDoMC(3)
 
 #Run model
 epochs <- 100
