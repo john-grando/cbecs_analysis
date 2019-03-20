@@ -47,7 +47,7 @@ random_rows <- runif(n=nrow(train_raw_df)*scale_factor,
                      max=nrow(train_raw_df))
 
 train_df <- train_raw_df[random_rows,] %>% 
-  mutate_at(vars(one_of(numeric_cols)), funs(jitter(., factor = 1))) %>% 
+  mutate_at(vars(one_of(numeric_cols)), list(~jitter(., factor = 1))) %>% 
   bind_rows(train_raw_df)
 
 train_raw_labels <- (train_test_df %>% 
