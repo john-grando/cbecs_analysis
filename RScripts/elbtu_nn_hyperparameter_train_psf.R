@@ -92,8 +92,8 @@ for(v in c(seq(0,length(variables_by_importance),300),
                                       optimizer = hyper_list$opt[[o]]$func,
                                       metrics = list("mean_absolute_error", 
                                                      "mean_squared_error", 
-                                                     'mean_squared_logarithmic_error' 
-                                                     #percentage_metric
+                                                     'mean_squared_logarithmic_error',
+                                                     percentage_metric
                                                      ))
                                     history <- cv_model_t %>% fit(
                                       as.matrix(cv_train_df),
@@ -106,7 +106,7 @@ for(v in c(seq(0,length(variables_by_importance),300),
                                     mae_val <- tail(history$metrics$val_mean_absolute_error,1)
                                     msle_val <- tail(history$metrics$val_mean_squared_logarithmic_error,1)
 				                            mse_val <- tail(history$metrics$val_mean_squared_error,1)
-                                    #pm_val <- tail(history$metrics$percentage_metric,1)
+                                    pm_val <- tail(history$metrics$percentage_metric,1)
                                     #hyper_results <- rbind(hyper_results, data.frame(dropout=d, units=u, fold=f, loss= loss_val, mae = mae_val, pm = pm_val))
                                     data.frame(num_vars=length(variables_by_importance)-v,
                                                loss_f=hyper_list$loss[[l]]$name,
@@ -121,7 +121,7 @@ for(v in c(seq(0,length(variables_by_importance),300),
                                                mae = mae_val, 
                                                msle = msle_val,
 					                                     mse = mse_val,
-                                               #pm = pm_val,
+                                               pm = pm_val,
 					                                     run_time = Sys.time())
                                   }
                 print(paste('finished running model - variables:', length(variables_by_importance)-v,
