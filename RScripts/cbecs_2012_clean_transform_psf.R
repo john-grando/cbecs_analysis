@@ -30,7 +30,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     #Extremely large electricity use points influencing plots
     filter(ELBTU < 5E8) %>% 
     #reduce scale of response variables
-    mutate_at(vars(ELBTU, NGBTU, DHBTU, FKBTU, MFBTU), funs(. * 1000)) %>% 
+    mutate_at(vars(ELBTU, NGBTU, DHBTU, FKBTU, MFBTU), list(~. * 1000)) %>% 
     #Remove weight and imputation columns as well as IDs
     select(-one_of(weight_list), -one_of(impute_list), -PUBID) %>% 
     #Remove MFUSED, no variance %>% 
@@ -62,7 +62,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
     mutate(NELVTR = ifelse(ELEVTR==2, 0, NELVTR)) %>% 
     mutate(NESLTR = ifelse(ESCLTR==2, 0, NESLTR)) %>% 
     #if don't know or refuse then assume zero?
-    mutate_at(vars(NELVTR, NESLTR), funs(na_repl_num(.,0))) %>% 
+    mutate_at(vars(NELVTR, NESLTR), list(~na_repl_num(.,0))) %>% 
     #If only indicated that electricity is bought from local utility, then assume it is 100%
     mutate(ELLUPCT = ifelse(ELLOCUT==1 & ELNONLU==2 & ELOTSRC==2 & ELCPLT==2, 100, ELLUPCT)) %>% 
     mutate(ELLUPCT = ifelse(ELLOCUT==2 & ELNONLU==1 & ELOTSRC==2 & ELCPLT==2, 0, ELLUPCT)) %>% 
@@ -193,7 +193,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
                    NFLOOR_bin, FLCEILHT_bin, NELVTR_bin, NESLTR_bin, RWSEAT_bin, PBSEAT_bin, HCBED_bin, NRSBED_bin,
                    LODGRM_bin, XRAYN_bin, RFGCOMPN_bin, SERVERN_bin, TVVIDEON_bin, MONUSE #NOCC_bin
                    ),
-              funs(make_cat_w_repl(.))) %>%
+              list(~make_cat_w_repl(.))) %>%
     #Move down the order of activities and when there is a null, fill it in with the difference of 100 - sum
     mutate(ACT1PCT = ifelse(ACT1==-1, 100, ACT1PCT)) %>% 
     mutate(ACT2PCT = ifelse(ACT2==-1, 100-ACT1PCT, ACT2PCT)) %>% 
@@ -314,7 +314,7 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
                  #FKCKBTUPerSf, FKOTBTUPerSf, MFBTUPerSf, MFHTBTUPerSf, MFCLBTUPerSf, MFVNBTUPerSf, MFWTBTUPerSf,
                  #MFLTBTUPerSf, MFCKBTUPerSf, MFRFBTUPerSf, MFOFBTUPerSf, MFPCBTUPerSf, MFOTBTUPerSf
                  ), 
-            funs(na_repl_num(., 0)))
+            list(~na_repl_num(., 0)))
   #Get appropriate numeric columns and divide to get PerSf metrics
   PerSfVector <- c('BASEMNT',
                    'EDSEAT', 'FDSEAT', 'NWKER',
@@ -348,59 +348,59 @@ clean_encode_cbecs <- function(data, pba_filter=NA) {
   #weight numeric columns converted to bins
   encoded_df <- encoded_tmp_df %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('NFLOOR_bin\\.[^2]')))), 
-              funs(as.numeric(. * NFLOOR / SQFT))) %>% 
+              list(~as.numeric(. * NFLOOR / SQFT))) %>% 
     select(-NFLOOR) %>% 
     rename(NFLOORPerSf = `NFLOOR_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('FLCEILHT_bin\\.[^2]')))), 
-              funs(as.numeric(. * FLCEILHT / SQFT))) %>%
+              list(~as.numeric(. * FLCEILHT / SQFT))) %>%
     select(-FLCEILHT) %>% 
     rename(FLCEILHTPerSf = `FLCEILHT_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('NELVTR_bin\\.[^2]')))), 
-              funs(as.numeric(. * NELVTR / SQFT))) %>%
+              list(~as.numeric(. * NELVTR / SQFT))) %>%
     select(-NELVTR) %>% 
     rename(NELVTRPerSf = `NELVTR_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('NESLTR_bin\\.[^2]')))), 
-              funs(as.numeric(. * NESLTR / SQFT))) %>%
+              list(~as.numeric(. * NESLTR / SQFT))) %>%
     select(-NESLTR) %>% 
     rename(NESLTRPerSf = `NESLTR_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('RWSEAT_bin\\.[^2]')))), 
-              funs(as.numeric(. * RWSEAT / SQFT))) %>%
+              list(~as.numeric(. * RWSEAT / SQFT))) %>%
     select(-RWSEAT) %>% 
     rename(RWSEATPerSf = `RWSEAT_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('PBSEAT_bin\\.[^2]')))), 
-              funs(as.numeric(. * PBSEAT / SQFT))) %>%
+              list(~as.numeric(. * PBSEAT / SQFT))) %>%
     select(-PBSEAT) %>% 
     rename(PBSEATPerSf = `PBSEAT_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('HCBED_bin\\.[^2]')))), 
-              funs(as.numeric(. * HCBED / SQFT))) %>%
+              list(~as.numeric(. * HCBED / SQFT))) %>%
     select(-HCBED) %>% 
     rename(HCBEDPerSf = `HCBED_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('NRSBED_bin\\.[^2]')))), 
-              funs(as.numeric(. * NRSBED / SQFT))) %>%
+              list(~as.numeric(. * NRSBED / SQFT))) %>%
     select(-NRSBED) %>% 
     rename(NRSBEDPerSf = `NRSBED_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('LODGRM_bin\\.[^2]')))), 
-              funs(as.numeric(. * LODGRM / SQFT))) %>%
+              list(~as.numeric(. * LODGRM / SQFT))) %>%
     select(-LODGRM) %>% 
     rename(LODGRMPerSf = `LODGRM_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('XRAYN_bin\\.[^2]')))), 
-              funs(as.numeric(. * XRAYN / SQFT))) %>%
+              list(~as.numeric(. * XRAYN / SQFT))) %>%
     select(-XRAYN) %>% 
     rename(XRAYNPerSf = `XRAYN_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('NOCC_bin\\.[^2]')))), 
-              funs(as.numeric(. * NOCC / SQFT))) %>%
+              list(~as.numeric(. * NOCC / SQFT))) %>%
     select(-NOCC) %>% 
     rename(NOCCPerSf = `NOCC_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('RFGCOMPN_bin\\.[^2]')))), 
-              funs(as.numeric(. * RFGCOMPN / SQFT))) %>%
+              list(~as.numeric(. * RFGCOMPN / SQFT))) %>%
     select(-RFGCOMPN) %>% 
     rename(RFGCOMPNPerSf = `RFGCOMPN_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('SERVERN_bin\\.[^2]')))), 
-              funs(as.numeric(. * SERVERN / SQFT))) %>%
+              list(~as.numeric(. * SERVERN / SQFT))) %>%
     select(-SERVERN) %>% 
     rename(SERVERNPerSf = `SERVERN_bin.1`) %>% 
     mutate_at(vars(colnames(encoded_tmp_df %>% select(matches('TVVIDEON_bin\\.[^2]')))), 
-              funs(as.numeric(. * TVVIDEON / SQFT))) %>% 
+              list(~as.numeric(. * TVVIDEON / SQFT))) %>% 
     select(-TVVIDEON) %>% 
     rename(TVVIDEONPerSf = `TVVIDEON_bin.1`)
   encoded_numeric_cols <- append(clean_numeric_cols, 

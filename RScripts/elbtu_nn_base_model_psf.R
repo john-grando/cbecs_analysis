@@ -83,10 +83,10 @@ custom_loss_func <- function(y_true, y_pred) {
 }
 
 #Custom metrics
-percentage_metric <- custom_metric('percentage_metric', function(y_true, y_pred){
-  K <- backend()
-  K$mean(tf$multiply(K$abs(1 - K$abs(y_true - y_pred) / K$clip(y_true,0.1,1000)), y_true))
-})
+#percentage_metric <- custom_metric('percentage_metric', function(y_true, y_pred){
+#  K <- backend()
+#  K$mean(tf$multiply(K$abs(1 - K$abs(y_true - y_pred) / K$clip(y_true,0.1,1000)), y_true))
+#})
 
 #Set variable size
 num_vars <- 14

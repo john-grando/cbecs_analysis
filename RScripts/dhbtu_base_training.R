@@ -65,7 +65,7 @@ cbecs_dhbtu_encoded_non_numerics_cols <- colnames(
 
 #Make offset for boxcox
 cbecs_dhbtu_encoded_offset_df <- cbecs_dhbtu_encoded_df %>% 
-  mutate_at(vars(cbecs_dhbtu_encoded_numerics_cols), funs(. + 0.5 * min(.[which(. > 0)])))
+  mutate_at(vars(cbecs_dhbtu_encoded_numerics_cols), list(~. + 0.5 * min(.[which(. > 0)])))
 
 #center and scale only numeric columns in data set, not encoder columns
 dhbtu_pre_process <- preProcess(
@@ -79,7 +79,7 @@ dhbtu_pre_process <- preProcess(
 cbecs_dhbtu_encoded_center_scale_df <- predict(dhbtu_pre_process, 
                                                cbecs_dhbtu_encoded_df %>% 
                                                  mutate_at(vars(cbecs_dhbtu_encoded_numerics_cols), 
-                                                           funs(. + 0.5 * min(.[which(. > 0)]))))
+                                                           list(~. + 0.5 * min(.[which(. > 0)]))))
 
 #Train/Test split
 set.seed(20)

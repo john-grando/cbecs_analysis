@@ -64,7 +64,7 @@ cbecs_fkbtu_encoded_non_numerics_cols <- colnames(
 #Make offset for boxcox, 50% of column minimum value
 cbecs_fkbtu_encoded_offset_df <- cbecs_fkbtu_encoded_df %>% 
   select(one_of(cbecs_dfs$encoded_numeric_cols)) %>% 
-  mutate_at(vars(one_of(cbecs_dfs$encoded_numeric_cols)), funs(. + 0.5 * min(.[which(. > 0)])))
+  mutate_at(vars(one_of(cbecs_dfs$encoded_numeric_cols)), list(~. + 0.5 * min(.[which(. > 0)])))
 
 #center and scale only numeric columns in data set, not encoder columns
 fkbtu_pre_process <- preProcess(
@@ -77,7 +77,8 @@ fkbtu_pre_process <- preProcess(
 #Apply transformations to dataframe
 cbecs_fkbtu_encoded_center_scale_df <- predict(fkbtu_pre_process, 
                                                cbecs_fkbtu_encoded_df %>%
-                                                 mutate_at(vars(one_of(cbecs_dfs$encoded_numeric_cols)), funs(. + 0.5 * min(.[which(. > 0)])))
+                                                 mutate_at(vars(one_of(cbecs_dfs$encoded_numeric_cols)), 
+                                                           list(~. + 0.5 * min(.[which(. > 0)])))
                                                )
 
 #Train/Test split
