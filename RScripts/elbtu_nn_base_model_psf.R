@@ -89,6 +89,6 @@ percentage_metric <- custom_metric('percentage_metric', function(y_true, y_pred)
 })
 
 #Set variable size
-num_vars <- 14
+num_vars <- 100
 train_reduced_df <- train_df %>% select(one_of(variables_by_importance[1:num_vars]))
 test_reduced_df <- test_df %>% select(one_of(variables_by_importance[1:num_vars]))
