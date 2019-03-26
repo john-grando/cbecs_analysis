@@ -83,10 +83,13 @@ hyper_summary_best <- hyper_summary %>%
                filter(row_number()==1)
 
 p1 <- ggplot(hyper_summary_best, 
-       aes(x=num_vars, y=msle)) + 
+       aes(x=num_vars, y=msle, color='MSLE')) + 
   geom_line() +
+  geom_line(aes(x=num_vars, y=sqrt(mse)/max(sqrt(mse)), color='RMSE')) +
+  scale_y_continuous(sec.axis = sec_axis(~.*max(sqrt(hyper_summary_best$mse)), name="Root Mean Square Error", breaks = seq(40000, 80000, 5000)), breaks = seq(0.6, 1.2, 0.1)) +
+  scale_color_manual(values = c("steelblue", "springgreen")) +
   ggtitle('Loss vs Number of Variables') +
-  labs(x='Number of Variables', y='Mean Squared Loss Error') +
+  labs(x='Number of Variables', y='Mean Squared Log Error', color='Loss Metric') +
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),
         plot.background = element_rect(fill = "lightgrey"), 
@@ -98,7 +101,8 @@ p1 <- ggplot(hyper_summary_best,
         legend.title=element_text(size=7),
         legend.text=element_text(size=6),
         legend.key.height = unit(0.5, "cm"),
-        title = element_text(size=14, color = "grey55"))
+        title = element_text(size=14, color = "grey55"),
+        legend.position = c(0.8, 0.85))
 ggsave(paste0('Documents/Images/electricity_psf_nn_error.png'), p1, width = 6.5, height = 3.5, units = 'in')
 p1
 
@@ -126,7 +130,7 @@ s3load('ModelSaves/elbtu_nn_full_model_history_psf.RData', bucket = 'cuny-msds-f
 png(paste0('Documents/Images/electricity_psf_nn_full_train_results.png'), width = 7, height = 4, 
       units = 'in', pointsize = 12,
       bg='white', res=100)
-plot(history)
+plot(history) + theme(strip.text = element_text(size=9))
 dev.off()
 #get variables used in model
 validation_reduced_df <- validation_df %>% select(one_of(variables_by_importance[1:num_vars])) 
@@ -206,6 +210,24 @@ caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu)
 ```
 
 ```{r}
+s3load('ModelSaves/elbtu_nn_input_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
+summary_df <- manual_summary %>% 
+  bind_rows(data.frame(
+  Model='Full Neural Network',
+  RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu),
+  R2=caret::R2(pred = resid_df$pred, obs = resid_df$elbtu),
+  MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu)
+))
+
+p <- summary_df %>% 
+  arrange(RMSE) %>% 
+  kable('html', 
+        caption = 'Feature Extraction Model Results') %>% 
+  kable_styling()
+p
+```
+
+```{r}
 #compute gross values and compare
 
 resid_model <- lm(model %>% predict(as.matrix(validation_reduced_df))*validation_sqft_values~as.matrix(validation_labels*validation_sqft_values))
@@ -228,3 +250,27 @@ caret::R2(pred = resid_df$pred, obs = resid_df$elbtu)
 caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu)
 ```
 
+```{r}
+s3load('ModelSaves/elbtu_nn_input.RData', bucket = 'cuny-msds-final-project-cbecs')
+summary_df <- manual_summary %>% 
+  bind_rows(data.frame(
+  Model='Full Neural Network',
+  RMSE=caret::RMSE(pred = resid_df$pred / 1000000, obs = resid_df$elbtu / 1000000),
+  R2=caret::R2(pred = resid_df$pred / 1000000, obs = resid_df$elbtu / 1000000),
+  MAE=caret::MAE(pred = resid_df$pred / 1000000, obs = resid_df$elbtu / 1000000)
+))
+
+p <- summary_df %>% 
+  arrange(RMSE) %>% 
+  kable('html', 
+        caption = 'Feature Extraction Model Results') %>% 
+  kable_styling()
+p
+```
+
+```{r}
+matrix(colnames(validation_reduced_df), ncol = 7) %>% kable('html', 
+        caption = 'Feature Extraction Model Results') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+```

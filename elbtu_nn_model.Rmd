@@ -83,10 +83,14 @@ hyper_summary_best <- hyper_summary %>%
                filter(row_number()==1)
 
 p1 <- ggplot(hyper_summary_best, 
-       aes(x=num_vars, y=msle)) + 
+       aes(x=num_vars, y=msle, color='MSLE')) + 
   geom_line() +
+  geom_line(aes(x=num_vars, y=sqrt(mse)/max(sqrt(mse)), color='RMSE')) +
+  scale_y_continuous(sec.axis = sec_axis(~.*max(sqrt(hyper_summary_best$mse)), name="Root Mean Square Error", breaks = seq(10000, 25000, 2000)), breaks = seq(0.7, 1.7, 0.1)) +
+  scale_x_continuous(breaks = seq(0, 800, 100)) +
+  scale_color_manual(values = c("steelblue", "springgreen")) +
   ggtitle('Loss vs Number of Variables') +
-  labs(x='Number of Variables', y='Mean Squared Loss Error') +
+  labs(x='Number of Variables', y='Mean Squared Log Error', color='Loss Metric') +
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),
         plot.background = element_rect(fill = "lightgrey"), 
@@ -98,7 +102,8 @@ p1 <- ggplot(hyper_summary_best,
         legend.title=element_text(size=7),
         legend.text=element_text(size=6),
         legend.key.height = unit(0.5, "cm"),
-        title = element_text(size=14, color = "grey55"))
+        title = element_text(size=14, color = "grey55"),
+        legend.position = c(0.8, 0.85))
 ggsave(paste0('Documents/Images/electricity_nn_error.png'), p1, width = 6.5, height = 3.5, units = 'in')
 p1
 
@@ -126,7 +131,7 @@ s3load('ModelSaves/elbtu_nn_full_model_history.RData', bucket = 'cuny-msds-final
 png(paste0('Documents/Images/electricity_nn_full_train_results.png'), width = 7, height = 4, 
       units = 'in', pointsize = 12,
       bg='white', res=100)
-plot(history)
+plot(history) + theme(strip.text = element_text(size=9))
 dev.off()
 #get variables used in model
 validation_reduced_df <- validation_df %>% select(one_of(variables_by_importance[1:num_vars])) 
@@ -203,5 +208,55 @@ elbtu_impact_error_check_df <- resid_df %>%
 caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu)
 caret::R2(pred = resid_df$pred, obs = resid_df$elbtu)
 caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu)
+```
+
+```{r}
+summary_df <- manual_summary %>% 
+  bind_rows(data.frame(
+  Model='Full Neural Network',
+  RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu),
+  R2=caret::R2(pred = resid_df$pred, obs = resid_df$elbtu),
+  MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu)
+))
+
+p <- summary_df %>% 
+  arrange(RMSE) %>% 
+  kable('html', 
+        caption = 'Feature Extraction Model Results') %>% 
+  kable_styling()
+p
+```
+
+```{r}
+matrix(colnames(validation_reduced_df), ncol = 7) %>% kable('html', 
+        caption = 'Feature Extraction Model Results') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+
+
+md_df <- readxl::read_excel('Reference/2012microdata_codebook.xlsx', col_names = TRUE)
+variable_df <- data.frame(Names = gsub('_bin\\.+[[:digit:]]+|\\.+[[:digit:]]+', '', colnames(validation_reduced_df))) %>% 
+  left_join(md_df[,c('Variable\r\nname', 'Label')] %>% rename(VariableName=`Variable\r\nname`), by = c('Names'='VariableName'))
+
+matrix(cbind(matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[1:25,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[26:50,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[51:75,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[76:100,]), ncol=8)[1:10,] %>% kable('html') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+
+matrix(cbind(matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[1:25,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[26:50,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[51:75,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[76:100,]), ncol=8)[11:20,] %>% kable('html') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+
+matrix(cbind(matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[1:25,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[26:50,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[51:75,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[76:100,]), ncol=8)[21:25,] %>% kable('html') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
 ```
 

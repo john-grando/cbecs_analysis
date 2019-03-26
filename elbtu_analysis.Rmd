@@ -27,12 +27,12 @@ top_n_rows <- 10
 
 Response Variable
 ```{r}
-ggplot(cbecs_fk_cleaned_df, aes(x=ELBTU)) + 
+ggplot(cbecs_el_cleaned_df, aes(x=ELBTU)) + 
   geom_density()
-#lmbda <- BoxCoxTrans(cbecs_fk_cleaned_df$ELBTU + 1)$lambda
+#lmbda <- BoxCoxTrans(cbecs_el_cleaned_df$ELBTU + 1)$lambda
 lmbda <- 0
 if(lmbda!=0){
-  ggplot(cbecs_fk_cleaned_df, aes(x=ELBTU^lmbda)) + 
+  ggplot(cbecs_el_cleaned_df, aes(x=ELBTU^lmbda)) + 
     geom_density() + 
     stat_function(fun=dnorm,
                 color="blue",
@@ -57,7 +57,7 @@ if(lmbda!=0){
           title = element_text(size=20, color = "grey55"))
 }
 if(lmbda==0){
-  ggplot(cbecs_fk_cleaned_df, aes(x=log(ELBTU+1))) + 
+  ggplot(cbecs_el_cleaned_df, aes(x=log(ELBTU+1))) + 
     geom_density() + 
     stat_function(fun=dnorm,
                 color="blue",
@@ -127,7 +127,7 @@ plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
 pls_plot$RMSE
 pls_plot$R2
-#View(t(cbecs_fk_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
+#View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
 
 #View(t(cbecs_elbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, one_of(pls_imp_df$feature))))
 ```
@@ -153,7 +153,7 @@ rf_imp_df <- rf_plot$imp_df
 rf_plot$RMSE
 rf_plot$R2
 #how to evaluate rows
-#View(t(cbecs_fk_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974)))
+#View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974)))
 #View(t(cbecs_elbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_elbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974) %>% select(ELBTU, pred, one_of(rf_imp_df$feature))))
 ```
 
@@ -349,7 +349,7 @@ nn_input_df <- cbecs_elbtu_encoded_center_scale_df %>%
          #one_of(colnames(cbecs_elbtu_encoded_center_scale_df %>% select(matches('^PBAPLUS'))))
   )
 
-nn_input_pba_labels <- cbecs_fk_cleaned_df$PBAPLUS
+nn_input_pba_labels <- cbecs_el_cleaned_df$PBAPLUS
 
 variable_by_importance_df <- data.frame(rbind(
   pca_imp_df, 
@@ -381,6 +381,7 @@ save(nn_input_pba_labels,
      variables_by_importance,
      numeric_cols,
      non_numeric_cols,
+     manual_summary,
      file= nn_input_data_name
 )
 put_object(file = nn_input_data_name, 

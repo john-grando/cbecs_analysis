@@ -11,6 +11,9 @@
 \usepackage{lscape}
 \usepackage{placeins}
 
+%make url breaks
+\def\UrlBreaks{\do-}
+
 \newenvironment{myitemize}
 { \begin{itemize}
     \setlength{\itemsep}{0pt}
@@ -88,7 +91,6 @@
 \input{project_introduction}
 \input{project_related_work}
 \input{project_problem_statement}
-\section{Data and Methods}
 \input{project_general_process}
 \input{project_pre_process_data}
 \input{project_electricity_variable_selection}
@@ -111,13 +113,13 @@
 \input{project_appendix_electricity}
 \FloatBarrier
 \newpage
-\input{project_appendix_natural_gas}
-\FloatBarrier
-\newpage
-\input{project_appendix_district_heat}
-\FloatBarrier
-\newpage
-\input{project_appendix_fuel_oil}
+%\input{project_appendix_natural_gas}
+%\FloatBarrier
+%\newpage
+%\input{project_appendix_district_heat}
+%\FloatBarrier
+%\newpage
+%\input{project_appendix_fuel_oil}
 \FloatBarrier
 \newpage
 \input{project_appendix_neural_networks}
