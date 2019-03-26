@@ -263,7 +263,7 @@ summary_df <- manual_summary %>%
 p <- summary_df %>% 
   arrange(RMSE) %>% 
   kable('html', 
-        caption = 'Feature Extraction Model Results') %>% 
+        caption = 'Full Model Summary') %>% 
   kable_styling()
 p
 ```
