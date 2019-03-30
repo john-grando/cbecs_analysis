@@ -1,0 +1,262 @@
+---
+title: "multi_layer_perceptron"
+author: "John Grando"
+date: "February 13, 2019"
+output: html_document
+---
+
+#libraries
+```{r}
+library(kableExtra)
+```
+
+```{r}
+#Set up base and compile
+source('RScripts/ngbtu_nn_base_model.R')
+source('RScripts/ngbtu_nn_model_parameters.R')
+```
+
+```{r}
+s3load('ModelSaves/ngbtu_nn_hyperparameter_results.RData', bucket = 'cuny-msds-final-project-cbecs')
+#Remove old postings
+time_summary <- hyper_results %>% 
+  group_by(
+    num_vars, 
+    loss_f, 
+    opt, 
+    model, 
+    dropout, 
+    units, 
+    reg, 
+    batch
+  ) %>% 
+  arrange(desc(run_time)) %>% 
+  filter(row_number()==1) %>% 
+  select(num_vars, 
+         loss_f, 
+         opt, 
+         model, 
+         dropout, 
+         units, 
+         reg, 
+         batch, 
+         run_time) %>% 
+  rename(end_time = run_time) %>% 
+  mutate(end_time = end_time + 1) %>% 
+  mutate(start_time = end_time - 60 * 10)
+
+hyper_parsed_results <- hyper_results %>% 
+  left_join(time_summary, 
+            by = c('num_vars'='num_vars', 
+                   'loss_f'='loss_f', 
+                   'opt'='opt', 
+                   'model'='model', 
+                   'dropout'='dropout', 
+                   'units'='units', 
+                   'reg'='reg', 
+                   'batch'='batch')) %>% 
+  mutate(run_flag = ifelse(run_time > start_time & run_time < end_time, 1, 0)) %>% 
+  filter(run_flag==1) %>% 
+  select(-run_flag, -start_time)
+
+hyper_summary <- hyper_parsed_results %>% 
+  group_by(
+    num_vars, 
+    loss_f, 
+    opt, 
+    model, 
+    dropout, 
+    units, 
+    reg, 
+    batch
+  ) %>% 
+  summarize(mae = mean(mae), 
+            mse = mean(mse),
+            msle = mean(msle),
+            loss = mean(loss),
+            pm = mean(pm),
+            run_time = mean(end_time))
+
+hyper_summary_best <- hyper_summary %>% 
+               group_by(num_vars) %>% 
+               arrange(msle) %>% 
+               filter(row_number()==1)
+
+p1 <- ggplot(hyper_summary_best, 
+       aes(x=num_vars, y=msle, color='MSLE')) + 
+  geom_line() +
+  geom_line(aes(x=num_vars, y=sqrt(mse)/(max(sqrt(hyper_summary_best$mse))*3), color='RMSE')) +
+  scale_y_continuous(sec.axis = sec_axis(~.*max(sqrt(hyper_summary_best$mse)*3), name="Root Mean Square Error", breaks = seq(30000, 33000, 1000)), breaks = seq(0.7, 4.0, 0.5)) +
+  scale_x_continuous(breaks = seq(0, 800, 100)) +
+  scale_color_manual(values = c("steelblue", "springgreen")) +
+  ggtitle('Loss vs Number of Variables') +
+  labs(x='Number of Variables', y='Mean Squared Log Error', color='Loss Metric') +
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0.5),
+        plot.background = element_rect(fill = "lightgrey"), 
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.major.x = element_line(color = "lightgrey"), 
+        panel.grid.major.y = element_line(color = "lightgrey"), 
+        axis.text = element_text(size=12, color = "grey55"), 
+        axis.title = element_text(size=14, color = "grey55"), 
+        legend.title=element_text(size=7),
+        legend.text=element_text(size=6),
+        legend.key.height = unit(0.5, "cm"),
+        title = element_text(size=14, color = "grey55"),
+        legend.position = c(0.8, 0.85))
+ggsave(paste0('Documents/Images/natural_gas_nn_error.png'), p1, width = 6.5, height = 3.5, units = 'in')
+p1
+
+hyper_summary %>% 
+  arrange(msle) %>% 
+  head(20) %>% 
+  kable('html') %>% 
+  kable_styling()
+```
+
+```{r}
+model <- s3read_using(load_model_hdf5, 
+                      object = 'ModelSaves/ngbtu_nn_full_model.h5', 
+                      bucket = 'cuny-msds-final-project-cbecs', custom_objects = list(
+                        'keras::loss_mean_squared_logarithmic_error' = keras::loss_mean_squared_logarithmic_error,
+                        'custom_loss_func' = custom_loss_func,
+                        'loss_func' = loss_func,
+                        'optimizer_func' = optimizer_func))
+model %>% summary()
+s3load('ModelSaves/ngbtu_nn_full_model_history.RData', bucket = 'cuny-msds-final-project-cbecs')
+```
+
+#Predict and examine residuals
+```{r fig.width=10}
+png(paste0('Documents/Images/natural_gas_nn_full_train_results.png'), width = 7, height = 4, 
+      units = 'in', pointsize = 12,
+      bg='white', res=100)
+plot(history) + theme(strip.text = element_text(size=9))
+dev.off()
+#get variables used in model
+validation_reduced_df <- validation_df %>% select(one_of(variables_by_importance[1:num_vars])) 
+evaluation <- model %>% evaluate(as.matrix(validation_reduced_df), as.matrix(validation_labels), verbose=2)
+evaluation
+resid_model <- lm(model %>% predict(as.matrix(validation_reduced_df))~as.matrix(validation_labels))
+summary(resid_model)
+png(paste0('Documents/Images/natural_gas_nn_full_resid_1.png'), width = 7, height = 4, 
+      units = 'in', pointsize = 12,
+      bg='white', res=100)
+par(mfrow=c(1,2))
+plot(resid_model, c(1,2))
+dev.off()
+png(paste0('Documents/Images/natural_gas_nn_full_resid_2.png'), width = 7, height = 4, 
+      units = 'in', pointsize = 12,
+      bg='white', res=100)
+par(mfrow=c(1,2))
+plot(resid_model, c(3,5))
+dev.off()
+residuals <- resid(resid_model)
+resid_df <- data.frame(resid = residuals, 
+                       pba = data.frame(pba=nn_input_pba_labels) %>% slice(-train_test_list),
+                       ngbtu = validation_labels,
+                       pred = model %>% predict(as.matrix(validation_reduced_df)))
+p1 <- ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_reduced_df)),
+                         obs=validation_labels),
+       aes(x=pred, y=obs)) + 
+    geom_point(alpha=0.2) +
+    ggtitle('Predicted vs. Observed') +
+    labs(x='Predicted mmBTU', y="Observed mmBTU") +
+    geom_abline(slope = 1, intercept = 0) +
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          plot.title = element_text(hjust = 0.5),
+          plot.background = element_rect(fill = "lightgrey"), 
+          panel.background = element_rect(fill = "white"), 
+          panel.grid.major.x = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"), 
+          axis.text = element_text(size=12, color = "grey55"), 
+          axis.title = element_text(size=14, color = "grey55"), 
+          legend.title=element_text(size=7),
+          legend.text=element_text(size=6),
+          legend.key.height = unit(0.5, "cm"),
+          title = element_text(size=20, color = "grey55"))
+ggsave(paste0('Documents/Images/natural_gas_nn_full_pvo.png'), p1, width = 6.5, height = 3, units = 'in')
+p1
+p2 <- ggplot(resid_df, aes(x=ngbtu, y=resid)) + 
+    geom_point(alpha=0.2) +
+    ggtitle('Predicted vs. Residual') +
+    labs(x='Predicted mmBTU', y="Residuals") +
+    geom_abline(slope = 0, intercept = 0) +
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          plot.title = element_text(hjust = 0.5),
+          plot.background = element_rect(fill = "lightgrey"), 
+          panel.background = element_rect(fill = "white"), 
+          panel.grid.major.x = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"), 
+          axis.text = element_text(size=12, color = "grey55"), 
+          axis.title = element_text(size=14, color = "grey55"), 
+          legend.title=element_text(size=7),
+          legend.text=element_text(size=6),
+          legend.key.height = unit(0.5, "cm"),
+          title = element_text(size=20, color = "grey55"))
+ggsave(paste0('Documents/Images/natural_gas_nn_full_pvr.png'), p2, width = 6.5, height = 3, units = 'in')
+p2
+ngbtu_impact_error_check_df <- resid_df %>% 
+  group_by(pba) %>% 
+  summarize(avg_ngbtu = mean(ngbtu),
+            avg_pred_ngbtu = mean(pred),
+            RMSE = caret::RMSE(pred = pred, obs = ngbtu),
+            RMSE_ratio = RMSE / avg_ngbtu,
+            R2 = caret::R2(pred=pred,obs=ngbtu),
+            instances = n())
+
+caret::RMSE(pred = resid_df$pred, obs = resid_df$ngbtu)
+caret::R2(pred = resid_df$pred, obs = resid_df$ngbtu)
+caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu)
+```
+
+```{r}
+summary_df <- manual_summary %>% 
+  bind_rows(data.frame(
+  Model='Full Neural Network',
+  RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$ngbtu),
+  R2=caret::R2(pred = resid_df$pred, obs = resid_df$ngbtu),
+  MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu)
+))
+
+p <- summary_df %>% 
+  arrange(RMSE) %>% 
+  kable('html', 
+        caption = 'Full Model Comparison') %>% 
+  kable_styling()
+p
+```
+
+```{r}
+matrix(colnames(validation_reduced_df), ncol = 7) %>% kable('html', 
+        caption = 'Feature Extraction Model Results') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+
+
+md_df <- readxl::read_excel('Reference/2012microdata_codebook.xlsx', col_names = TRUE)
+variable_df <- data.frame(Names = gsub('_bin\\.+[[:digit:]]+|\\.+[[:digit:]]+', '', colnames(validation_reduced_df))) %>% 
+  left_join(md_df[,c('Variable\r\nname', 'Label')] %>% rename(VariableName=`Variable\r\nname`), by = c('Names'='VariableName'))
+
+matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[1:25,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[26:50,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[51:75,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[76:100,]), ncol=8)[1:10,] %>% kable('html') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+
+matrix(cbind(matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[1:25,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[26:50,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[51:75,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[76:100,]), ncol=8)[11:20,] %>% kable('html') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+
+matrix(cbind(matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[1:25,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[26:50,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[51:75,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[76:100,]), ncol=8)[21:25,] %>% kable('html') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+```
+
