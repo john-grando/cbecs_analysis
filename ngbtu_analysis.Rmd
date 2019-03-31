@@ -377,6 +377,7 @@ save(nn_input_pba_labels,
      variables_by_importance,
      numeric_cols,
      non_numeric_cols,
+     manual_summary,
      file= nn_input_data_name
 )
 put_object(file = nn_input_data_name, 
