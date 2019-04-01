@@ -225,6 +225,28 @@ p <- summary_df %>%
         caption = 'Feature Extraction Model Results') %>% 
   kable_styling()
 p
+
+p1 <- ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_reduced_df)) * validation_sqft_values /1000000,
+                         obs=validation_labels * validation_sqft_values /1000000),
+       aes(x=pred, y=obs)) + 
+    geom_point(alpha=0.2) +
+    ggtitle('Predicted vs. Observed') +
+    labs(x='Predicted mmBTU', y='Observed BTU Per SF') +
+    geom_abline(slope = 1, intercept = 0) +
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          plot.title = element_text(hjust = 0.5),
+          plot.background = element_rect(fill = "lightgrey"), 
+          panel.background = element_rect(fill = "white"), 
+          panel.grid.major.x = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"), 
+          axis.text = element_text(size=12, color = "grey55"), 
+          axis.title = element_text(size=14, color = "grey55"), 
+          legend.title=element_text(size=7),
+          legend.text=element_text(size=6),
+          legend.key.height = unit(0.5, "cm"),
+          title = element_text(size=20, color = "grey55"))
+ggsave(paste0('Documents/Images/electricity_nn_full_pvo_transformed.png'), p1, width = 6.5, height = 3, units = 'in')
+p1
 ```
 
 ```{r}
@@ -271,6 +293,32 @@ p
 ```{r}
 matrix(colnames(validation_reduced_df), ncol = 7) %>% kable('html', 
         caption = 'Feature Extraction Model Results') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+
+
+md_df <- readxl::read_excel('Reference/2012microdata_codebook.xlsx', col_names = TRUE)
+variable_df <- data.frame(Names = gsub('_bin\\.+[[:digit:]]+|\\.+[[:digit:]]+', '', colnames(validation_reduced_df))) %>% 
+  left_join(md_df[,c('Variable\r\nname', 'Label')] %>% rename(VariableName=`Variable\r\nname`), by = c('Names'='VariableName'))
+
+matrix(cbind(matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[1:25,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[26:50,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[51:75,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[76:100,]), ncol=8)[1:10,] %>% kable('html') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+
+matrix(cbind(matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[1:25,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[26:50,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[51:75,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[76:100,]), ncol=8)[11:20,] %>% kable('html') %>% 
+  kable_styling(full_width = TRUE) %>% 
+  column_spec(1, width = '4cm')
+
+matrix(cbind(matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[1:25,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[26:50,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[51:75,],
+      matrix(append(variable_df$Names, variable_df$Label), ncol = 2, byrow = FALSE)[76:100,]), ncol=8)[21:25,] %>% kable('html') %>% 
   kable_styling(full_width = TRUE) %>% 
   column_spec(1, width = '4cm')
 ```

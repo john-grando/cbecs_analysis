@@ -250,7 +250,7 @@ p_rfe <- ggplot(data = data.frame(varImp(rfe_train) %>%
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
           title = element_text(size=20, color = "grey55"))
-ggsave(paste0('Documents/Images/electricity_rfe_vars.png'), p_rfe, width = 6.5, height = 3.5, units = 'in')
+ggsave(paste0('Documents/Images/electricity_psf_rfe_vars.png'), p_rfe, width = 6.5, height = 3.5, units = 'in')
 p_rfe
 ```
 

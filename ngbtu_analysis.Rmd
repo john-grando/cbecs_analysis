@@ -198,6 +198,7 @@ lp_plot$pvo_plot
 plot(lp_plot$tmp_model)
 lp_imp_df <- lp_plot$imp_df %>% mutate(Overall = 100 * Overall) %>% filter(!is.na(Overall))
 lp_plot$RMSE
+lp_plot$R2
 ```
 
 #recursive feaure extraction
@@ -226,6 +227,7 @@ varImp(rfe_train)
 rfe_plot$p
 plot(rfe_plot$tmp_mdl)
 rfe_plot$RMSE_untransformed
+rfe_plot$R2_untransformed
 
 #specific graph needs to be made
 p_rfe <- ggplot(data = data.frame(varImp(rfe_train) %>% 
@@ -271,6 +273,7 @@ nn_plot$pvo_plot
 plot(nn_plot$tmp_model)
 nn_imp_df <- nn_plot$imp_df %>% mutate(Overall = 100 * Overall)
 nn_plot$RMSE
+nn_plot$R2
 ```
 
 #load models, again if not done before
