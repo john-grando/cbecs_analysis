@@ -8,37 +8,56 @@ The choice to use neural networks for the final model was multi-faceted.  First,
 
 \subsection{Hyperparameter Training}
 In order to select the most optimized set of parameters, some hyperparameter training was performed.  Some standard searches were made, such as varying the dropout rate, regularization, learning rate, and batch size; however, one additional training set was incorporated to highlight the goals of this study.  A series of models were tested which had an incrementally decreasing number of variables, by least importance, in order to test the loss of accuracy.
-\newpage
+
 \subsection{Electricity}
 \subsubsection{Summary}
 The final selected model consisted of a 3 hidden layers, 200 hidden layer nodes, a dropout rate of 0.6, no regularization, batch sizes of 150, using the rmsprop() algorithm with a learning rate of 0.01, and 100 predictors.  As can be seen in the graph below, the number of variables needed to obtain near-peak performance, is much less than the full set.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth, height=0.25\textheight]{Images/electricity_nn_error.png}
+\includegraphics[width=\textwidth, height=0.25\textheight]{Images/electricity_psf_nn_error.png}
 \end{figure}
 
-The final selected model, after re-training, has a MSLE of 0.875 and RMSE of 15357.  Comparing this model ('Full Neural Network') to the previous feature extraction models, which used many more variables, the performance is competitive.  Note, in an effort to provide a sufficient number of data points for such a large model, 50\% of the training data had noise added to the numeric columns and appended to the existing set.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.6\textwidth, height=0.25\textheight]{Images/electricity_model_summary.png}
-\end{figure}
+The final selected model, after re-training, has a MSLE of 0.875 and RMSE of 15357.  Comparing this model ('Full Neural Network') to the previous feature extraction models, which used many more variables, the performance is competitive.  Additionally, the results were then multiplied by their respect gross floor area and then compared to a set of feature extraction models that were trained on total consumption.  Again, it can be seen that this neural network model has shown to be competetive in this manner and, in fact, has a better Rsquared value.
 
 The resdiuals indicate that the variance scales with the response variable; however, since neural network models do not operate on a principle of homoscedacitity, only underlying patterns are of concern. Additionally, the noted error pattern is by design so that higher error in higher consumption projects are acceptable.  \textit{\hyperref[appendix_nn:electricity:nn_full]{Appendix}}
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=.49\textwidth, height=0.25\textheight]{Images/electricity_psf_model_summary.png}
+\includegraphics[width=0.49\textwidth, height=0.25\textheight]{Images/electricity_psf_model_summary_transformed.png}
+\end{figure}
+
+
 \subsubsection{Variable Selection Summary}
-The final model chosen uses 100 variables.  Many of the features within the set have to do with the amount of receptacle equipment within the building as well as major electrical appliances (e.g. elevators) and essential equipment (e.g. data center servers, refrigeration).  In fact, there are only a few cryptic selected variable (e.g. existence of employee breakroom) that may be more related to the building type rather than the actual question being asked.   \textit{\hyperref[appendix_nn:electricity:nn_full_variables]{Appendix}}
+The final model chosen uses 100 variables.  Many of the features within the set have to do with the amount of receptacle equipment within the building as well as major electrical devices (e.g. MRI machines) and essential equipment (e.g. data center servers, refrigeration).  Also, building type identifiers have been included for various categories. \textit{\hyperref[appendix_nn:electricity:nn_full_variables]{Appendix}}
 
-\subsubsection{Future Work}
-While it was determined that some heteroscedacitity would be acceptable, there does appear to be area for improvement.  Additionally, as mentioned at the beginning of this report, the sampling of this data set was stratified to reflect the building population.  However, it is noted that there are some building classes that have greater variance than others.  Therefore, it may be useful to use this stratification as a weighted method, based on \lstinline{PBAPLUS}, in order to try and emphasize accuracy on the most prevalent budiding types. Also, there was not a lot of attention paid to the actual transformations of the predictors given the large quantity of them.  It is possible a better fit can be obtained with more intelligent transformations applied to the features after further analysis.
+The automated selection process does seem to have included some highly correlated pairs, such as the number of workers per square foot as well as the categorical bin of workers.  This does reduce the number of necessary questions, but it is unclear if both are necessary and/or if they are possibly detrimental.  Also, there are a number of questions that may be automatically known just based on the usage type as some questions do not apply to all buidlings.  It is possible take the steps used in asking questions in the survey in order to build a live form that can automatically parse out the meaningful questions based on building type, which could reduce the need to enter a value for all the selected variables.
 
-The automated selection process does seem to have included some highly correlated pairs, such as requesting the numeric amont of workers as well as the binned category of this value.  This does reduce the number of necessary questions, but it is unclear if both are necessary and/or if they are possibly detrimental.  Also, there are a number of questions that may be automatically known just based on the usage type as some questions do not apply to all buidlings.  It is possible take the steps used in asking questions in the survey in order to build a live form that can automatically parse out the meaningful questions based on building type, which could reduce the need to enter a value for all the selected variables.
-
-\FloatBarrier
-\newpage
+%\FloatBarrier
+%\newpage
 \subsection{Natural Gas}
+\subsubsection{Summary}
+Test
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth, height=0.25\textheight]{Images/natural_gas_psf_nn_error.png}
+\end{figure}
+
+\subsubsection{Variable Selection Summary}
+Test
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.49\textwidth, height=0.25\textheight]{Images/natural_gas_psf_model_summary.png}
+\includegraphics[width=0.49\textwidth, height=0.25\textheight]{Images/natural_gas_psf_model_summary_transformed.png}
+\end{figure}
+
+The resdiuals
+
+\subsection{Future Work}
+While it was determined that some heteroscedacitity would be acceptable, there does appear to be area for improvement.  Additionally, as mentioned at the beginning of this report, the sampling of this data set was stratified to reflect the building population.  However, it is noted that there are some building classes that have greater variance than others.  Therefore, it may be useful to use this stratification as a weighted method, based on \lstinline{PBAPLUS}, in order to try and emphasize accuracy on the most prevalent budiding types. Also, there was not a lot of attention paid to the actual transformations of the predictors given the large quantity of them.  It is possible a better fit can be obtained with more intelligent transformations applied to the features after further analysis.
 
 %\FloatBarrier
 %\newpage

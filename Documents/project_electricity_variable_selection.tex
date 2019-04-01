@@ -14,21 +14,21 @@ The response data appear to be unimodal and have a heavy right skew.  After filt
 
 \subsection{Variable Selection - PCA}
 RMSE: NA, Rsquared: NA\\
-Top 5: \lstinline{LAUNDR[NA]}, \lstinline{NWKER}, \lstinline{COOK[NO]}, \lstinline{PRNTRN}, \lstinline{EDSEAT}
+Top 5: \lstinline{COOK.2[NO]}, \lstinline{LAUNDR..1[NA]}, \lstinline{ELCPLT..1[NA]}, \lstinline{PBA.14[EDUCATION]}, \lstinline{BLDPLT.2[NO]}
 \\[0.1in]
 \indent The principle component analysis indicates that only About 5.0\% of the variance in the data can be explained in the first principle component, which then drops to about 2\% for the second principle component.  These results reveal that there does not appear to be a clear set of axes that can explain the variance of the data very well, which indicates there may be some very complex interactions taking place in the predictors.  \textit{\hyperref[appendix:electricity:pca]{Appendix}}
 
 \subsection{Variable Selection - PLS}
-RMSE: 12109, Rsquared: 0.763\\
-Top 5: \lstinline{NWKER}, \lstinline{PRNTRN}, \lstinline{RFGVNN}, \lstinline{NELVTR}, \lstinline{COPIERN}
+RMSE: 46880, Rsquared: 0.0.548\\
+Top 5: \lstinline{NWKERPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{FDSEATPerSf}, \lstinline{RFGWINPerSf}, \lstinline{PCTERMNPerSf}
 \\[0.1in]
 \indent This model returned a promising result; however, it must be noted that all predictors were used in this process.  Looking at the output thus far, it is appears that the number of workers, receptical equipment, and refrigeration equipment, influence electrical consumption.  \textit{\hyperref[appendix:electricity:pls]{Appendix}}
 
 \subsection{Variable Selection - Random Forest}
-RMSE: 17284, Rsquared: 0.809\\
-Top 5: \lstinline{PUBCLIM.7[WITHELD]}, \lstinline{SQFTC.8[200K SF - 500K SF]}, \lstinline{NELVTR}, \lstinline{NWKER},  \lstinline{SQFTC.9[500K SF - 1mm SF]}
+RMSE: 163434, Rsquared: 0.173\\
+Top 5: \lstinline{RFGWINPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{NWKERPerSf}, \lstinline{RFGICNPerSf},  \lstinline{PCTERMNPerSf}
 \\[0.1in]
-\indent As with the PLS, model, the resulting error metrics were promising, with slightly better RMSE and Rsquared values.  The selected variables are ver similar except the square foot categories are comign into play.  Also note that the presence of publicly witheld data, for security reasons, was a selected feature, possibly due to the nature of high security government buildings.  \textit{\hyperref[appendix:electricity:rf]{Appendix}}
+\indent The resulting error metrics were much less promising.  However, similarly selected variables are are picked for this model when compared to the PLS.  \textit{\hyperref[appendix:electricity:rf]{Appendix}}
 
 \subsection{Variable Selection - Lasso}
 RMSE: NA, Rsquared: NA\\
@@ -37,32 +37,32 @@ RMSE: NA, Rsquared: NA\\
 \indent This resulted in a very poor fit, which is not unexpected.  Lasso models typically work when a few variables can be used to predict the response, which does not appear to be the case in this instance.  Due to the lack of fit, this model will not be used in the variable selection process.  Additionally, the actual model was poor enough that predictions could not be made on the data, which is the reason for the lack of reported metrics.
 
 \subsection{Variable Selection - Forward Selection}
-RMSE: 18490, Rsquared: 0.453\\
-Top 5: \lstinline{NWKER}, \lstinline{PRNTRN}, \lstinline{RFGVNN}, \lstinline{NELVTR}, \lstinline{COPIERN}
+RMSE: 90503, Rsquared: 0.315\\
+Top 5: \lstinline{NWKERPerSf}, \lstinline{RFGWINPerSf}, \lstinline{RFGWI.1[YES]}, \lstinline{RFGICNPerSf}, \lstinline{PCTERMNPerSf}
 \\[0.1in]
-\indent This model was building using the leaps package which iteratively selected the best predictor variable up to a limit of 100.  Unsurprisingly, the best model turned out to be the maximum setting; however, encouraging model metrics were still not returned.  \textit{\hyperref[appendix:electricity:lp]{Appendix}}
+\indent This model was building using the leaps package which iteratively selected the best predictor variable up to a limit of 100.  Unsurprisingly, the best model turned out to be the maximum setting.  Large refrigeration equipment load and typical office space attributes dominated this analysis, as appears to be the case in previous models.  It seems that in order to capture energy use for all buidling types, much more than 5 variables will be necessary.  \textit{\hyperref[appendix:electricity:lp]{Appendix}}
 
 \subsection{Variable Selection - Recursive Feature Elimination}
-RMSE: 10462, Rsquared: 0.831\\
-Top 5: \lstinline{NWKER}, \lstinline{RFGICN}, \lstinline{NELVTR}, \lstinline{HCBED_bin.2[>250]}, \lstinline{PUBLICM.7[WITHELD]}
+RMSE: 48022, Rsquared: 0.517\\
+Top 5: \lstinline{RGSTRNPerSf}, \lstinline{RFGICNPerSf}, \lstinline{NWKERPerSf}, \lstinline{PBAPLUS.32[FAST FOOD]}, \lstinline{RFGWINPerSf}
 \\[0.1in]
-\indent A more direct approach was taken with this model, which is specifically used to extract useful features from data sets.  As can be seen, there are many of the same predictors chosen in this model as in previous models.  \textit{\hyperref[appendix:electricity:rfe]{Appendix}}
+\indent A more direct approach was taken with this model, which is specifically used to extract useful features from data sets. \textit{\hyperref[appendix:electricity:rfe]{Appendix}}
 
 \subsection{Variable Selection - Simple Neural Network}
-RMSE: 12337, Rsquared: 0.768\\
-Top 5: \lstinline{PUBCLIM.7[WITHELD]}, \lstinline{HCBED_bin.2[>250]}, \lstinline{TVVIDEON_bin.2[>200]}, \lstinline{MRI[YES]}, \lstinline{NWKER}
+RMSE: 48644, Rsquared: 0.499\\
+Top 5: \lstinline{FDSeatPerSf}, \lstinline{PBAPLUS.32[FAST FOOD]}, \lstinline{RFGWINPerSf}, \lstinline{RFGWI.1[YES]}, \lstinline{RGSTRNPerSf}
 \\[0.1in]
-\indent Given that the final model will be a neural network, it made sense to try a simple out-of-the-box training model to see if any particular features worked better with this specific process, which provided encouraging results. \textit{\hyperref[appendix:electricity:snn]{Appendix}}
+\indent Given that the final model will be a neural network, it made sense to try a simple out-of-the-box training model to see if any particular features work better with this process.  As can be seen, there are some new attributes that surface which were not indicated to be of high importance previously.  \textit{\hyperref[appendix:electricity:snn]{Appendix}}
 \newpage
 \subsection{Variable Selection - Selected Variable Analysis}
 \begin{figure}[h]
 \begin{subfigure}{1\textwidth}
 \centering
-\includegraphics[width=.6\textwidth, height=0.2\textheight]{Images/electricity_fe_summary.png}
+\includegraphics[width=.6\textwidth, height=0.2\textheight]{Images/electricity_psf_fe_summary.png}
 \end{subfigure}
 \begin{subfigure}{1\textwidth}
 \centering
-\includegraphics[width=.99\textwidth, height=0.3\textheight]{Images/electricity_all_vars.png}
+\includegraphics[width=.99\textwidth, height=0.3\textheight]{Images/electricity_psf_all_vars.png}
 \end{subfigure}
 \end{figure}
-In order to rank the most impactful features, the variable importance metrics from the selected models were all set to the same scale then summed up.  As a preliminary check, the top 20 predictors are plotted in the appendix and are generally discussed here.  It seems the attempts to create stratified random samples, by building type, may have been beneficial in this case since there are some very building type specific end-uses that are highly ranked.  It does cause some concern that there are some odd selections, such as the 'witheld' column of the climate encoded variables being selected; however, it seems as though whatever reasoning to classify these types of buidlings this way is a direct indicator of electrical consumption.  When evaluating multiple selected atypical variables (e.g. LAUNDR.3[laundry provided by offsite services]) it seems that just the applicability of the question influences the consumption (building types - lodgining, healthcare, nursing).  In an attempt to truly follow the imporant predictors, no variables have been removed from this set and the order of importance remains unchanged.  \textit{\hyperref[appendix:electricity:sva]{Appendix}}
+In order to rank the most impactful features, the variable importance metrics from the selected models were all set to the same scale then summed up.  As a preliminary check, the top 20 predictors are plotted in the appendix and are generally discussed here.  It seems the attempts to create stratified random samples may have been beneficial in this case since there are some building type specific end-uses that are highly ranked.  As previously noted, there are many attributes associated with refrigeration, office, and food sales equipment.  Also, the attribute identifying one of the more atypical building types, speaking in an energy intensity sense, has made it into the top 20 (\lstinline{PBA.5[NON-REFRIGERATED WAREHOUSE]}).  Additionally, some occupancy features (\lstinline{NWKERPerSf}, \lstinline{FDSEATPerSf}) have been included which is expected given that they impact interior space cooling and ventilation loads. In an attempt to truly follow the imporant predictors, no variables have been removed from this set and the order of importance remains unchanged.  \textit{\hyperref[appendix:electricity:sva]{Appendix}}

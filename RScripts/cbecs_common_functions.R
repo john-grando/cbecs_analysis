@@ -71,9 +71,9 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
                           response_sub)
   }
   p2 <- p2 + 
-    aes(x=predicted, y=observed) + 
+    aes(x=log(predicted), y=log(observed)) + 
     geom_point(alpha=0.2) +
-    ggtitle('Predicted vs. Observed') +
+    ggtitle('Log Predicted vs. Log Observed') +
     geom_abline(slope = 1, intercept = 0) +
     theme(axis.text.x = element_text(angle=60, hjust=1),
           plot.title = element_text(hjust = 0.5),

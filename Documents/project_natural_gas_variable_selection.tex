@@ -11,34 +11,34 @@ After filtering for this model's end-use, there are 6662 samples in the data set
 
 \subsection{Variable Selection - PCA}
 RMSE: NA, Rsquared: NA\\
-Top 5: \lstinline{NWKER}, \lstinline{EDSEAT}, \lstinline{PBA.14[EDUCATION]}, \lstinline{STRLZR..1[NA]}, \lstinline{PRINTRN}  \textit{\hyperref[appendix:natural_gas:pca]{Appendix}}
+Top 5: \lstinline{EDSEATPerSf}, \lstinline{PBA.14[EDUCATION]}, \lstinline{STRLZR.1[YES]}, \lstinline{MCHEQP[NA]}, \lstinline{ACT2PCT}  \textit{\hyperref[appendix:natural_gas:pca]{Appendix}}
 
 \subsection{Variable Selection - PLS}
-RMSE: 25929, Rsquared: 0.547\\
-Top 5: \lstinline{NWKER}, \lstinline{PRINTRN}, \lstinline{NELVTR}, \lstinline{RFGVNN}, \lstinline{RFGWIN}\\
+RMSE: 73076, Rsquared: 0.293\\
+Top 5: \lstinline{FDSEATPerSf}, \lstinline{HEATP}, \lstinline{RFGWINPerSf}, \lstinline{NWKERPerSf}, \lstinline{RGSTRNPerSf}\\
 \\[0.1in]
-The Rsquared and RMSE values are significantly poorer than those in the electricity study, which suggests there is either a more complex relationship, or there is greater variance in response, give the available data.  \textit{\hyperref[appendix:natural_gas:pls]{Appendix}}
+The Rsquared and RMSE values are still on the poorer side compared to those in the electricity study, which suggests there is either a more complex relationship, or there is greater variance in response, given the available data. However, the presence of attribute which indicates the percent of the building that is heated (\lstinline{HEATP}) is promising.   \textit{\hyperref[appendix:natural_gas:pls]{Appendix}}
 
 \subsection{Variable Selection - Random Forest}
-RMSE: 27500, Rsquared: 0.748\\
-Top 5: \lstinline{SQFTC.8[200K SF - 500K SF]}, \lstinline{NGWATR.2[NO]}, \lstinline{SQFTC.7[100K SF - 200K SF]}, \lstinline{HCBED}, \lstinline{STRLZR.1[YES]} 
+RMSE: 175808, Rsquared: 0.193\\
+Top 5: \lstinline{DRYCL.1[YES]}, \lstinline{FDSEATPerSf}, \lstinline{RFGWINPerSf}, \lstinline{LAUNDR.3[OFF-SITE]}, \lstinline{STRLSZR.1[YES]} 
 \\[0.1in]
-The error values are much better for this model, which supports the hypothesis that a good model can be constructed, it will just require the ability to have complex relationships.  \textit{\hyperref[appendix:natural_gas:rf]{Appendix}}
+Again, the error values are much lower; however, the presesence of notable fuel-using equipment have been indicated to be of high importance. \textit{\hyperref[appendix:natural_gas:rf]{Appendix}}
 
 \subsection{Variable Selection - Lasso}
 RMSE: NA, Rsquared: NA\\
 
 \subsection{Variable Selection - Forward Selection}
-RMSE: 32968, Rsquared: 0.265\\
-Top 5: \lstinline{NWKER}, \lstinline{PRINTRN}, \lstinline{NELVTR}, \lstinline{RFGVNN}, \lstinline{RFGWIN}  \textit{\hyperref[appendix:natural_gas:lp]{Appendix}}
+RMSE: 100385, Rsquared: 0.0.246\\
+Top 5: \lstinline{FDSEATPerSf}, \lstinline{TVVIDEONPerSf}, \lstinline{NGWATR.2[NO]}, \lstinline{RGSTRNPerSf}, \lstinline{RFGWINPerSf}  \textit{\hyperref[appendix:natural_gas:lp]{Appendix}}
 
 \subsection{Variable Selection - Recursive Feature Elimination}
-RMSE: 23757, Rsquared: 0.635\\
-Top 5: \lstinline{NELVTR}, \lstinline{RFGICN}, \lstinline{NWKER}, \lstinline{HCBED_bin.2[>250]}, \lstinline{PRINTRN}  \textit{\hyperref[appendix:natural_gas:rfe]{Appendix}}
+RMSE: 59212, Rsquared: 0.523\\
+Top 5: \lstinline{NWKERPerSf}, \lstinline{RFGICNPerSf}, \lstinline{RFGWINPerSf}, \lstinline{FDSEATPerSf}, \lstinline{RGSTRNPerSf}  \textit{\hyperref[appendix:natural_gas:rfe]{Appendix}}
 
 \subsection{Variable Selection - Simple Neural Network}
-RMSE: 27866, Rsquared: 0.473\\
-Top 5: \lstinline{HCBED_bin.2[>250]}, \lstinline{LINACC.1[YES]}, \lstinline{TVVIDEON_bin.2[>200]}, \lstinline{LAUNDR.3[OFF-SITE SERVICE]}, \lstinline{FACACT.8[HOSPITAL OR OTHER HEALTH CARE COMPLEX]}  
+RMSE: 69784, Rsquared: 0.334\\
+Top 5: \lstinline{FDSEATPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{DRYCL.1[YES]}, \lstinline{PBAPLUS.33[RESTAURANT/CAFETERIA]}, \lstinline{PBAPLUS.32[FAST FOOD]}  
 \textit{\hyperref[appendix:natural_gas:snn]{Appendix}}
 \newpage
 \subsection{Variable Selection - Selected Variable Analysis}
@@ -52,4 +52,4 @@ Top 5: \lstinline{HCBED_bin.2[>250]}, \lstinline{LINACC.1[YES]}, \lstinline{TVVI
 \includegraphics[width=.99\textwidth, height=0.3\textheight]{Images/natural_gas_all_vars.png}
 \end{subfigure}
 \end{figure}
-A number of high importance variables indicated in the electricity analysis are present in this one which indicates there are some attributes that lead to building which have high energy demands for all connected utilities, such as hospitals (\lstinline{HCBED_bin.2[NO]}, \lstinline{FACACT.8[HOSPITAL]}) and refrigerated buildings (\lstinline{RFG*}). Also, it is possible that the models which use these variables may have negative coefficients applied, thus indicating a negative correlation. Additionally, the electricity specific variables (\lstinline{GENUSE}) have dropped significantly. \textit{\hyperref[appendix:electricity:sva]{Appendix}}
+As with the electricity model, attributes related to occupancy seem to have made a large impact, possibly due to the need to heat ventilation air, especially given some of these occupancy types are associated with 24/7 operation.  Also as expected, cooking and large heating equipment attributes are high on the list.  Surprisingly, the number of floors per gross floor area has shown some importance, perhaps due to building shape and its relationship with heating needs (i.e. volume to area ratio). \textit{\hyperref[appendix:electricity:sva]{Appendix}}
