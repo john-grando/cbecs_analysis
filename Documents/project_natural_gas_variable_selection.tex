@@ -40,16 +40,16 @@ Top 5: \lstinline{NWKERPerSf}, \lstinline{RFGICNPerSf}, \lstinline{RFGWINPerSf},
 RMSE: 69784, Rsquared: 0.334\\
 Top 5: \lstinline{FDSEATPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{DRYCL.1[YES]}, \lstinline{PBAPLUS.33[RESTAURANT/CAFETERIA]}, \lstinline{PBAPLUS.32[FAST FOOD]}  
 \textit{\hyperref[appendix:natural_gas:snn]{Appendix}}
-\newpage
+
 \subsection{Variable Selection - Selected Variable Analysis}
 \begin{figure}[h]
 \begin{subfigure}{1\textwidth}
 \centering
-\includegraphics[width=.6\textwidth, height=0.2\textheight]{Images/natural_gas_fe_summary.png}
+\includegraphics[width=.6\textwidth, height=0.2\textheight]{Images/natural_gas_psf_fe_summary.png}
 \end{subfigure}
 \begin{subfigure}{1\textwidth}
 \centering
-\includegraphics[width=.99\textwidth, height=0.3\textheight]{Images/natural_gas_all_vars.png}
+\includegraphics[width=.99\textwidth, height=0.3\textheight]{Images/natural_gas_psf_all_vars.png}
 \end{subfigure}
 \end{figure}
-As with the electricity model, attributes related to occupancy seem to have made a large impact, possibly due to the need to heat ventilation air, especially given some of these occupancy types are associated with 24/7 operation.  Also as expected, cooking and large heating equipment attributes are high on the list.  Surprisingly, the number of floors per gross floor area has shown some importance, perhaps due to building shape and its relationship with heating needs (i.e. volume to area ratio). \textit{\hyperref[appendix:electricity:sva]{Appendix}}
+As with the electricity model, attributes related to occupancy seem to have made a large impact, possibly due to the need to heat ventilation air, especially given some of these occupancy types are associated with 24/7 operation.  Also as expected, cooking and large heating equipment attributes are high on the list.  Surprisingly, the number of floors per gross floor area has shown some importance, perhaps due to building shape and its relationship with heating needs (i.e. volume to area ratio). \textit{\hyperref[appendix:natural_gas:sva]{Appendix}}

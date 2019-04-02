@@ -18,8 +18,8 @@ folds <- createFolds(y = train_test_list, k=n_folds, list=FALSE)
 
 hyper_list <- list()
 hyper_list$dropout <- seq(0.3, 0.9, 0.3)
-hyper_list$units <- seq(200, 400, 100)
-hyper_list$regularizer <- seq(0, 0, 0.045)
+hyper_list$units <- seq(200, 600, 100)
+hyper_list$regularizer <- seq(0, 0.3, 0.05)
 hyper_list$model <- seq(3,5,1)
 hyper_list$batch <- seq(50, 250, 100)
 hyper_list$loss <- list(
@@ -28,22 +28,22 @@ hyper_list$loss <- list(
       #list(name = 'cusom_loss_func', func = custom_loss_func)
 )
 hyper_list$opt <- list(
-  list(name = 'rmsprop_lr_00005', func = keras::optimizer_rmsprop(lr = 0.00005)),
+  #list(name = 'rmsprop_lr_00005', func = keras::optimizer_rmsprop(lr = 0.00005)),
   list(name = 'rmsprop_lr_0001', func = keras::optimizer_rmsprop(lr = 0.0001)),
   list(name = 'rmsprop_lr_0005', func = keras::optimizer_rmsprop(lr = 0.0005)),
-  list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001)),
-  list(name = 'sgd_lr_005_m_0_d_0_n_T', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=0.0, nesterov=TRUE)),
+  list(name = 'rmsprop_lr_001', func = keras::optimizer_rmsprop(lr = 0.001))#,
+  #list(name = 'sgd_lr_005_m_0_d_0_n_T', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=0.0, nesterov=TRUE)),
   #list(name = 'sgd_lr_01_m_0_d_0_n_T', func = keras::optimizer_sgd(lr=0.01, momentum=0.0, decay=0.0, nesterov=TRUE)),
   #list(name = 'sgd_lr_015_m_0_d_0_n_T', func = keras::optimizer_sgd(lr=0.015, momentum=0.0, decay=0.0, nesterov=TRUE)),
-  list(name = 'sgd_lr_005_m_0_d_0_n_F', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=0.0, nesterov=FALSE)),
+  #list(name = 'sgd_lr_005_m_0_d_0_n_F', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=0.0, nesterov=FALSE)),
   #list(name = 'sgd_lr_01_m_5_d_0_n_T', func = keras::optimizer_sgd(lr=0.01, momentum=0.5, decay=0.0, nesterov=TRUE)),
   #list(name = 'sgd_lr_015_m_9_d_0_n_T', func = keras::optimizer_sgd(lr=0.015, momentum=0.9, decay=0.0, nesterov=TRUE)),
   #list(name = 'sgd_lr_005_m_0_d_1E6_n_T', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=1e-6, nesterov=TRUE)),
-  list(name = 'sgd_lr_01_m_5_d_1E3_n_T', func = keras::optimizer_sgd(lr=0.01, momentum=0.5, decay=1e-3, nesterov=TRUE)),
+  #list(name = 'sgd_lr_01_m_5_d_1E3_n_T', func = keras::optimizer_sgd(lr=0.01, momentum=0.5, decay=1e-3, nesterov=TRUE)),
   #list(name = 'sgd_lr_015_m_9_d_1_n_T', func = keras::optimizer_sgd(lr=0.015, momentum=0.9, decay=0.1, nesterov=TRUE)),
   #list(name = 'sgd_lr_005_m_0_d_1E6_n_T', func = keras::optimizer_sgd(lr=0.005, momentum=0.0, decay=1e-6, nesterov=TRUE)),
   #list(name = 'sgd_lr_01_m_0_d_1E3_n_T', func = keras::optimizer_sgd(lr=0.01, momentum=0.0, decay=1e-3, nesterov=TRUE)),
-  list(name = 'sgd_lr_015_m_0_d_1_n_T', func = keras::optimizer_sgd(lr=0.015, momentum=0.0, decay=0.1, nesterov=TRUE))
+  #list(name = 'sgd_lr_015_m_0_d_1_n_T', func = keras::optimizer_sgd(lr=0.015, momentum=0.0, decay=0.1, nesterov=TRUE))
 )
 
 #Initialize parallel processing on 2 cores
@@ -52,10 +52,13 @@ registerDoMC(3)
 
 #Run model
 epochs <- 100
-for(v in c(seq(0,length(variables_by_importance),300), 
+for(v in c(#seq(0,length(variables_by_importance),300), 
            length(variables_by_importance)-100,
-           length(variables_by_importance)-10,
-           length(variables_by_importance)-1)) {
+           length(variables_by_importance)-50,
+           length(variables_by_importance)-20,
+           length(variables_by_importance)-10
+           #length(variables_by_importance)-1
+           )) {
   for (o in 1:length(hyper_list$opt)) {
     for (l in 1:length(hyper_list$loss)){
       for (m in hyper_list$model) {
