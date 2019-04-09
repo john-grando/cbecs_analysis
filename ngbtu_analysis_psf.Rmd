@@ -74,11 +74,11 @@ if(lmbda==0){
           panel.grid.major.x = element_line(color = "lightgrey"), 
           panel.grid.major.y = element_line(color = "lightgrey"),
           axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
+          axis.title = element_text(size=12, color = "grey55"), 
           legend.title=element_text(size=7),
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
+          title = element_text(size=16, color = "grey55"))
 }
 ggsave('Documents/Images/natural_gas_psf_response.png', width = 6.5, height = 2, units = 'in')
 #Reset to 1, not going to use it.
