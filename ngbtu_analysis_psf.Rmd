@@ -79,7 +79,7 @@ if(lmbda==0){
           legend.key.height = unit(0.5, "cm"),
           title = element_text(size=14, color = "grey55"))
 }
-ggsave('Documents/Images/natural_gas_psf_response.png', width = 6.5, height = 2, units = 'in')
+ggsave('Documents/Images/natural_gas_psf_response.png', width = 8, height = 4, units = 'in')
 #Reset to 1, not going to use it.
 lmbda <- 1
 ```
@@ -249,7 +249,7 @@ p_rfe <- ggplot(data = data.frame(varImp(rfe_train) %>%
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
           title = element_text(size=14, color = "grey55"))
-ggsave(paste0('Documents/Images/natural_gas_psf_rfe_vars.png'), p_rfe, width = 6.5, height = 3.5, units = 'in')
+ggsave(paste0('Documents/Images/natural_gas_psf_rfe_vars.png'), p_rfe, width = 8, height = 4, units = 'in')
 p_rfe
 ```
 
@@ -408,7 +408,7 @@ p_all_v <- ggplot(data = variable_by_importance_df %>% head(20),
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
           title = element_text(size=14, color = "grey55"))
-ggsave(paste0('Documents/Images/natural_gas_psf_all_vars.png'), p_all_v, width = 6.5, height = 3.5, units = 'in')
+ggsave(paste0('Documents/Images/natural_gas_psf_all_vars.png'), p_all_v, width = 8, height = 4, units = 'in')
 p_all_v
 ```
 
