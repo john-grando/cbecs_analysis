@@ -47,14 +47,13 @@ if(lmbda!=0){
           plot.background = element_rect(fill = "lightgrey"), 
           panel.background = element_rect(fill = "white"), 
           panel.grid.major.x = element_line(color = "lightgrey"), 
-          panel.grid.major.y = element_line(color = "lightgrey"), 
-          title.text = element_text(size=16),
+          panel.grid.major.y = element_line(color = "lightgrey"),
           axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
+          axis.title = element_text(size=12, color = "grey55"), 
           legend.title=element_text(size=7),
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
+          title = element_text(size=14, color = "grey55"))
 }
 if(lmbda==0){
   ggplot(cbecs_el_cleaned_df, aes(x=log(ELBTUPerSf+1))) + 
@@ -239,17 +238,17 @@ p_rfe <- ggplot(data = data.frame(varImp(rfe_train) %>%
     ggtitle('Variable Importance') +
     labs(x='Feature') +
     theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0.5),
+          plot.title = element_text(hjust = 0.5,  size=16),
           plot.background = element_rect(fill = "lightgrey"), 
           panel.background = element_rect(fill = "white"), 
           panel.grid.major.x = element_line(color = "lightgrey"), 
-          panel.grid.major.y = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"),
           axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
+          axis.title = element_text(size=12, color = "grey55"), 
           legend.title=element_text(size=7),
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
+          title = element_text(size=14, color = "grey55"))
 ggsave(paste0('Documents/Images/electricity_psf_rfe_vars.png'), p_rfe, width = 6.5, height = 3.5, units = 'in')
 p_rfe
 ```
@@ -398,17 +397,17 @@ p_all_v <- ggplot(data = variable_by_importance_df %>% head(20),
     ggtitle('Variable Importance') +
     labs(x='Feature') +
     theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0.5),
+          plot.title = element_text(hjust = 0.5,  size=16),
           plot.background = element_rect(fill = "lightgrey"), 
           panel.background = element_rect(fill = "white"), 
           panel.grid.major.x = element_line(color = "lightgrey"), 
-          panel.grid.major.y = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"),
           axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
+          axis.title = element_text(size=12, color = "grey55"), 
           legend.title=element_text(size=7),
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
+          title = element_text(size=14, color = "grey55"))
 ggsave(paste0('Documents/Images/electricity_psf_all_vars.png'), p_all_v, width = 6.5, height = 3.5, units = 'in')
 p_all_v
 ```

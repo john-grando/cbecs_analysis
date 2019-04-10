@@ -163,17 +163,17 @@ p1 <- ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_reduc
     labs(x='Log Predicted BTU Per SF', y='Log Observed BTU Per SF') +
     geom_abline(slope = 1, intercept = 0) +
     theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0.5),
+          plot.title = element_text(hjust = 0.5,  size=16),
           plot.background = element_rect(fill = "lightgrey"), 
           panel.background = element_rect(fill = "white"), 
           panel.grid.major.x = element_line(color = "lightgrey"), 
-          panel.grid.major.y = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"),
           axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
+          axis.title = element_text(size=12, color = "grey55"), 
           legend.title=element_text(size=7),
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
+          title = element_text(size=14, color = "grey55"))
 ggsave(paste0('Documents/Images/electricity_psf_nn_full_pvo.png'), p1, width = 6.5, height = 3, units = 'in')
 p1
 p2 <- ggplot(resid_df, aes(x=elbtu, y=resid)) + 
@@ -182,17 +182,17 @@ p2 <- ggplot(resid_df, aes(x=elbtu, y=resid)) +
     labs(x='Predicted BTU Per SF', y='Residuals') +
     geom_abline(slope = 0, intercept = 0) +
     theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0.5),
+          plot.title = element_text(hjust = 0.5,  size=16),
           plot.background = element_rect(fill = "lightgrey"), 
           panel.background = element_rect(fill = "white"), 
           panel.grid.major.x = element_line(color = "lightgrey"), 
-          panel.grid.major.y = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"),
           axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
+          axis.title = element_text(size=12, color = "grey55"), 
           legend.title=element_text(size=7),
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
+          title = element_text(size=14, color = "grey55"))
 ggsave(paste0('Documents/Images/electricity_psf_nn_full_pvr.png'), p2, width = 6.5, height = 3, units = 'in')
 p2
 elbtu_impact_error_check_df <- resid_df %>% 
@@ -234,18 +234,18 @@ p1 <- ggplot(data = data.frame(pred=model %>% predict(as.matrix(validation_reduc
     labs(x='Log Predicted mmBTU', y='Log Observed mmBTU') +
     geom_abline(slope = 1, intercept = 0) +
     theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0.5),
+          plot.title = element_text(hjust = 0.5,  size=16),
           plot.background = element_rect(fill = "lightgrey"), 
           panel.background = element_rect(fill = "white"), 
           panel.grid.major.x = element_line(color = "lightgrey"), 
-          panel.grid.major.y = element_line(color = "lightgrey"), 
+          panel.grid.major.y = element_line(color = "lightgrey"),
           axis.text = element_text(size=12, color = "grey55"), 
-          axis.title = element_text(size=14, color = "grey55"), 
+          axis.title = element_text(size=12, color = "grey55"), 
           legend.title=element_text(size=7),
           legend.text=element_text(size=6),
           legend.key.height = unit(0.5, "cm"),
-          title = element_text(size=20, color = "grey55"))
-ggsave(paste0('Documents/Images/electricity_psf_nn_full_pvo_transformed.png'), p1, width = 11, height = 5, units = 'in')
+          title = element_text(size=14, color = "grey55"))
+ggsave(paste0('Documents/Images/electricity_psf_nn_full_pvo_transformed.png'), p1, width = 10, height = 4, units = 'in')
 p1
 ```
 

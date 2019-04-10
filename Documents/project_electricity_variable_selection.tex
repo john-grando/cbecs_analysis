@@ -56,13 +56,13 @@ Top 5: \lstinline{FDSeatPerSf}, \lstinline{PBAPLUS.32[FAST FOOD]}, \lstinline{RF
 
 \subsection{Variable Selection - Selected Variable Analysis}
 \begin{figure}[h]
-\begin{subfigure}{1\textwidth}
 \centering
-\includegraphics[width=.6\textwidth, height=0.2\textheight]{Images/electricity_psf_fe_summary.png}
-\end{subfigure}
-\begin{subfigure}{1\textwidth}
-\centering
-\includegraphics[width=.99\textwidth, height=0.3\textheight]{Images/electricity_psf_all_vars.png}
-\end{subfigure}
+\includegraphics[width=.6\textwidth, height=0.25\textheight]{Images/electricity_psf_fe_summary.png}
 \end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[width=.99\textwidth, height=0.375\textheight]{Images/electricity_psf_all_vars.png}
+\end{figure}
+\FloatBarrier
+
 In order to rank the most impactful features, the variable importance metrics from the selected models were all set to the same scale then summed up.  As a preliminary check, the top 20 predictors are plotted in the appendix and are generally discussed here.  It seems the attempts to create stratified random samples may have been beneficial in this case since there are some building type specific end-uses that are highly ranked.  As previously noted, there are many attributes associated with refrigeration, office, and food sales equipment.  Also, the attribute identifying one of the more atypical building types, speaking in an energy intensity sense, has made it into the top 20 (\lstinline{PBA.5[NON-REFRIGERATED WAREHOUSE]}).  Additionally, some occupancy features (\lstinline{NWKERPerSf}, \lstinline{FDSEATPerSf}) have been included which is expected given that they impact interior space cooling and ventilation loads. In an attempt to truly follow the imporant predictors, no variables have been removed from this set and the order of importance remains unchanged.  \textit{\hyperref[appendix:electricity:sva]{Appendix}}
