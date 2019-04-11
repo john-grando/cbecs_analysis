@@ -120,6 +120,7 @@ model <- s3read_using(load_model_hdf5,
                         'keras::loss_mean_squared_logarithmic_error' = keras::loss_mean_squared_logarithmic_error,
                         'custom_loss_func' = custom_loss_func,
                         'loss_func' = loss_func,
+                        'custom_metric' = custom_metric,
                         'optimizer_func' = optimizer_func))
 model %>% summary()
 s3load('ModelSaves/elbtu_nn_full_model_history_psf.RData', bucket = 'cuny-msds-final-project-cbecs')

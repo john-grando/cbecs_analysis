@@ -18,14 +18,14 @@ folds <- createFolds(y = train_test_list, k=n_folds, list=FALSE)
 
 hyper_list <- list()
 hyper_list$dropout <- seq(0.3, 0.9, 0.3)
-hyper_list$units <- seq(200, 600, 100)
-hyper_list$regularizer <- seq(0, 0.3, 0.05)
+hyper_list$units <- seq(200, 600, 200)
+hyper_list$regularizer <- seq(0, 0.3, 0.1)
 hyper_list$model <- seq(3,5,1)
 hyper_list$batch <- seq(50, 250, 100)
 hyper_list$loss <- list(
       #list(name = 'mse', func = 'mse'), 
-      list(name = 'msle', func = keras::loss_mean_squared_logarithmic_error)#,
-      #list(name = 'cusom_loss_func', func = custom_loss_func)
+      list(name = 'msle', func = keras::loss_mean_squared_logarithmic_error),
+      list(name = 'cusom_loss_func', func = custom_loss_func)
 )
 hyper_list$opt <- list(
   #list(name = 'rmsprop_lr_00005', func = keras::optimizer_rmsprop(lr = 0.00005)),
@@ -96,7 +96,7 @@ for(v in c(#seq(0,length(variables_by_importance),300),
                                       metrics = list("mean_absolute_error", 
                                                      "mean_squared_error", 
                                                      'mean_squared_logarithmic_error',
-                                                     percentage_metric
+                                                     mean_absolute_percentage_error
                                                      ))
                                     history <- cv_model_t %>% fit(
                                       as.matrix(cv_train_df),
@@ -109,7 +109,7 @@ for(v in c(#seq(0,length(variables_by_importance),300),
                                     mae_val <- tail(history$metrics$val_mean_absolute_error,1)
                                     msle_val <- tail(history$metrics$val_mean_squared_logarithmic_error,1)
 				                            mse_val <- tail(history$metrics$val_mean_squared_error,1)
-                                    pm_val <- tail(history$metrics$percentage_metric,1)
+                                    mape_val <- tail(history$metrics$mean_absolute_percentage_error,1)
                                     #hyper_results <- rbind(hyper_results, data.frame(dropout=d, units=u, fold=f, loss= loss_val, mae = mae_val, pm = pm_val))
                                     data.frame(num_vars=length(variables_by_importance)-v,
                                                loss_f=hyper_list$loss[[l]]$name,
@@ -124,7 +124,7 @@ for(v in c(#seq(0,length(variables_by_importance),300),
                                                mae = mae_val, 
                                                msle = msle_val,
 					                                     mse = mse_val,
-                                               pm = pm_val,
+                                               mape = mape_val,
 					                                     run_time = Sys.time())
                                   }
                 print(paste('finished running model - variables:', length(variables_by_importance)-v,
@@ -139,12 +139,12 @@ for(v in c(#seq(0,length(variables_by_importance),300),
                 print(hyper_results %>% 
                       group_by(num_vars, loss_f, opt, model, dropout, units, reg, batch) %>% 
                       summarize(mae = mean(mae), 
+                                mape = mean(mape),
 				                        mse = mean(mse),
 				                        msle = mean(msle),
 				                        loss = mean(loss)
-				                        #pm = mean(pm)
 				                        )%>% 
-                      arrange(msle) %>% 
+                      arrange(mape) %>% 
                       head(10))
               }
             }

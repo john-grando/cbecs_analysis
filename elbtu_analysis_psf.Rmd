@@ -323,11 +323,17 @@ manual_summary <- data.frame(
           #l_plot$MAE, 
           lp_plot$MAE, 
           rfe_plot$MAE, 
-          nn_plot$MAE)
+          nn_plot$MAE),
+  MAPE = c(pls_plot$MAPE, 
+          rf_plot$MAPE, 
+          #l_plot$MAPE, 
+          lp_plot$MAPE, 
+          rfe_plot$MAPE, 
+          nn_plot$MAPE)
 )
 
 p <- manual_summary %>% 
-  arrange(RMSE) %>% 
+  arrange(MAPE) %>% 
   kable('html', 
         caption = 'Feature Extraction Model Results') %>% 
   kable_styling()

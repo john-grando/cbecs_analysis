@@ -34,7 +34,8 @@ plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE
               imp_df = imp_df,
               RMSE = plots$RMSE_untransformed,
               R2 = plots$R2_untransformed,
-              MAE = plots$MAE_untransformed)
+              MAE = plots$MAE_untransformed,
+              MAPE = plots$MAPE_untransformed)
   )
 }
 
@@ -57,6 +58,7 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
                         response_sub)
     MAE_sub <- caret::MAE(exp(predict(final_model, observed_df_sub)), 
                           response_sub)
+    MAPE_sub <- abs(exp(predict(final_model, observed_df_sub)) - response_sub) / response_sub
   }
   if(log_tran_sub!=TRUE){
     tmp_model_sub <- lm(predict(final_model, observed_df_sub) ~ 
@@ -69,6 +71,7 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
                         response_sub)
     MAE_sub <- caret::MAE(predict(final_model, observed_df_sub),
                           response_sub)
+    MAPE_sub <- abs(predict(final_model, observed_df_sub) - response_sub) / response_sub
   }
   p2 <- p2 + 
     aes(x=log(predicted), y=log(observed)) + 
@@ -104,7 +107,8 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
               tmp_mdl = tmp_model_sub,
               RMSE_untransformed = RMSE_sub,
               R2_untransformed = R2_sub,
-              MAE_untransformed = MAE_sub))
+              MAE_untransformed = MAE_sub,
+              MAPE_untransformed = MAPE_sub))
 }
 
 plot_vars <- function(df, response, response_char, i, file_index, trans_name, title_text, yname){
