@@ -1,4 +1,5 @@
-plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE, log_tran=FALSE, observed_df=NA, response=NA, fuel_type = NA) {
+plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE, log_tran=FALSE, 
+                     observed_df=NA, response=NA, fuel_type = NA, area_vector=NA) {
   imp_df <- varImp(in_model)$importance %>% 
     rownames_to_column(var='feature')
   plot_df <- imp_df %>% 
@@ -27,7 +28,8 @@ plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE
                          log_tran_sub = log_tran,
                          observed_df_sub = observed_df,
                          response_sub = response,
-                         fuel_type_sub = fuel_type)
+                         fuel_type_sub = fuel_type,
+                         area_vector_sub = area_vector)
   return(list(vars_plot = p1, 
               pvo_plot = plots$p,
               tmp_model = plots$tmp_mdl,
@@ -35,11 +37,16 @@ plot_fun <- function(in_model=NA, n_features=2, short_name=NA, alt_predict=FALSE
               RMSE = plots$RMSE_untransformed,
               R2 = plots$R2_untransformed,
               MAE = plots$MAE_untransformed,
-              MAPE = plots$MAPE_untransformed)
+              MAPE = plots$MAPE_untransformed,
+              RMSE_total = plots$RMSE_total_untransformed,
+              R2_total = plots$R2_total_untransformed,
+              MAE_total = plots$MAE_total_untransformed,
+              MAPE_total = plots$MAPE_total_untransformed)
   )
 }
 
-plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_predict_sub=FALSE, log_tran_sub=FALSE, observed_df_sub=NA, response_sub=NA, fuel_type_sub = NA){
+plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_predict_sub=FALSE, 
+                          log_tran_sub=FALSE, observed_df_sub=NA, response_sub=NA, fuel_type_sub = NA, area_vector_sub=NA){
   if(alt_predict_sub==FALSE){
     final_model <- in_model_sub$finalModel
   }
@@ -59,6 +66,14 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
     MAE_sub <- caret::MAE(exp(predict(final_model, observed_df_sub)), 
                           response_sub)
     MAPE_sub <- mean(abs(exp(predict(final_model, observed_df_sub)) - response_sub) / pmax(response_sub, 1)) * 100
+    RMSE_total_sub <- caret::RMSE(exp(predict(final_model, observed_df_sub))*area_vector_sub, 
+                            response_sub*area_vector_sub)
+    R2_total_sub <- caret::R2(exp(predict(final_model, observed_df_sub))*area_vector_sub, 
+                        response_sub*area_vector_sub)
+    MAE_total_sub <- caret::MAE(exp(predict(final_model, observed_df_sub))*area_vector_sub, 
+                          response_sub*area_vector_sub)
+    MAPE_total_sub <- mean(abs(exp(predict(final_model, observed_df_sub))*area_vector_sub - 
+                                 response_sub*area_vector_sub) / pmax(response_sub*area_vector_sub, 1)) * 100
   }
   if(log_tran_sub!=TRUE){
     tmp_model_sub <- lm(predict(final_model, observed_df_sub) ~ 
@@ -72,6 +87,14 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
     MAE_sub <- caret::MAE(predict(final_model, observed_df_sub),
                           response_sub)
     MAPE_sub <- mean(abs(predict(final_model, observed_df_sub) - response_sub) / pmax(response_sub, 1)) * 100
+    RMSE_total_sub <- caret::RMSE(predict(final_model, observed_df_sub)*area_vector_sub,
+                            response_sub*area_vector_sub)
+    R2_total_sub <- caret::R2(predict(final_model, observed_df_sub)*area_vector_sub,
+                        response_sub*area_vector_sub)
+    MAE_total_sub <- caret::MAE(predict(final_model, observed_df_sub)*area_vector_sub,
+                          response_sub*area_vector_sub)
+    MAPE_total_sub <- mean(abs(predict(final_model, observed_df_sub)*area_vector_sub - 
+                           response_sub*area_vector_sub) / pmax(response_sub*area_vector_sub, 1)) * 100
   }
   p2 <- p2 + 
     aes(x=log(predicted), y=log(observed)) + 
@@ -108,7 +131,11 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
               RMSE_untransformed = RMSE_sub,
               R2_untransformed = R2_sub,
               MAE_untransformed = MAE_sub,
-              MAPE_untransformed = MAPE_sub))
+              MAPE_untransformed = MAPE_sub,
+              RMSE_total_untransformed = RMSE_total_sub,
+              R2_total_untransformed = R2_total_sub,
+              MAE_total_untransformed = MAE_total_sub,
+              MAPE_total_untransformed = MAPE_total_sub))
 }
 
 plot_vars <- function(df, response, response_char, i, file_index, trans_name, title_text, yname){

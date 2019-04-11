@@ -119,13 +119,16 @@ pls_plot <- plot_fun(in_model=pls_train,
                      log_tran = TRUE,
                      observed_df = cbecs_elbtu_encoded_center_scale_train_df,
                      response = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
-                     fuel_type = 'electricity_psf')
+                     fuel_type = 'electricity_psf',
+                     area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
 pls_plot$vars_plot
 pls_plot$pvo_plot
 plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
 pls_plot$RMSE
 pls_plot$R2
+pls_plot$RMSE_total
+pls_plot$R2_total
 #View(t(cbecs_el_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
 
 #View(t(cbecs_elbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_elbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(ELBTU, pred, one_of(pls_imp_df$feature))))
@@ -144,7 +147,8 @@ rf_plot <- plot_fun(in_model=rf_train,
                     alt_predict = FALSE,
                     observed_df = cbecs_elbtu_encoded_center_scale_train_df,
                     response = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
-                    fuel_type = 'electricity_psf')
+                    fuel_type = 'electricity_psf',
+                    area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
 rf_plot$vars_plot
 rf_plot$pvo_plot
 plot(rf_plot$tmp_model)
@@ -169,7 +173,8 @@ l_plot <- plot_fun(in_model=l_train,
                    log_tran = FALSE,
                    observed_df = cbecs_elbtu_encoded_center_scale_train_df,
                    response = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
-                   fuel_type = 'electricity_psf')
+                   fuel_type = 'electricity_psf',
+                   area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
 l_plot$vars_plot
 l_plot$pvo_plot
 plot(l_plot$tmp_model)
@@ -192,7 +197,8 @@ lp_plot <- plot_fun(in_model=lp_train,
                     log_tran = FALSE,
                     observed_df = cbecs_elbtu_encoded_center_scale_train_df,
                     response = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
-                    fuel_type = 'electricity_psf')
+                    fuel_type = 'electricity_psf',
+                    area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
 lp_plot$vars_plot
 lp_plot$pvo_plot
 plot(lp_plot$tmp_model)
@@ -221,7 +227,8 @@ rfe_plot <- plot_pred_obs(in_model_sub = rfe_train,
                           log_tran_sub = FALSE,
                           observed_df = cbecs_elbtu_encoded_center_scale_train_df,
                           response = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
-                          fuel_type_sub = 'electricity_psf')
+                          fuel_type_sub = 'electricity_psf',
+                          area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
 
 varImp(rfe_train)
 rfe_plot$p
@@ -267,7 +274,8 @@ nn_plot <- plot_fun(in_model=nn_train,
                     log_tran = FALSE,
                     observed_df = cbecs_elbtu_encoded_center_scale_train_df,
                     response = cbecs_elbtu_encoded_center_scale_train_df$ELBTUPerSf,
-                    fuel_type = 'electricity_psf')
+                    fuel_type = 'electricity_psf',
+                    area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
 nn_plot$vars_plot
 nn_plot$pvo_plot
 plot(nn_plot$tmp_model)
@@ -310,30 +318,54 @@ manual_summary <- data.frame(
            rf_plot$RMSE, 
            #l_plot$RMSE, 
            lp_plot$RMSE, 
-           rfe_plot$RMSE, 
+           rfe_plot$RMSE_untransformed, 
            nn_plot$RMSE),
   R2 = c(pls_plot$R2, 
          rf_plot$R2, 
          #l_plot$R2, 
          lp_plot$R2, 
-         rfe_plot$R2, 
+         rfe_plot$R2_untransformed, 
          nn_plot$R2),
   MAE = c(pls_plot$MAE, 
           rf_plot$MAE, 
           #l_plot$MAE, 
           lp_plot$MAE, 
-          rfe_plot$MAE, 
+          rfe_plot$MAE_untransformed, 
           nn_plot$MAE),
   MAPE = c(pls_plot$MAPE, 
           rf_plot$MAPE, 
           #l_plot$MAPE, 
           lp_plot$MAPE, 
-          rfe_plot$MAPE, 
-          nn_plot$MAPE)
+          rfe_plot$MAPE_untransformed, 
+          nn_plot$MAPE),
+  RMSE_total = c(pls_plot$RMSE_total, 
+           rf_plot$RMSE_total, 
+           #l_plot$RMSE_total, 
+           lp_plot$RMSE_total, 
+           rfe_plot$RMSE_total_untransformed, 
+           nn_plot$RMSE_total),
+  R2_total = c(pls_plot$R2_total, 
+         rf_plot$R2_total, 
+         #l_plot$R2_total, 
+         lp_plot$R2_total, 
+         rfe_plot$R2_total_untransformed, 
+         nn_plot$R2_total),
+  MAE_total = c(pls_plot$MAE_total, 
+          rf_plot$MAE_total, 
+          #l_plot$MAE_total, 
+          lp_plot$MAE_total, 
+          rfe_plot$MAE_total, 
+          nn_plot$MAE_total),
+  MAPE_total = c(pls_plot$MAPE_total, 
+          rf_plot$MAPE_total, 
+          #l_plot$MAPE_total, 
+          lp_plot$MAPE_total, 
+          rfe_plot$MAPE_total_untransformed, 
+          nn_plot$MAPE_total)
 )
 
 p <- manual_summary %>% 
-  arrange(RMSE) %>% 
+  arrange(RMSE_total) %>% 
   kable('html', 
         caption = 'Feature Extraction Model Results') %>% 
   kable_styling()

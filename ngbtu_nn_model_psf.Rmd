@@ -212,6 +212,7 @@ caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu)
 ```{r}
 s3load('ModelSaves/ngbtu_nn_input_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
 summary_df <- manual_summary %>% 
+  select(-matches('.*_total')) %>%
   bind_rows(data.frame(
   Model='Full Neural Network',
   RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$ngbtu),
@@ -229,7 +230,6 @@ p
 
 ```{r}
 #compute gross values and compare
-
 resid_model <- lm(model %>% predict(as.matrix(validation_reduced_df))*validation_sqft_values~as.matrix(validation_labels*validation_sqft_values))
 summary(resid_model)
 residuals <- resid(resid_model)
@@ -251,8 +251,9 @@ caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu)
 ```
 
 ```{r}
-s3load('ModelSaves/ngbtu_nn_input.RData', bucket = 'cuny-msds-final-project-cbecs')
 summary_df <- manual_summary %>% 
+  select(Model, matches('.*_total')) %>%
+  rename_all(gsub, pattern = '_total', replacement = '') %>% 
   bind_rows(data.frame(
   Model='Full Neural Network',
   RMSE=caret::RMSE(pred = resid_df$pred / 1000000, obs = resid_df$ngbtu / 1000000),
