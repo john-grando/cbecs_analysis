@@ -333,7 +333,7 @@ manual_summary <- data.frame(
 )
 
 p <- manual_summary %>% 
-  arrange(MAPE) %>% 
+  arrange(RMSE) %>% 
   kable('html', 
         caption = 'Feature Extraction Model Results') %>% 
   kable_styling()

@@ -58,7 +58,7 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
                         response_sub)
     MAE_sub <- caret::MAE(exp(predict(final_model, observed_df_sub)), 
                           response_sub)
-    MAPE_sub <- abs(exp(predict(final_model, observed_df_sub)) - response_sub) / response_sub
+    MAPE_sub <- mean(abs(exp(predict(final_model, observed_df_sub)) - response_sub) / pmax(response_sub, 1)) * 100
   }
   if(log_tran_sub!=TRUE){
     tmp_model_sub <- lm(predict(final_model, observed_df_sub) ~ 
@@ -71,7 +71,7 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
                         response_sub)
     MAE_sub <- caret::MAE(predict(final_model, observed_df_sub),
                           response_sub)
-    MAPE_sub <- abs(predict(final_model, observed_df_sub) - response_sub) / response_sub
+    MAPE_sub <- mean(abs(predict(final_model, observed_df_sub) - response_sub) / pmax(response_sub, 1)) * 100
   }
   p2 <- p2 + 
     aes(x=log(predicted), y=log(observed)) + 
