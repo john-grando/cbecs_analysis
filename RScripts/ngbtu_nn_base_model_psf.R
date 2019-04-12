@@ -77,15 +77,13 @@ validation_sqft_values <- sqft_values[-train_test_list]
 #Custom loss funcitons
 custom_loss_func <- function(y_true, y_pred) {
   K <- backend()
-  true_log <- K$log(K$clip(y_true, 1, 1000000000))
-  pred_log <- K$log(K$clip(y_pred, 1, 1000000000))
-  K$mean(tf$multiply(K$square(true_log - pred_log) / K$clip(true_log,1,1000000000), true_log))
+  K$mean(K$abs(y_true - y_pred) / (K$relu(y_true)+1)) * 100
 }
 
 #Custom metrics
-percentage_metric <- custom_metric('percentage_metric', function(y_true, y_pred){
+mean_absolute_percentage_error <- custom_metric('mean_absolute_percentage_error', function(y_true, y_pred){
   K <- backend()
-  K$mean(tf$multiply(K$abs(1 - K$abs(y_true - y_pred) / K$clip(y_true,0.1,1000)), y_true))
+  K$mean(K$abs(y_true - y_pred) / (K$relu(y_true)+1)) * 100
 })
 
 #Set variable size

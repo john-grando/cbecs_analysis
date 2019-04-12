@@ -17,14 +17,14 @@ source('RScripts/elbtu_nn_model_parameters_psf.R')
 ```
 
 ```{r}
-s3load('ModelSaves/elbtu_nn_hyperparameter_results_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/elbtu_nn_full_set_test_results_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
 #Remove old postings
 time_summary <- hyper_results %>% 
   group_by(
     num_vars, 
-    loss_f, 
+    loss_func, 
     opt, 
-    model, 
+    model_number, 
     dropout, 
     units, 
     reg, 
@@ -33,9 +33,9 @@ time_summary <- hyper_results %>%
   arrange(desc(run_time)) %>% 
   filter(row_number()==1) %>% 
   select(num_vars, 
-         loss_f, 
+         loss_func, 
          opt, 
-         model, 
+         model_number, 
          dropout, 
          units, 
          reg, 
@@ -48,9 +48,9 @@ time_summary <- hyper_results %>%
 hyper_parsed_results <- hyper_results %>% 
   left_join(time_summary, 
             by = c('num_vars'='num_vars', 
-                   'loss_f'='loss_f', 
+                   'loss_func'='loss_func', 
                    'opt'='opt', 
-                   'model'='model', 
+                   'model_number'='model_number', 
                    'dropout'='dropout', 
                    'units'='units', 
                    'reg'='reg', 
@@ -62,9 +62,9 @@ hyper_parsed_results <- hyper_results %>%
 hyper_summary <- hyper_parsed_results %>% 
   group_by(
     num_vars, 
-    loss_f, 
+    loss_func, 
     opt, 
-    model, 
+    model_number, 
     dropout, 
     units, 
     reg, 
@@ -74,22 +74,22 @@ hyper_summary <- hyper_parsed_results %>%
             mse = mean(mse),
             msle = mean(msle),
             loss = mean(loss),
-            pm = mean(pm),
+            mape = mean(mape),
             run_time = mean(end_time))
 
 hyper_summary_best <- hyper_summary %>% 
                group_by(num_vars) %>% 
-               arrange(msle) %>% 
+               arrange(mape) %>% 
                filter(row_number()==1)
 
 p1 <- ggplot(hyper_summary_best, 
-       aes(x=num_vars, y=msle, color='MSLE')) + 
+       aes(x=num_vars, y=mape, color='MAPE')) + 
   geom_line() +
-  geom_line(aes(x=num_vars, y=sqrt(mse)/max(sqrt(mse)), color='RMSE')) +
-  scale_y_continuous(sec.axis = sec_axis(~.*max(sqrt(hyper_summary_best$mse)), name="Root Mean Square Error", breaks = seq(40000, 80000, 5000)), breaks = seq(0.6, 1.2, 0.1)) +
+  geom_line(aes(x=num_vars, y=sqrt(mse)/(max(sqrt(mse)/60)), color='RMSE')) +
+  scale_y_continuous(sec.axis = sec_axis(~.*max(sqrt(hyper_summary_best$mse)/60), name="Root Mean Square Error", breaks = seq(20000, 100000, 10000)), breaks = seq(20, 100, 10)) +
   scale_color_manual(values = c("steelblue", "springgreen")) +
   ggtitle('Loss vs Number of Variables') +
-  labs(x='Number of Variables', y='Mean Squared Log Error', color='Loss Metric') +
+  labs(x='Number of Variables', y='Mean Absolute Percentage Error', color='Loss Metric') +
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),
         plot.background = element_rect(fill = "lightgrey"), 
@@ -107,7 +107,7 @@ ggsave(paste0('Documents/Images/electricity_psf_nn_error.png'), p1, width = 6.5,
 p1
 
 hyper_summary %>% 
-  arrange(msle) %>% 
+  arrange(mape) %>% 
   head(20) %>% 
   kable('html') %>% 
   kable_styling()
