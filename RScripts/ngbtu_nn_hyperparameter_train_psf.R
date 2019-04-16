@@ -1,7 +1,7 @@
 #Set up base and compile
 source('RScripts/ngbtu_nn_base_model_psf.R')
 #Get model types
-source('RScripts/ngbtu_nn_model_functions_build.R')
+source('RScripts/elbtu_nn_model_functions_build.R')
 
 #if hyperparameter df exists then use it
 if(head_object('ModelSaves/ngbtu_nn_hyperparameter_results_psf.RData', bucket='cuny-msds-final-project-cbecs')[1]==TRUE){
@@ -72,7 +72,7 @@ for (o in 1:length(hyper_list$opt)) {
                                     ind <- which(folds == f)
                                     cv_train_df <- train_test_df %>% 
                                       slice(-ind) %>% 
-                                      select(-PBA, -ngbtuPerSf) %>% 
+                                      select(-PBA, -NGBTUPerSf) %>% 
                                       select(variables_by_importance[1:(length(variables_by_importance)-v)])
                                     cv_train_y <- train_test_df %>% 
                                       slice(-ind) %>% 

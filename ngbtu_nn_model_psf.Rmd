@@ -17,7 +17,7 @@ source('RScripts/ngbtu_nn_model_parameters_psf.R')
 ```
 
 ```{r}
-s3load('ModelSaves/ngbtu_nn_hyperparameter_results_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
+s3load('ModelSaves/ngbtu_nn_full_set_test_results_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
 #Remove old postings
 time_summary <- hyper_results %>% 
   group_by(
@@ -217,11 +217,12 @@ summary_df <- manual_summary %>%
   Model='Full Neural Network',
   RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$ngbtu),
   R2=caret::R2(pred = resid_df$pred, obs = resid_df$ngbtu),
-  MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu)
+  MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu),
+  MAPE=mean(abs(resid_df$pred - resid_df$elbtu) / pmax(resid_df$elbtu, 1))
 ))
 
 p <- summary_df %>% 
-  arrange(RMSE) %>% 
+  arrange(MAPE) %>% 
   kable('html', 
         caption = 'Per SF Model Comparison') %>% 
   kable_styling()
@@ -256,15 +257,16 @@ summary_df <- manual_summary %>%
   rename_all(gsub, pattern = '_total', replacement = '') %>% 
   bind_rows(data.frame(
   Model='Full Neural Network',
-  RMSE=caret::RMSE(pred = resid_df$pred / 1000000, obs = resid_df$ngbtu / 1000000),
-  R2=caret::R2(pred = resid_df$pred / 1000000, obs = resid_df$ngbtu / 1000000),
-  MAE=caret::MAE(pred = resid_df$pred / 1000000, obs = resid_df$ngbtu / 1000000)
+  RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$ngbtu),
+  R2=caret::R2(pred = resid_df$pred, obs = resid_df$ngbtu),
+  MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu),
+  MAPE=mean(abs(resid_df$pred - resid_df$elbtu) / pmax(resid_df$elbtu, 1))
 ))
 
 p <- summary_df %>% 
-  arrange(RMSE) %>% 
+  arrange(MAPE) %>% 
   kable('html', 
-        caption = 'Per SF Model Comparison To Total Feature Extraction Models') %>% 
+        caption = 'Per SF Model Comparison') %>% 
   kable_styling()
 p
 
