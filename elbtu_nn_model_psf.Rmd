@@ -17,6 +17,75 @@ source('RScripts/elbtu_nn_model_parameters_psf.R')
 ```
 
 ```{r}
+#hyperparameter results
+s3load('ModelSaves/elbtu_nn_hyperparameter_results_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
+#Remove old postings
+time_summary <- hyper_results %>% 
+  group_by(
+    num_vars, 
+    loss_f, 
+    opt, 
+    model, 
+    dropout, 
+    units, 
+    reg, 
+    batch
+  ) %>% 
+  arrange(desc(run_time)) %>% 
+  filter(row_number()==1) %>% 
+  select(num_vars, 
+         loss_f, 
+         opt, 
+         model, 
+         dropout, 
+         units, 
+         reg, 
+         batch, 
+         run_time) %>% 
+  rename(end_time = run_time) %>% 
+  mutate(end_time = end_time + 1) %>% 
+  mutate(start_time = end_time - 60 * 10)
+
+hyperparameter_parsed_results <- hyper_results %>% 
+  left_join(time_summary, 
+            by = c('num_vars'='num_vars', 
+                   'loss_f'='loss_f', 
+                   'opt'='opt', 
+                   'model'='model', 
+                   'dropout'='dropout', 
+                   'units'='units', 
+                   'reg'='reg', 
+                   'batch'='batch')) %>% 
+  mutate(run_flag = ifelse(run_time > start_time & run_time < end_time, 1, 0)) %>% 
+  filter(run_flag==1) %>% 
+  select(-run_flag, -start_time)
+
+hyperparameter_summary <- hyperparameter_parsed_results %>% 
+  group_by(
+    num_vars, 
+    loss_f, 
+    opt, 
+    model, 
+    dropout, 
+    units, 
+    reg, 
+    batch
+  ) %>% 
+  summarize(mae = mean(mae), 
+            mse = mean(mse),
+            msle = mean(msle),
+            loss = mean(loss),
+            mape = mean(mape),
+            run_time = mean(end_time))
+
+hyperparameter_summary_best <- hyperparameter_summary %>% 
+               group_by(num_vars) %>% 
+               arrange(mape) %>% 
+               filter(row_number()==1)
+```
+
+
+```{r}
 s3load('ModelSaves/elbtu_nn_full_set_test_results_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
 #Remove old postings
 time_summary <- hyper_results %>% 
