@@ -41,7 +41,7 @@ model_run <- function(model_n_f, n_dropout_f, n_units_f, n_l_f, loss_func_f, opt
   #Run
   train_reduced_df <- train_df %>% select(one_of(variables_by_importance[1:num_vars_f]))
   test_reduced_df <- test_df %>% select(one_of(variables_by_importance[1:num_vars_f]))
-  epochs <- 1000
+  epochs <- 10
   history <- model %>% fit(
     as.matrix(train_reduced_df),
     as.matrix(train_labels),
@@ -91,11 +91,13 @@ model_run <- function(model_n_f, n_dropout_f, n_units_f, n_l_f, loss_func_f, opt
                             batch_size_f, 
                             num_vars_f, 
                             sep = '_')
-  hyper_models[[hyper_model_name]] <- list(model = model, history = history)
+  hyper_models[[hyper_model_name]] <- list(history = history)
   save(hyper_results, hyper_models, file = model_name)
+  #Save summary
   put_object(file = model_name, 
              bucket = 'cuny-msds-final-project-cbecs', 
              object = model_name)
+  print(paste0('Model completed and saved: ', hyper_model_name))
   return(list(hyper_results = hyper_results,
               hyper_models = hyper_models))
 }
@@ -107,29 +109,29 @@ run_list <- list()
 for(n in n_v_seq){
   run_list <- append(run_list, list(list(m_n='3', 
                         n_d=0.3, 
-                        n_u=300, 
-                        n_l=0, 
-                        l_f=list(name = 'custom_loss', func = custom_loss_func), 
+                        n_u=200, 
+                        n_l=0.3, 
+                        l_f=list(name = 'custom_loss', func = keras::loss_mean_squared_logarithmic_error), 
                         o_f=list(name = 'rmsprop_001', func = keras::optimizer_rmsprop(lr=0.001)),
                         b_f=150,
                         n_v=n)))
 }
-model_run_list <- list(list(m_n='3', 
+model_run_list <- list(list(m_n='5', 
+                            n_d=0.3, 
+                            n_u=600, 
+                            n_l=0, 
+                            l_f=list(name = 'custom_loss', func = keras::loss_mean_squared_logarithmic_error), 
+                            o_f=list(name = 'rmsprop_001', func = keras::optimizer_rmsprop(lr=0.001)),
+                            b_f=150,
+                            n_v=791),
+                       list(m_n='5', 
                             n_d=0.3, 
                             n_u=600, 
                             n_l=0, 
                             l_f=list(name = 'custom_loss', func = custom_loss_func), 
                             o_f=list(name = 'rmsprop_001', func = keras::optimizer_rmsprop(lr=0.001)),
                             b_f=150,
-                            n_v=10),
-                       list(m_n='3', 
-                            n_d=0.3, 
-                            n_u=600, 
-                            n_l=0, 
-                            l_f=list(name = 'custom_loss', func = custom_loss_func), 
-                            o_f=list(name = 'rmsprop_001', func = keras::optimizer_rmsprop(lr=0.001)),
-                            b_f=150,
-                            n_v=5))
+                            n_v=100))
 
 model_run_list <- append(run_list, model_run_list)
 

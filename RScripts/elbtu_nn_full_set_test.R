@@ -91,11 +91,13 @@ model_run <- function(model_n_f, n_dropout_f, n_units_f, n_l_f, loss_func_f, opt
                             batch_size_f, 
                             num_vars_f, 
                             sep = '_')
-  hyper_models[[hyper_model_name]] <- list(model = model, history = history)
+  hyper_models[[hyper_model_name]] <- list(history = history)
   save(hyper_results, hyper_models, file = model_name)
+  #Save summary
   put_object(file = model_name, 
              bucket = 'cuny-msds-final-project-cbecs', 
              object = model_name)
+  print(paste0('Model completed and saved: ', hyper_model_name))
   return(list(hyper_results = hyper_results,
               hyper_models = hyper_models))
 }
