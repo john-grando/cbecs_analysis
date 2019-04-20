@@ -102,7 +102,7 @@ model_run <- function(model_n_f, n_dropout_f, n_units_f, n_l_f, loss_func_f, opt
               hyper_models = hyper_models))
 }
 
-n_v_seq <- c(seq(10, 100, 10), 200, 500, 800)
+n_v_seq <- c(seq(10, 100, 10), 200, 500, length(colnames(train_df)))
 
 #Make list of models to run
 run_list <- list()
