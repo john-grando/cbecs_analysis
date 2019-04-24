@@ -107,31 +107,31 @@ n_v_seq <- c(seq(10, 100, 10), 200, 500, length(colnames(train_df)))
 #Make list of models to run
 run_list <- list()
 for(n in n_v_seq){
-  run_list <- append(run_list, list(list(m_n='3', 
+  run_list <- append(run_list, list(list(m_n='5', 
                         n_d=0.3, 
-                        n_u=300, 
+                        n_u=600, 
                         n_l=0, 
                         l_f=list(name = 'custom_loss', func = custom_loss_func), 
                         o_f=list(name = 'rmsprop_001', func = keras::optimizer_rmsprop(lr=0.001)),
-                        b_f=150,
+                        b_f=350,
                         n_v=n)))
 }
-model_run_list <- list(list(m_n='3', 
+model_run_list <- list(list(m_n='5', 
                             n_d=0.3, 
                             n_u=600, 
                             n_l=0, 
-                            l_f=list(name = 'custom_loss', func = custom_loss_func), 
+                            l_f=list(name = 'custom_loss', func = keras::loss_mean_squared_logarithmic_error), 
                             o_f=list(name = 'rmsprop_001', func = keras::optimizer_rmsprop(lr=0.001)),
                             b_f=150,
-                            n_v=10),
-                       list(m_n='3', 
+                            n_v=516),
+                       list(m_n='5', 
                             n_d=0.3, 
                             n_u=600, 
                             n_l=0, 
-                            l_f=list(name = 'custom_loss', func = custom_loss_func), 
+                            l_f=list(name = 'custom_loss', func = keras::loss_mean_squared_logarithmic_error), 
                             o_f=list(name = 'rmsprop_001', func = keras::optimizer_rmsprop(lr=0.001)),
                             b_f=150,
-                            n_v=5))
+                            n_v=816))
 
 model_run_list <- append(run_list, model_run_list)
 
