@@ -87,6 +87,6 @@ mean_absolute_percentage_error <- custom_metric('mean_absolute_percentage_error'
 })
 
 #Set variable size
-num_vars <- 100
+num_vars <- 40
 train_reduced_df <- train_df %>% select(one_of(variables_by_importance[1:num_vars]))
 test_reduced_df <- test_df %>% select(one_of(variables_by_importance[1:num_vars]))

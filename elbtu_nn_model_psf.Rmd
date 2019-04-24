@@ -89,6 +89,8 @@ hyperparameter_summary_best <- hyperparameter_summary %>%
 s3load('ModelSaves/elbtu_nn_full_set_test_results_psf.RData', bucket = 'cuny-msds-final-project-cbecs')
 #Remove old postings
 time_summary <- hyper_results %>% 
+  #change similar num_vars to be consistent
+  mutate(num_vars = replace(num_vars, num_vars==516, 500)) %>% 
   group_by(
     num_vars, 
     loss_func, 
@@ -155,6 +157,7 @@ p1 <- ggplot(hyper_summary_best,
        aes(x=num_vars, y=mape, color='MAPE')) + 
   geom_line() +
   geom_line(aes(x=num_vars, y=sqrt(mse)/(max(sqrt(mse)/60)), color='RMSE')) +
+  scale_x_continuous(breaks = seq(0, 850, 50)) +
   scale_y_continuous(sec.axis = sec_axis(~.*max(sqrt(hyper_summary_best$mse)/60), name="Root Mean Square Error", breaks = seq(20000, 100000, 10000)), breaks = seq(20, 100, 10)) +
   scale_color_manual(values = c("steelblue", "springgreen")) +
   ggtitle('Loss vs Number of Variables') +
