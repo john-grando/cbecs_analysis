@@ -294,7 +294,7 @@ summary_df <- manual_summary %>%
 p <- summary_df %>% 
   arrange(MAPE) %>% 
   kable('html', 
-        caption = 'Per SF Model Comparison') %>% 
+        caption = 'Per SF Model Comparison [BTU/SF]') %>% 
   kable_styling()
 p
 ```
@@ -336,7 +336,7 @@ summary_df <- manual_summary %>%
 p <- summary_df %>% 
   arrange(MAPE) %>% 
   kable('html', 
-        caption = 'Per SF Model Comparison') %>% 
+        caption = 'Total Consumption Prediction vs. Feature Extraction Models [mmBTU]') %>% 
   kable_styling()
 p
 
