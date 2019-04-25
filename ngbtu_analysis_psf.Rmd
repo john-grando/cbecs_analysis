@@ -363,7 +363,8 @@ manual_summary <- data.frame(
 )
 
 p <- manual_summary %>% 
-  arrange(RMSE_total) %>% 
+  arrange(MAPE) %>%
+  select(-matches('.*_total')) %>%
   kable('html', 
         caption = 'Feature Extraction Model Results') %>% 
   kable_styling()

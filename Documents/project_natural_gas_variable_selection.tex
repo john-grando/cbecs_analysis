@@ -3,7 +3,7 @@
 %\addcontentsline{toc}{section}{\nameref{sec:natural_gas}}
 
 \subsection{General}
-As previously noted, only buildings that indicated natural gas being used \lstinline{NGUSED} were included in the samples for this major fuel use.  Then, one of each pair of predictors with correlations above 0.75 were removed, to avoid model selection issues. Numeric predictors were transformed via BoxCox methodology as well as centered and scaled due to the varying scales and skewness.  Note, no further commentary will be made in the following sections unless it differs from previous sections.
+As previously noted, only buildings that indicated natural gas being used \lstinline{NGUSED} were included in the samples for this major fuel use.  Then, one of each pair of predictors with correlations above 0.75 were removed, to avoid model selection issues. Numeric predictors were transformed via BoxCox methodology as well as centered and scaled.  Note, no further commentary will be made in the following sections unless it differs from previous sections.
 
 \subsection{Response Analysis}
 
@@ -29,7 +29,7 @@ Again, the error values are much lower; however, the presesence of notable fuel-
 RMSE: NA, Rsquared: NA\\
 
 \subsection{Variable Selection - Forward Selection}
-RMSE: 100385, Rsquared: 0.0.246\\
+RMSE: 100385, Rsquared: 0.246\\
 Top 5: \lstinline{FDSEATPerSf}, \lstinline{TVVIDEONPerSf}, \lstinline{NGWATR.2[NO]}, \lstinline{RGSTRNPerSf}, \lstinline{RFGWINPerSf}  \textit{\hyperref[appendix:natural_gas:lp]{Appendix}}
 
 \subsection{Variable Selection - Recursive Feature Elimination}
@@ -44,7 +44,7 @@ Top 5: \lstinline{FDSEATPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{DRYCL.1[YES]
 \subsection{Variable Selection - Selected Variable Analysis}
 \begin{figure}[h]
 \centering
-\includegraphics[width=.6\textwidth, height=0.25\textheight]{Images/natural_gas_psf_fe_summary.png}
+\includegraphics[width=.8\textwidth, height=0.25\textheight]{Images/natural_gas_psf_fe_summary.png}
 \end{figure}
 \begin{figure}[h]
 \centering
