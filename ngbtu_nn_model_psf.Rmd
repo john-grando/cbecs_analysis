@@ -154,6 +154,7 @@ p1 <- ggplot(hyper_summary_best,
        aes(x=num_vars, y=mape, color='MAPE')) + 
   geom_line() +
   geom_line(aes(x=num_vars, y=sqrt(mse)/(max(sqrt(mse)/60)), color='RMSE')) +
+  scale_x_continuous(breaks = seq(0, 800, 50)) +
   scale_y_continuous(sec.axis = sec_axis(~.*max(sqrt(hyper_summary_best$mse)/60), name="Root Mean Square Error", breaks = seq(20000, 100000, 10000)), breaks = seq(20, 100, 10)) +
   scale_color_manual(values = c("steelblue", "springgreen")) +
   ggtitle('Loss vs Number of Variables') +
@@ -287,7 +288,7 @@ summary_df <- manual_summary %>%
   RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$ngbtu),
   R2=caret::R2(pred = resid_df$pred, obs = resid_df$ngbtu),
   MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu),
-  MAPE=mean(abs(resid_df$pred - resid_df$elbtu) / pmax(resid_df$elbtu, 1))
+  MAPE=mean(abs(resid_df$pred - resid_df$ngbtu) / pmax(resid_df$ngbtu, 1)) * 100
 ))
 
 p <- summary_df %>% 
@@ -329,7 +330,7 @@ summary_df <- manual_summary %>%
   RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$ngbtu),
   R2=caret::R2(pred = resid_df$pred, obs = resid_df$ngbtu),
   MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu),
-  MAPE=mean(abs(resid_df$pred - resid_df$elbtu) / pmax(resid_df$elbtu, 1))
+  MAPE=mean(abs(resid_df$pred / 1000000 - resid_df$ngbtu / 1000000) / pmax(resid_df$ngbtu / 1000000, 1)) * 100
 ))
 
 p <- summary_df %>% 

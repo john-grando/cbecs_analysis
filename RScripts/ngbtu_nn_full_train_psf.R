@@ -11,7 +11,7 @@ model %>% compile(
   #loss = custom_loss_func,
   #optimizer = keras::optimizer_sgd(lr = 0.01, decay = 0.0),
   optimizer = optimizer_func,
-  metrics = list("mean_squared_error", "mean_squared_logarithmic_error")
+  metrics = list("mean_squared_error", "mean_squared_logarithmic_error", mean_absolute_percentage_error)
 )
 
 #Function for model building

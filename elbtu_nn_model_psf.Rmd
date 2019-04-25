@@ -291,7 +291,7 @@ summary_df <- manual_summary %>%
   RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu),
   R2=caret::R2(pred = resid_df$pred, obs = resid_df$elbtu),
   MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu),
-  MAPE=mean(abs(resid_df$pred - resid_df$elbtu) / pmax(resid_df$elbtu, 1))
+  MAPE=mean(abs(resid_df$pred - resid_df$elbtu) / pmax(resid_df$elbtu, 1)) * 100
 ))
 
 p <- summary_df %>% 
@@ -355,7 +355,7 @@ summary_df <- manual_summary %>%
   RMSE=caret::RMSE(pred = resid_df$pred / 1000000, obs = resid_df$elbtu / 1000000),
   R2=caret::R2(pred = resid_df$pred / 1000000, obs = resid_df$elbtu / 1000000),
   MAE=caret::MAE(pred = resid_df$pred / 1000000, obs = resid_df$elbtu / 1000000),
-  MAPE=mean(abs(resid_df$pred / 1000000 - resid_df$elbtu / 1000000) / pmax(resid_df$elbtu / 1000000, 1))
+  MAPE=mean(abs(resid_df$pred / 1000000 - resid_df$elbtu / 1000000) / pmax(resid_df$elbtu / 1000000, 1)) * 100
 ))
 
 p <- summary_df %>% 

@@ -41,7 +41,7 @@ model_run <- function(model_n_f, n_dropout_f, n_units_f, n_l_f, loss_func_f, opt
   #Run
   train_reduced_df <- train_df %>% select(one_of(variables_by_importance[1:num_vars_f]))
   test_reduced_df <- test_df %>% select(one_of(variables_by_importance[1:num_vars_f]))
-  epochs <- 10
+  epochs <- 1000
   history <- model %>% fit(
     as.matrix(train_reduced_df),
     as.matrix(train_labels),
