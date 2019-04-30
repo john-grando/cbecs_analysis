@@ -17,10 +17,10 @@ set.seed(20)
 folds <- createFolds(y = train_test_list, k=n_folds, list=FALSE)
 
 hyper_list <- list()
-hyper_list$dropout <- seq(0.3, 0.9, 0.3)
-hyper_list$units <- seq(200, 600, 200)
+hyper_list$dropout <- seq(0.0, 0.9, 0.3)
+hyper_list$units <- seq(600, 1000, 200)
 hyper_list$regularizer <- seq(0, 0.3, 0.15)
-hyper_list$model <- seq(3,5,1)
+hyper_list$model <- seq(4,5,1)
 hyper_list$batch <- seq(150, 350, 100)
 hyper_list$loss <- list(
   #list(name = 'mse', func = 'mse'), 
@@ -109,7 +109,7 @@ for (o in 1:length(hyper_list$opt)) {
                                     mae_val <- tail(history$metrics$val_mean_absolute_error,1)
                                     msle_val <- tail(history$metrics$val_mean_squared_logarithmic_error,1)
                                     mse_val <- tail(history$metrics$val_mean_squared_error,1)
-                                    mape_val <- tail(history$metrics$mean_absolute_percentage_error,1)
+                                    mape_val <- tail(history$metrics$val_mean_absolute_percentage_error,1)
                                     #hyper_results <- rbind(hyper_results, data.frame(dropout=d, units=u, fold=f, loss= loss_val, mae = mae_val, pm = pm_val))
                                     data.frame(num_vars=length(variables_by_importance)-v,
                                                loss_f=hyper_list$loss[[l]]$name,

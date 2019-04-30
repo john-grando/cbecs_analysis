@@ -34,7 +34,7 @@ history <- model %>% fit(
   epochs = epochs,
   validation_data = list(as.matrix(test_reduced_df), as.matrix(test_labels)),
   batch_size = batch_size,
-  verbose = 0,
+  verbose = 1,
   callbacks = list(print_dot_callback, 
                    early_stop
   )
