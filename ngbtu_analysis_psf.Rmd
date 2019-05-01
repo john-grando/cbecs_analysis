@@ -117,16 +117,17 @@ pls_plot <- plot_fun(in_model=pls_train,
                      short_name='pls', 
                      alt_predict = TRUE, 
                      log_tran = TRUE,
-                     observed_df = cbecs_ngbtu_encoded_center_scale_train_df,
-                     response = cbecs_ngbtu_encoded_center_scale_train_df$NGBTUPerSf,
+                     observed_df = cbecs_ngbtu_encoded_center_scale_test_df,
+                     response = cbecs_ngbtu_encoded_center_scale_test_df$NGBTUPerSf,
                      fuel_type = 'natural_gas_psf',
-                     area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
+                     area_vector = cbecs_dfs$clean_df$SQFT[-cbecs_train_list])
 pls_plot$vars_plot
 pls_plot$pvo_plot
 plot(pls_plot$tmp_model)
 pls_imp_df <- pls_plot$imp_df
 pls_plot$RMSE
 pls_plot$R2
+pls_plot$MAPE
 #View(t(cbecs_ng_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_ngbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(NGBTU, pred, SQFTC, RFGVEN, RFGICE, RFGWI, EMCS, GENUSE, one_of(pls_imp_df$feature))))
 
 #View(t(cbecs_ngbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = exp(predict(pls_train, newdata = cbecs_ngbtu_encoded_center_scale_df))) %>% filter(rowname==406|rowname==4974) %>% select(NGBTU, pred, one_of(pls_imp_df$feature))))
@@ -143,16 +144,17 @@ rf_plot <- plot_fun(in_model=rf_train,
                     short_name='rf', 
                     log_tran = FALSE, 
                     alt_predict = FALSE,
-                    observed_df = cbecs_ngbtu_encoded_center_scale_train_df,
-                    response = cbecs_ngbtu_encoded_center_scale_train_df$NGBTUPerSf,
+                    observed_df = cbecs_ngbtu_encoded_center_scale_test_df,
+                    response = cbecs_ngbtu_encoded_center_scale_test_df$NGBTUPerSf,
                     fuel_type = 'natural_gas_psf',
-                    area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
+                    area_vector = cbecs_dfs$clean_df$SQFT[-cbecs_train_list])
 rf_plot$vars_plot
 rf_plot$pvo_plot
 plot(rf_plot$tmp_model)
 rf_imp_df <- rf_plot$imp_df
 rf_plot$RMSE
 rf_plot$R2
+rf_plot$MAPE
 #how to evaluate rows
 #View(t(cbecs_ng_cleaned_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_ngbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974)))
 #View(t(cbecs_ngbtu_encoded_center_scale_df %>% tibble::rownames_to_column() %>% mutate(pred = predict(rf_train, newdata = cbecs_ngbtu_encoded_center_scale_df)) %>% filter(rowname==507|rowname==406|rowname==4974) %>% select(NGBTU, pred, one_of(rf_imp_df$feature))))
@@ -169,10 +171,10 @@ l_plot <- plot_fun(in_model=l_train,
                    short_name='l', 
                    alt_predict = TRUE, 
                    log_tran = FALSE,
-                   observed_df = cbecs_ngbtu_encoded_center_scale_train_df,
-                   response = cbecs_ngbtu_encoded_center_scale_train_df$NGBTUPerSf,
+                   observed_df = cbecs_ngbtu_encoded_center_scale_test_df,
+                   response = cbecs_ngbtu_encoded_center_scale_test_df$NGBTUPerSf,
                    fuel_type = 'natural_gas_psf',
-                   area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
+                   area_vector = cbecs_dfs$clean_df$SQFT[-cbecs_train_list])
 l_plot$vars_plot
 l_plot$pvo_plot
 plot(l_plot$tmp_model)
@@ -192,17 +194,18 @@ lp_plot <- plot_fun(in_model=lp_train,
                     n_features=top_n_rows, 
                     short_name='lp', 
                     alt_predict = TRUE, 
-                    log_tran = FALSE,
-                    observed_df = cbecs_ngbtu_encoded_center_scale_train_df,
-                    response = cbecs_ngbtu_encoded_center_scale_train_df$NGBTUPerSf,
+                    log_tran = TRUE,
+                    observed_df = cbecs_ngbtu_encoded_center_scale_test_df,
+                    response = cbecs_ngbtu_encoded_center_scale_test_df$NGBTUPerSf,
                     fuel_type = 'natural_gas_psf',
-                    area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
+                    area_vector = cbecs_dfs$clean_df$SQFT[-cbecs_train_list])
 lp_plot$vars_plot
 lp_plot$pvo_plot
 plot(lp_plot$tmp_model)
 lp_imp_df <- lp_plot$imp_df %>% mutate(Overall = 100 * Overall) %>% filter(!is.na(Overall))
 lp_plot$RMSE
 lp_plot$R2
+lp_plot$MAPE
 ```
 
 #recursive feaure extraction
@@ -223,16 +226,17 @@ rfe_plot <- plot_pred_obs(in_model_sub = rfe_train,
                           short_name_sub = 'rfe',
                           alt_predict_sub = TRUE, 
                           log_tran_sub = FALSE,
-                          observed_df = cbecs_ngbtu_encoded_center_scale_train_df,
-                          response = cbecs_ngbtu_encoded_center_scale_train_df$NGBTUPerSf,
+                          observed_df = cbecs_ngbtu_encoded_center_scale_test_df,
+                          response = cbecs_ngbtu_encoded_center_scale_test_df$NGBTUPerSf,
                           fuel_type_sub = 'natural_gas_psf',
-                          area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
+                          area_vector = cbecs_dfs$clean_df$SQFT[-cbecs_train_list])
 
 varImp(rfe_train)
 rfe_plot$p
 plot(rfe_plot$tmp_mdl)
 rfe_plot$RMSE_untransformed
 rfe_plot$R2_untransformed
+rfe_plot$MAPE_untransformed
 
 #specific graph needs to be made
 p_rfe <- ggplot(data = data.frame(varImp(rfe_train) %>% 
@@ -270,10 +274,10 @@ nn_plot <- plot_fun(in_model=nn_train,
                     short_name='nn', 
                     alt_predict = TRUE,
                     log_tran = FALSE,
-                    observed_df = cbecs_ngbtu_encoded_center_scale_train_df,
-                    response = cbecs_ngbtu_encoded_center_scale_train_df$NGBTUPerSf,
+                    observed_df = cbecs_ngbtu_encoded_center_scale_test_df,
+                    response = cbecs_ngbtu_encoded_center_scale_test_df$NGBTUPerSf,
                     fuel_type = 'natural_gas_psf',
-                    area_vector = cbecs_dfs$clean_df$SQFT[cbecs_train_list])
+                    area_vector = cbecs_dfs$clean_df$SQFT[-cbecs_train_list])
 nn_plot$vars_plot
 nn_plot$pvo_plot
 plot(nn_plot$tmp_model)

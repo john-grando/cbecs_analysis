@@ -17,11 +17,11 @@ set.seed(20)
 folds <- createFolds(y = train_test_list, k=n_folds, list=FALSE)
 
 hyper_list <- list()
-hyper_list$dropout <- seq(0.0, 0.9, 0.3)
+hyper_list$dropout <- seq(0.0, 0.6, 0.3)
 hyper_list$units <- seq(600, 1000, 200)
-hyper_list$regularizer <- seq(0, 0.3, 0.15)
+hyper_list$regularizer <- seq(0, 0, 0.15)
 hyper_list$model <- seq(4,5,1)
-hyper_list$batch <- seq(150, 350, 100)
+hyper_list$batch <- seq(150, 350, 200)
 hyper_list$loss <- list(
       #list(name = 'mse', func = 'mse'), 
       list(name = 'msle', func = keras::loss_mean_squared_logarithmic_error),
