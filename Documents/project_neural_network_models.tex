@@ -38,7 +38,7 @@ The automated selection process does seem to have included some highly correlate
 %\newpage
 \subsection{Natural Gas}
 \subsubsection{Summary}
-The final selected model consisted of a 4 hidden layers, 400 hidden layer nodes, a dropout rate of 0.9, no regularization, batch sizes of 50, using the rmsprop() algorithm with a learning rate of 0.001, and 100 predictors.  As can be seen in the graph below, the number of variables needed to obtain near-peak performance, is much less than the full set.
+The final selected model consisted of a 4 hidden layers, 400 hidden layer nodes, a dropout rate of 0.9, no regularization, batch sizes of 50, using the rmsprop() algorithm with a learning rate of 0.001, and 100 predictors.  As can be seen in the graph below, the number of variables needed to obtain near-peak performance, is much less than the full set. \textit{\hyperref[appendix_nn:natural_gas:nn_full]{Appendix}}
 
 \begin{figure}[h]
 \centering
@@ -46,7 +46,7 @@ The final selected model consisted of a 4 hidden layers, 400 hidden layer nodes,
 \end{figure}
 
 \subsubsection{Variable Selection Summary}
-The final selected model, after re-training, has a MSLE of 0.875 and RMSE of 58528.  Comparing this model ('Full Neural Network') to the previous feature extraction models, which used many more variables, the performance is actually better.  Additionally, the results were then multiplied by their respect gross floor area and then compared to a set of feature extraction models that were trained on total consumption.  Again, it can be seen that this neural network model is the best performing out of the set and has a better Rsquared value than the per SF model.  Much like the electricity data set, there appears to be heteroscedacicity in the residuals, but may be due to the selected loss function.
+The final selected model, after re-training, has a MSLE of 0.875 and RMSE of 58528.  Comparing this model ('Full Neural Network') to the previous feature extraction models, which used many more variables, the performance is actually better.  Additionally, the results were then multiplied by their respect gross floor area and then compared to a set of feature extraction models that were trained on total consumption.  Again, it can be seen that this neural network model is the best performing out of the set and has a better Rsquared value than the per SF model.  Much like the electricity data set, there appears to be heteroscedacicity in the residuals, but may be due to the selected loss function.  \textit{\hyperref[appendix_nn:natural_gas:nn_full_variables]{Appendix}}
 
 \begin{figure}[h]
 \centering

@@ -14,13 +14,13 @@ RMSE: NA, Rsquared: NA\\
 Top 5: \lstinline{EDSEATPerSf}, \lstinline{PBA.14[EDUCATION]}, \lstinline{STRLZR.1[YES]}, \lstinline{MCHEQP[NA]}, \lstinline{ACT2PCT}  \textit{\hyperref[appendix:natural_gas:pca]{Appendix}}
 
 \subsection{Variable Selection - PLS}
-RMSE: 73076, Rsquared: 0.293\\
+RMSE: 67978, Rsquared: 0.232\\
 Top 5: \lstinline{FDSEATPerSf}, \lstinline{HEATP}, \lstinline{RFGWINPerSf}, \lstinline{NWKERPerSf}, \lstinline{RGSTRNPerSf}\\
 \\[0.1in]
 The Rsquared and RMSE values are still on the poorer side compared to those in the electricity study, which suggests there is either a more complex relationship, or there is greater variance in response, given the available data. However, the presence of attribute which indicates the percent of the building that is heated (\lstinline{HEATP}) is promising.   \textit{\hyperref[appendix:natural_gas:pls]{Appendix}}
 
 \subsection{Variable Selection - Random Forest}
-RMSE: 175808, Rsquared: 0.193\\
+RMSE: 174127, Rsquared: 0.122\\
 Top 5: \lstinline{DRYCL.1[YES]}, \lstinline{FDSEATPerSf}, \lstinline{RFGWINPerSf}, \lstinline{LAUNDR.3[OFF-SITE]}, \lstinline{STRLSZR.1[YES]} 
 \\[0.1in]
 Again, the error values are much lower; however, the presesence of notable fuel-using equipment have been indicated to be of high importance. \textit{\hyperref[appendix:natural_gas:rf]{Appendix}}
@@ -29,15 +29,15 @@ Again, the error values are much lower; however, the presesence of notable fuel-
 RMSE: NA, Rsquared: NA\\
 
 \subsection{Variable Selection - Forward Selection}
-RMSE: 100385, Rsquared: 0.246\\
+RMSE: 69079, Rsquared: 0.184\\
 Top 5: \lstinline{FDSEATPerSf}, \lstinline{TVVIDEONPerSf}, \lstinline{NGWATR.2[NO]}, \lstinline{RGSTRNPerSf}, \lstinline{RFGWINPerSf}  \textit{\hyperref[appendix:natural_gas:lp]{Appendix}}
 
 \subsection{Variable Selection - Recursive Feature Elimination}
-RMSE: 59212, Rsquared: 0.523\\
+RMSE: 61465, Rsquared: 0.258\\
 Top 5: \lstinline{NWKERPerSf}, \lstinline{RFGICNPerSf}, \lstinline{RFGWINPerSf}, \lstinline{FDSEATPerSf}, \lstinline{RGSTRNPerSf}  \textit{\hyperref[appendix:natural_gas:rfe]{Appendix}}
 
 \subsection{Variable Selection - Simple Neural Network}
-RMSE: 69784, Rsquared: 0.334\\
+RMSE: 57929, Rsquared: 0.319\\
 Top 5: \lstinline{FDSEATPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{DRYCL.1[YES]}, \lstinline{PBAPLUS.33[RESTAURANT/CAFETERIA]}, \lstinline{PBAPLUS.32[FAST FOOD]}  
 \textit{\hyperref[appendix:natural_gas:snn]{Appendix}}
 

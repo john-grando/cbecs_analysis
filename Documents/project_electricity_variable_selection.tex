@@ -19,13 +19,13 @@ Top 5: \lstinline{COOK.2[NO]}, \lstinline{LAUNDR..1[NA]}, \lstinline{ELCPLT..1[N
 \indent The principle component analysis indicates that only About 4.2\% of the variance in the data can be explained in the first principle component, which then drops to about 1.7\% for the second principle component.  These results reveal that there does not appear to be a clear set of axes that can explain the variance of the data very well, which indicates there may be some very complex interactions taking place in the predictors.  \textit{\hyperref[appendix:electricity:pca]{Appendix}}
 
 \subsection{Variable Selection - PLS}
-RMSE: 46880, Rsquared: 0.548\\
+RMSE: 49439, Rsquared: 0.512\\
 Top 5: \lstinline{NWKERPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{FDSEATPerSf}, \lstinline{RFGWINPerSf}, \lstinline{PCTERMNPerSf}
 \\[0.1in]
 \indent This model returned a promising result; however, it must be noted that all predictors were used in this process.  Looking at the output thus far, it is appears that the number of workers, receptical equipment, and refrigeration equipment, influence electrical consumption.  \textit{\hyperref[appendix:electricity:pls]{Appendix}}
 
 \subsection{Variable Selection - Random Forest}
-RMSE: 163434, Rsquared: 0.173\\
+RMSE: 165663, Rsquared: 0.138\\
 Top 5: \lstinline{RFGWINPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{NWKERPerSf}, \lstinline{RFGICNPerSf},  \lstinline{PCTERMNPerSf}
 \\[0.1in]
 \indent The resulting error metrics were much less promising.  However, similarly selected variables are are picked for this model when compared to the PLS.  \textit{\hyperref[appendix:electricity:rf]{Appendix}}
@@ -37,19 +37,19 @@ RMSE: NA, Rsquared: NA\\
 \indent This algorithm returned an error on many simulations, which is not unexpected.  Lasso models typically work when a few variables can be used to predict the response, which does not appear to be the case in this instance.  Due to the lack of fit, this model will not be used in the variable selection process.  Due to the number of reported errors, no metrics have been provided for this model.
 
 \subsection{Variable Selection - Forward Selection}
-RMSE: 90503, Rsquared: 0.315\\
+RMSE: 91257, Rsquared: 0.316\\
 Top 5: \lstinline{NWKERPerSf}, \lstinline{RFGWINPerSf}, \lstinline{RFGWI.1[YES]}, \lstinline{RFGICNPerSf}, \lstinline{PCTERMNPerSf}
 \\[0.1in]
 \indent This model was building using the leaps package which iteratively selected the best predictor variable up to a limit of 100.  Unsurprisingly, the best model turned out to be the maximum setting.  Large refrigeration equipment load and typical office space attributes dominated this analysis, as appears to be the case in previous models.  It seems that in order to capture energy use for all buidling types, much more than 5 variables will be necessary.  \textit{\hyperref[appendix:electricity:lp]{Appendix}}
 
 \subsection{Variable Selection - Recursive Feature Elimination}
-RMSE: 48022, Rsquared: 0.517\\
+RMSE: 49714, Rsquared: 0.502\\
 Top 5: \lstinline{RGSTRNPerSf}, \lstinline{RFGICNPerSf}, \lstinline{NWKERPerSf}, \lstinline{PBAPLUS.32[FAST FOOD]}, \lstinline{RFGWINPerSf}
 \\[0.1in]
 \indent A more direct approach was taken with this model, which is specifically used to extract useful features from data sets. \textit{\hyperref[appendix:electricity:rfe]{Appendix}}
 
 \subsection{Variable Selection - Simple Neural Network}
-RMSE: 48644, Rsquared: 0.499\\
+RMSE: 51378, Rsquared: 0.463\\
 Top 5: \lstinline{FDSeatPerSf}, \lstinline{PBAPLUS.32[FAST FOOD]}, \lstinline{RFGWINPerSf}, \lstinline{RFGWI.1[YES]}, \lstinline{RGSTRNPerSf}
 \\[0.1in]
 \indent Given that the final model will be a neural network, it made sense to try a simple out-of-the-box training model to see if any particular features work better with this process.  As can be seen, there are some new attributes that surface which were not indicated to be of high importance previously.  \textit{\hyperref[appendix:electricity:snn]{Appendix}}

@@ -172,7 +172,7 @@ p1 <- ggplot(hyper_summary_best,
         legend.key.height = unit(0.5, "cm"),
         title = element_text(size=14, color = "grey55"),
         legend.position = c(0.8, 0.85))
-ggsave(paste0('Documents/Images/electricity_psf_nn_error.png'), p1, width = 6.5, height = 3.5, units = 'in')
+ggsave(paste0('Documents/Images/natural_gas_psf_nn_error.png'), p1, width = 6.5, height = 3.5, units = 'in')
 p1
 
 hyper_summary %>% 
@@ -327,9 +327,9 @@ summary_df <- manual_summary %>%
   rename_all(gsub, pattern = '_total', replacement = '') %>% 
   bind_rows(data.frame(
   Model='Full Neural Network',
-  RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$ngbtu),
-  R2=caret::R2(pred = resid_df$pred, obs = resid_df$ngbtu),
-  MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu),
+  RMSE=caret::RMSE(pred = resid_df$pred / 1000000, obs = resid_df$ngbtu / 1000000),
+  R2=caret::R2(pred = resid_df$pred / 1000000, obs = resid_df$ngbtu / 1000000),
+  MAE=caret::MAE(pred = resid_df$pred / 1000000, obs = resid_df$ngbtu / 1000000),
   MAPE=mean(abs(resid_df$pred / 1000000 - resid_df$ngbtu / 1000000) / pmax(resid_df$ngbtu / 1000000, 1)) * 100
 ))
 
