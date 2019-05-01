@@ -51,7 +51,7 @@ hyper_list$opt <- list(
 registerDoMC(3)
 
 #Run model
-epochs <- 200
+epochs <- 100
 
 for (o in 1:length(hyper_list$opt)) {
   for (l in 1:length(hyper_list$loss)){
