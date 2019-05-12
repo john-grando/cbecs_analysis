@@ -80,7 +80,7 @@ hyperparameter_summary <- hyperparameter_parsed_results %>%
 
 hyperparameter_summary_best <- hyperparameter_summary %>% 
                group_by(num_vars) %>% 
-               arrange(mape) %>% 
+               arrange(msle) %>% 
                filter(row_number()==1)
 ```
 
@@ -150,18 +150,18 @@ hyper_summary <- hyper_parsed_results %>%
 
 hyper_summary_best <- hyper_summary %>% 
                group_by(num_vars) %>% 
-               arrange(mape) %>% 
+               arrange(msle) %>% 
                filter(row_number()==1)
 
 p1 <- ggplot(hyper_summary_best, 
-       aes(x=num_vars, y=mape, color='MAPE')) + 
+       aes(x=num_vars, y=msle, color='MSLE')) + 
   geom_line() +
-  geom_line(aes(x=num_vars, y=sqrt(mse)/(max(sqrt(mse)/60)), color='RMSE')) +
+  geom_line(aes(x=num_vars, y=sqrt(mse)/(max(sqrt(mse))), color='RMSE')) +
   scale_x_continuous(breaks = seq(0, 850, 50)) +
-  scale_y_continuous(sec.axis = sec_axis(~.*max(sqrt(hyper_summary_best$mse)/60), name="Root Mean Square Error", breaks = seq(20000, 100000, 10000)), breaks = seq(20, 100, 10)) +
+  scale_y_continuous(sec.axis = sec_axis(~.*max(sqrt(hyper_summary_best$mse)), name="Root Mean Square Error", breaks = seq(40000, 80000, 5000)), breaks = seq(0.5, 1.2, 0.05)) +
   scale_color_manual(values = c("steelblue", "springgreen")) +
   ggtitle('Loss vs Number of Variables') +
-  labs(x='Number of Variables', y='Mean Absolute Percentage Error', color='Loss Metric') +
+  labs(x='Number of Variables', y='Mean Squared Log Error', color='Loss Metric') +
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),
         plot.background = element_rect(fill = "lightgrey"), 
@@ -179,7 +179,7 @@ ggsave(paste0('Documents/Images/electricity_psf_nn_error.png'), p1, width = 6.5,
 p1
 
 hyper_summary %>% 
-  arrange(mape) %>% 
+  arrange(msle) %>% 
   head(20) %>% 
   kable('html') %>% 
   kable_styling()
@@ -291,7 +291,8 @@ summary_df <- manual_summary %>%
   RMSE=caret::RMSE(pred = resid_df$pred, obs = resid_df$elbtu),
   R2=caret::R2(pred = resid_df$pred, obs = resid_df$elbtu),
   MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$elbtu),
-  MAPE=mean(abs(resid_df$pred - resid_df$elbtu) / pmax(resid_df$elbtu, 1)) * 100
+  MAPE=mean(abs(resid_df$pred - resid_df$elbtu) / pmax(resid_df$elbtu, 1)) * 100,
+  MSLE=mean((log(pmax(0,resid_df$pred)) - log(pmax(0,resid_df$elbtu)))^2)
 ))
 
 p <- summary_df %>% 
@@ -355,7 +356,8 @@ summary_df <- manual_summary %>%
   RMSE=caret::RMSE(pred = resid_df$pred / 1000000, obs = resid_df$elbtu / 1000000),
   R2=caret::R2(pred = resid_df$pred / 1000000, obs = resid_df$elbtu / 1000000),
   MAE=caret::MAE(pred = resid_df$pred / 1000000, obs = resid_df$elbtu / 1000000),
-  MAPE=mean(abs(resid_df$pred / 1000000 - resid_df$elbtu / 1000000) / pmax(resid_df$elbtu / 1000000, 1)) * 100
+  MAPE=mean(abs(resid_df$pred / 1000000 - resid_df$elbtu / 1000000) / pmax(resid_df$elbtu / 1000000, 1)) * 100,
+  MSLE=mean((log(pmax(0,resid_df$pred / 1000000)) - log(pmax(0,resid_df$elbtu / 1000000)))^2)
 ))
 
 p <- summary_df %>% 

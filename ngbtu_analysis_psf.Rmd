@@ -340,6 +340,12 @@ manual_summary <- data.frame(
           lp_plot$MAPE, 
           rfe_plot$MAPE_untransformed, 
           nn_plot$MAPE),
+  MSLE = c(pls_plot$MSLE, 
+          rf_plot$MSLE, 
+          #l_plot$MSLE, 
+          lp_plot$MSLE, 
+          rfe_plot$MSLE_untransformed, 
+          nn_plot$MSLE),
   RMSE_total = c(pls_plot$RMSE_total, 
            rf_plot$RMSE_total, 
            #l_plot$RMSE_total, 
@@ -363,11 +369,17 @@ manual_summary <- data.frame(
           #l_plot$MAPE_total, 
           lp_plot$MAPE_total, 
           rfe_plot$MAPE_total_untransformed, 
-          nn_plot$MAPE_total)
+          nn_plot$MAPE_total),
+  MSLE_total = c(pls_plot$MSLE_total, 
+          rf_plot$MSLE_total, 
+          #l_plot$MSLE_total, 
+          lp_plot$MSLE_total, 
+          rfe_plot$MSLE_total_untransformed, 
+          nn_plot$MSLE_total)
 )
 
 p <- manual_summary %>% 
-  arrange(MAPE) %>%
+  arrange(MSLE) %>%
   select(-matches('.*_total')) %>%
   kable('html', 
         caption = 'Feature Extraction Model Results') %>% 
@@ -459,25 +471,25 @@ vars <- variables_by_importance[1:21]
 iter <- 0
 for(i in vars){
   plot_vars(cbecs_dfs$encoded_df, 
-            cbecs_dfs$encoded_df$NGBTU, 
+            cbecs_dfs$encoded_df$NGBTUPerSf, 
             'natural_gas_psf', 
             i, 
             iter,
             'original',
             'Untransformed',
-            'Natural Gas')
+            'Natural Gas PSF')
   iter <- iter + 1
 }
 iter <- 0
 for(i in vars){
   plot_vars(cbecs_ngbtu_encoded_center_scale_df, 
-            log(cbecs_ngbtu_encoded_center_scale_df$NGBTU), 
+            log(cbecs_ngbtu_encoded_center_scale_df$NGBTUPerSf), 
             'natural_gas_psf', 
             i, 
             iter,
             'transformed',
             'Transformed',
-            'Logscale Natural Gas')
+            'Logscale Natural Gas PSF')
   iter <- iter + 1
 }
 ```
