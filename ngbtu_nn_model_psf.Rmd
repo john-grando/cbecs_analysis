@@ -290,7 +290,7 @@ summary_df <- manual_summary %>%
   R2=caret::R2(pred = resid_df$pred, obs = resid_df$ngbtu),
   MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu),
   MAPE=mean(abs(resid_df$pred - resid_df$ngbtu) / pmax(resid_df$ngbtu, 1)) * 100,
-  MSLE=mean((log(pmax(0,resid_df$pred)) - log(pmax(0,resid_df$elbtu)))^2)
+  MSLE=mean((log(pmax(0.001,resid_df$pred)) - log(pmax(0.001,resid_df$ngbtu)))^2)
 )) %>% 
   mutate(
     RMSE = round(RMSE, 0),
@@ -340,7 +340,7 @@ summary_df <- manual_summary %>%
   R2=caret::R2(pred = resid_df$pred / 1000000, obs = resid_df$ngbtu / 1000000),
   MAE=caret::MAE(pred = resid_df$pred / 1000000, obs = resid_df$ngbtu / 1000000),
   MAPE=mean(abs(resid_df$pred / 1000000 - resid_df$ngbtu / 1000000) / pmax(resid_df$ngbtu / 1000000, 1)) * 100,
-  MSLE=mean((log(pmax(0,resid_df$pred / 1000000)) - log(pmax(0,resid_df$elbtu / 1000000)))^2)
+  MSLE=mean((log(pmax(0,resid_df$pred / 1000000)) - log(pmax(0,resid_df$ngbtu / 1000000)))^2)
 )) %>% 
   mutate(
     RMSE = round(RMSE, 0),
