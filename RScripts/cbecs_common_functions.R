@@ -69,16 +69,16 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
                           response_sub)
     MAPE_sub <- mean(abs(exp(predict(final_model, observed_df_sub)) - response_sub) / pmax(response_sub, 1)) * 100
     MSLE_sub <- mean((log(pmax(0,exp(predict(final_model, observed_df_sub)))) - log(pmax(response_sub,0)))^2)
-    RMSE_total_sub <- caret::RMSE(exp(predict(final_model, observed_df_sub))*area_vector_sub, 
-                            response_sub*area_vector_sub)
-    R2_total_sub <- caret::R2(exp(predict(final_model, observed_df_sub))*area_vector_sub, 
-                        response_sub*area_vector_sub)
-    MAE_total_sub <- caret::MAE(exp(predict(final_model, observed_df_sub))*area_vector_sub, 
-                          response_sub*area_vector_sub)
-    MAPE_total_sub <- mean(abs(exp(predict(final_model, observed_df_sub))*area_vector_sub - 
-                                 response_sub*area_vector_sub) / pmax(response_sub*area_vector_sub, 1)) * 100
-    MSLE_total_sub <- mean((log(pmax(0,(exp(predict(final_model, observed_df_sub))*area_vector_sub))) - 
-                                 log(pmax(0,response_sub*area_vector_sub)))^2)
+    RMSE_total_sub <- caret::RMSE(exp(predict(final_model, observed_df_sub))*area_vector_sub / 1000000, 
+                            response_sub*area_vector_sub / 1000000)
+    R2_total_sub <- caret::R2(exp(predict(final_model, observed_df_sub))*area_vector_sub / 1000000, 
+                        response_sub*area_vector_sub / 1000000)
+    MAE_total_sub <- caret::MAE(exp(predict(final_model, observed_df_sub))*area_vector_sub / 1000000, 
+                          response_sub*area_vector_sub / 1000000)
+    MAPE_total_sub <- mean(abs(exp(predict(final_model, observed_df_sub))*area_vector_sub / 1000000 - 
+                                 response_sub*area_vector_sub / 1000000) / pmax(response_sub*area_vector_sub / 1000000, 1)) * 100
+    MSLE_total_sub <- mean((log(pmax(0,(exp(predict(final_model, observed_df_sub))*area_vector_sub / 1000000))) - 
+                                 log(pmax(0,response_sub*area_vector_sub / 1000000)))^2)
   }
   if(log_tran_sub!=TRUE){
     tmp_model_sub <- lm(predict(final_model, observed_df_sub) ~ 
@@ -93,16 +93,16 @@ plot_pred_obs <- function(in_model_sub = NA, short_name_sub = short_name, alt_pr
                           response_sub)
     MAPE_sub <- mean(abs(predict(final_model, observed_df_sub) - response_sub) / pmax(response_sub, 1)) * 100
     MSLE_sub <- mean((log(pmax(0,predict(final_model, observed_df_sub))) - log(pmax(0,response_sub)))^2)
-    RMSE_total_sub <- caret::RMSE(predict(final_model, observed_df_sub)*area_vector_sub,
-                            response_sub*area_vector_sub)
-    R2_total_sub <- caret::R2(predict(final_model, observed_df_sub)*area_vector_sub,
-                        response_sub*area_vector_sub)
-    MAE_total_sub <- caret::MAE(predict(final_model, observed_df_sub)*area_vector_sub,
-                          response_sub*area_vector_sub)
-    MAPE_total_sub <- mean(abs(predict(final_model, observed_df_sub)*area_vector_sub - 
-                           response_sub*area_vector_sub) / pmax(response_sub*area_vector_sub, 1)) * 100
-    MSLE_total_sub <- mean((log(pmax(0,predict(final_model, observed_df_sub)*area_vector_sub)) - 
-                                 log(pmax(0,response_sub*area_vector_sub)))^2)
+    RMSE_total_sub <- caret::RMSE(predict(final_model, observed_df_sub)*area_vector_sub / 1000000,
+                            response_sub*area_vector_sub / 1000000)
+    R2_total_sub <- caret::R2(predict(final_model, observed_df_sub)*area_vector_sub / 1000000,
+                        response_sub*area_vector_sub / 1000000)
+    MAE_total_sub <- caret::MAE(predict(final_model, observed_df_sub)*area_vector_sub / 1000000,
+                          response_sub*area_vector_sub / 1000000)
+    MAPE_total_sub <- mean(abs(predict(final_model, observed_df_sub)*area_vector_sub / 1000000 - 
+                           response_sub*area_vector_sub / 1000000) / pmax(response_sub*area_vector_sub / 1000000, 1)) * 100
+    MSLE_total_sub <- mean((log(pmax(0,predict(final_model, observed_df_sub)*area_vector_sub / 1000000)) - 
+                                 log(pmax(0,response_sub*area_vector_sub / 1000000)))^2)
   }
   p2 <- p2 + 
     aes(x=log(predicted), y=log(observed)) + 
