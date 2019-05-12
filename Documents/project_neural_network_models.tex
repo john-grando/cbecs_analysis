@@ -11,14 +11,14 @@ In order to select the most optimized set of parameters, some hyperparameter tra
 
 \subsection{Electricity}
 \subsubsection{Summary}
-The final selected model consisted of a 3 hidden layers, 200 hidden layer nodes, a dropout rate of 0.6, no regularization, batch sizes of 150, using the rmsprop() algorithm with a learning rate of 0.001, and 100 predictors.  As can be seen in the graph below, the number of variables needed to obtain near-peak performance, is much less than the full set.
+The final selected model consisted of a 5 hidden layers, 1000 hidden layer nodes, a dropout rate of 0.3, no regularization, batch sizes of 150, using the rmsprop() algorithm with a learning rate of 0.0005, and 100 predictors.  As can be seen in the graph below, the number of variables needed to obtain near-peak performance, is much less than the full set.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth, height=0.25\textheight]{Images/electricity_psf_nn_error.png}
 \end{figure}
 
-The final selected model, after re-training, has a MSLE of 0.875 and RMSE of 15357.  Comparing this model ('Full Neural Network') to the previous feature extraction models, which used many more variables, the performance is competitive.  Additionally, the results were then multiplied by their respect gross floor area and then compared to the set of feature extraction models, with the same transformation, in order to evaluate the total consumption prediction error.  Again, it can be seen that this neural network model has shown to be competetive in this manner and, in fact, has a better Rsquared value.
+The final selected model, after re-training, has a MSLE of 0.92 and RMSE of 54696.  Comparing this model ('Full Neural Network') to the previous feature extraction models, which used many more variables, the performance is competitive.  Additionally, the results were then multiplied by their respect gross floor area and then compared to the set of feature extraction models, with the same transformation, in order to evaluate the total consumption prediction error.  Again, it can be seen that this neural network model has shown to be competetive in this manner and, in fact, has a better Rsquared value.
 
 The resdiuals indicate that the variance scales with the response variable; however, since neural network models do not operate on a principle of homoscedacitity, only underlying patterns are of concern. Additionally, the noted error pattern is by design since the loss function (MAPE) allows for higher error in higher consumption projects.  \textit{\hyperref[appendix_nn:electricity:nn_full]{Appendix}}
 
@@ -38,7 +38,7 @@ The automated selection process does seem to have included some highly correlate
 %\newpage
 \subsection{Natural Gas}
 \subsubsection{Summary}
-The final selected model consisted of a 4 hidden layers, 400 hidden layer nodes, a dropout rate of 0.9, no regularization, batch sizes of 50, using the rmsprop() algorithm with a learning rate of 0.001, and 100 predictors.  As can be seen in the graph below, the number of variables needed to obtain near-peak performance, is much less than the full set. \textit{\hyperref[appendix_nn:natural_gas:nn_full]{Appendix}}
+The final selected model consisted of a 4 hidden layers, 800 hidden layer nodes, a dropout rate of 0.3, no regularization, batch sizes of 150, using the rmsprop() algorithm with a learning rate of 0.0001, and 100 predictors.  As can be seen in the graph below, the number of variables needed to obtain near-peak performance, is much less than the full set. \textit{\hyperref[appendix_nn:natural_gas:nn_full]{Appendix}}
 
 \begin{figure}[h]
 \centering

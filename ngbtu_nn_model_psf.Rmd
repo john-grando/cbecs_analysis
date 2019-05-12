@@ -80,7 +80,7 @@ hyperparameter_summary <- hyperparameter_parsed_results %>%
 
 hyperparameter_summary_best <- hyperparameter_summary %>% 
                group_by(num_vars) %>% 
-               arrange(mape) %>% 
+               arrange(msle) %>% 
                filter(row_number()==1)
 ```
 
@@ -290,10 +290,17 @@ summary_df <- manual_summary %>%
   MAE=caret::MAE(pred = resid_df$pred, obs = resid_df$ngbtu),
   MAPE=mean(abs(resid_df$pred - resid_df$ngbtu) / pmax(resid_df$ngbtu, 1)) * 100,
   MSLE=mean((log(pmax(0,resid_df$pred)) - log(pmax(0,resid_df$elbtu)))^2)
-))
+)) %>% 
+  mutate(
+    RMSE = round(RMSE, 0),
+    R2 = round(R2, 2),
+    MAE = round(MAE, 0),
+    MAPE = round(MAPE, 0),
+    MSLE = round(MSLE, 2)
+  )
 
 p <- summary_df %>% 
-  arrange(MAPE) %>% 
+  arrange(MSLE) %>% 
   kable('html', 
         caption = 'Per SF Model Comparison [BTU/SF]') %>% 
   kable_styling()
@@ -333,10 +340,17 @@ summary_df <- manual_summary %>%
   MAE=caret::MAE(pred = resid_df$pred / 1000000, obs = resid_df$ngbtu / 1000000),
   MAPE=mean(abs(resid_df$pred / 1000000 - resid_df$ngbtu / 1000000) / pmax(resid_df$ngbtu / 1000000, 1)) * 100,
   MSLE=mean((log(pmax(0,resid_df$pred / 1000000)) - log(pmax(0,resid_df$elbtu / 1000000)))^2)
-))
+)) %>% 
+  mutate(
+    RMSE = round(RMSE, 0),
+    R2 = round(R2, 2),
+    MAE = round(MAE, 0),
+    MAPE = round(MAPE, 0),
+    MSLE = round(MSLE, 2)
+  )
 
 p <- summary_df %>% 
-  arrange(MAPE) %>% 
+  arrange(MSLE) %>% 
   kable('html', 
         caption = 'Total Consumption Prediction vs. Feature Extraction Models [mmBTU]') %>% 
   kable_styling()
