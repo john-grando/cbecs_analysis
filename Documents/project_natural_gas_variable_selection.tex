@@ -3,7 +3,7 @@
 %\addcontentsline{toc}{section}{\nameref{sec:natural_gas}}
 
 \subsection{General}
-As previously noted, only buildings that indicated natural gas being used \lstinline{NGUSED} were included in the samples for this major fuel use.  Then, one of each pair of predictors with correlations above 0.75 were removed, to avoid model selection issues. Numeric predictors were transformed via BoxCox methodology as well as centered and scaled.  Note, no further commentary will be made in the following sections unless it differs from previous sections.
+No further commentary will be made in the following sections unless it differs from previous sections.
 
 \subsection{Response Analysis}
 
@@ -15,18 +15,12 @@ Top 5: \lstinline{EDSEATPerSf}, \lstinline{PBA.14[EDUCATION]}, \lstinline{STRLZR
 
 \subsection{Variable Selection - PLS}
 RMSE: 67978, Rsquared: 0.232\\
-Top 5: \lstinline{FDSEATPerSf}, \lstinline{HEATP}, \lstinline{RFGWINPerSf}, \lstinline{NWKERPerSf}, \lstinline{RGSTRNPerSf}\\
-\\[0.1in]
-The Rsquared and RMSE values are still on the poorer side compared to those in the electricity study, which suggests there is either a more complex relationship, or there is greater variance in response, given the available data. However, the presence of attribute which indicates the percent of the building that is heated (\lstinline{HEATP}) is promising.   \textit{\hyperref[appendix:natural_gas:pls]{Appendix}}
+Top 5: \lstinline{FDSEATPerSf}, \lstinline{HEATP}, \lstinline{RFGWINPerSf}, \lstinline{NWKERPerSf}, \lstinline{RGSTRNPerSf}\\ \textit{\hyperref[appendix:natural_gas:pls]{Appendix}}
 
 \subsection{Variable Selection - Random Forest}
 RMSE: 174127, Rsquared: 0.122\\
 Top 5: \lstinline{DRYCL.1[YES]}, \lstinline{FDSEATPerSf}, \lstinline{RFGWINPerSf}, \lstinline{LAUNDR.3[OFF-SITE]}, \lstinline{STRLSZR.1[YES]} 
-\\[0.1in]
-Again, the error values are much lower; however, the presesence of notable fuel-using equipment have been indicated to be of high importance. \textit{\hyperref[appendix:natural_gas:rf]{Appendix}}
-
-\subsection{Variable Selection - Lasso}
-RMSE: NA, Rsquared: NA\\
+\textit{\hyperref[appendix:natural_gas:rf]{Appendix}}
 
 \subsection{Variable Selection - Forward Selection}
 RMSE: 69079, Rsquared: 0.184\\

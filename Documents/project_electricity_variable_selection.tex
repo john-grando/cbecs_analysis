@@ -3,10 +3,7 @@
 %\addcontentsline{toc}{section}{\nameref{sec:electricity}}
 
 \subsection{General}
-
-The preprocessed data was passed to the feature extraction algorithms in order to determine the best possible set of candidate predictors with some additional adjustments.  Only buildings that indicated electricity being used \lstinline{ELUSED} were included in the samples for this major fuel use.  Then, one of each pair of predictors with correlations above 0.75 were removed, to avoid model selection issues. Additionally, the other major fuel consumption values were removed from the set of possible predictors.  Also, the numeric predictors were transformed via BoxCox methodology as well as centered and scaled.
-
-Two potential outlier was found in the analysis. A public assembly space reported an energy consumption of 1E09 BTUs whereas the next highest consumption for this budiding type, with similar area was 3E08 BTU (less than one third of the value), and the 3rd quartile value of this subset is 5.5E06.  While it is noted that there were significantly higher indications of refrigeration use than other comparables, the inclusion of this data point still vastly skews most models due to its high leverage.  Similarly, an 'Other' space type has a reported energy consumption of 7E08 BTU whereas the next highest value is 2E08 BTU and the third quartile value is 2E06.  While this building is large (1.4 mmSF), and has a lot of server equipment (more than 500), it is still greatly beyond the next closest category and seems to be causing instability in the models due to lack of similar data points.  Therefore, these points have been removed and the caveat of instabilitity past a maximum limit will be instituted (more than 5E08 BTU), due to lack of additional information.
+Only buildings that indicated electricity being used \lstinline{ELUSED} were included in the samples for this major fuel use.  Then, one of each pair of predictors with correlations above 0.75 were removed, to avoid model selection issues. Numeric predictors were transformed via BoxCox methodology as well as centered and scaled.  Two potential outliers were found in the analysis.  Both data points had unusually high energy consumption for the building type noted, and were highly atypical in many other respsects.
 
 \subsection{Response Analysis}
 
@@ -29,12 +26,6 @@ RMSE: 165663, Rsquared: 0.138\\
 Top 5: \lstinline{RFGWINPerSf}, \lstinline{RGSTRNPerSf}, \lstinline{NWKERPerSf}, \lstinline{RFGICNPerSf},  \lstinline{PCTERMNPerSf}
 \\[0.1in]
 \indent The resulting error metrics were much less promising.  However, similarly selected variables are are picked for this model when compared to the PLS.  \textit{\hyperref[appendix:electricity:rf]{Appendix}}
-
-\subsection{Variable Selection - Lasso}
-RMSE: NA, Rsquared: NA\\
- Top 5: NA
-\\[0.1in]
-\indent This algorithm returned an error on many simulations, which is not unexpected.  Lasso models typically work when a few variables can be used to predict the response, which does not appear to be the case in this instance.  Due to the lack of fit, this model will not be used in the variable selection process.  Due to the number of reported errors, no metrics have been provided for this model.
 
 \subsection{Variable Selection - Forward Selection}
 RMSE: 91257, Rsquared: 0.316\\

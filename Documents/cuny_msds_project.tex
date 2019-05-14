@@ -1,4 +1,5 @@
 \documentclass[12pt,letterpaper]{article}
+\usepackage[doublespacing]{setspace}
 \usepackage[utf8]{inputenc}
 \usepackage{mathptmx}
 \usepackage{geometry}
@@ -11,8 +12,8 @@
 \usepackage{lscape}
 \usepackage{placeins}
 \usepackage{titlesec}
-\titlespacing*{\section}{0pt}{1\baselineskip}{0.5\baselineskip}
-\titlespacing*{\subsection}{0pt}{0.5\baselineskip}{0.5\baselineskip}
+\titlespacing*{\section}{0pt}{0.1\baselineskip}{0.1\baselineskip}
+\titlespacing*{\subsection}{0pt}{0.1\baselineskip}{0.1\baselineskip}
 \usepackage{xcolor}
 \hypersetup{
     colorlinks,
@@ -76,6 +77,7 @@
 
 
 \begin{document}
+\lhead{John Grando - DATA 698}
 %----------------------------------------------------------------
 % Maketitle
 %---------------------------------------------------------------
@@ -93,14 +95,15 @@
   }
 \newpage
 \pagestyle{fancy}
-\setcounter{page}{1}		% Set page numbering to begin on this page
+\setcounter{page}{1}		% Set page numbering to 
+%begin on this page
 %----------------------------------------------------------------
 % Begin document
 %------------------------------------------------------------------------
 \input{project_abstract}
 \input{project_introduction}
 \input{project_related_work}
-\input{project_problem_statement}
+%\input{project_problem_statement}
 \input{project_general_process}
 \input{project_pre_process_data}
 \input{project_electricity_variable_selection}
